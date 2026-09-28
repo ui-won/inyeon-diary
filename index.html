@@ -51,9 +51,32 @@
   *{ box-sizing:border-box; }
   html,body{ height:100%; }
   body{
+    position:relative;
     background:var(--bg); color:var(--ink); font-family:var(--font-body), -apple-system, sans-serif;
     margin:0; line-height:1.6; -webkit-font-smoothing:antialiased;
   }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(620px circle at 8% -8%, rgba(255,122,162,.22), transparent 60%),
+      radial-gradient(520px circle at 108% 6%, rgba(138,79,214,.16), transparent 60%),
+      radial-gradient(720px circle at 50% 115%, rgba(255,154,139,.18), transparent 60%);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) body::before{
+      background:
+        radial-gradient(620px circle at 8% -8%, rgba(240,99,122,.14), transparent 60%),
+        radial-gradient(520px circle at 108% 6%, rgba(138,79,214,.14), transparent 60%),
+        radial-gradient(720px circle at 50% 115%, rgba(255,154,139,.1), transparent 60%);
+    }
+  }
+  :root[data-theme="dark"] body::before{
+    background:
+      radial-gradient(620px circle at 8% -8%, rgba(240,99,122,.14), transparent 60%),
+      radial-gradient(520px circle at 108% 6%, rgba(138,79,214,.14), transparent 60%),
+      radial-gradient(720px circle at 50% 115%, rgba(255,154,139,.1), transparent 60%);
+  }
+  .app{ position:relative; z-index:1; }
   h1,h2,h3{ font-family:var(--font-display), serif; font-weight:700; margin:0; text-wrap:balance; }
   button{ font-family:inherit; }
   input,select,textarea{ font-family:inherit; font-size:14px; }
@@ -182,10 +205,73 @@
   .toast{ position:fixed; left:50%; bottom:calc(22px + env(safe-area-inset-bottom, 0px)); transform:translateX(-50%) translateY(12px); background:var(--ink); color:var(--bg); padding:10px 18px; border-radius:999px; font-size:13.5px; box-shadow:var(--shadow); opacity:0; transition:opacity .2s ease, transform .2s ease; z-index:80; pointer-events:none; }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
 
-  .lock-wrap{ text-align:center; max-width:340px; }
+  /* ---- Dating-app style lock screen ---- */
+  #lockOverlay{
+    background:
+      radial-gradient(circle at 18% 15%, rgba(255,255,255,.35), transparent 42%),
+      linear-gradient(160deg, #FF7AA2 0%, #FF9A8B 30%, #C86DD7 66%, #6A5AE0 100%);
+    overflow:hidden;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) #lockOverlay{
+      background:
+        radial-gradient(circle at 18% 15%, rgba(255,255,255,.12), transparent 42%),
+        linear-gradient(160deg, #7A2E4D 0%, #5B2A5E 35%, #3A2B66 70%, #221A3D 100%);
+    }
+  }
+  :root[data-theme="dark"] #lockOverlay{
+    background:
+      radial-gradient(circle at 18% 15%, rgba(255,255,255,.12), transparent 42%),
+      linear-gradient(160deg, #7A2E4D 0%, #5B2A5E 35%, #3A2B66 70%, #221A3D 100%);
+  }
+  .lock-hearts{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; }
+  .lock-hearts span{
+    position:absolute; bottom:-10%; opacity:0;
+    animation-name:heartFloat; animation-timing-function:ease-in; animation-iteration-count:infinite;
+    filter:drop-shadow(0 4px 10px rgba(90,20,60,.18));
+  }
+  @keyframes heartFloat{
+    0%{ transform:translateY(0) rotate(0deg); opacity:0; }
+    12%{ opacity:.75; }
+    88%{ opacity:.55; }
+    100%{ transform:translateY(-112vh) rotate(20deg); opacity:0; }
+  }
+  .lock-wrap{
+    position:relative; z-index:1; text-align:center; max-width:352px;
+    background:rgba(255,255,255,.88);
+    -webkit-backdrop-filter:blur(22px); backdrop-filter:blur(22px);
+    border:1px solid rgba(255,255,255,.6);
+    border-radius:28px !important;
+    box-shadow:0 24px 60px -22px rgba(90,20,60,.5), 0 2px 10px rgba(0,0,0,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .lock-wrap{ background:rgba(30,22,34,.82); border-color:rgba(255,255,255,.08); }
+  }
+  :root[data-theme="dark"] .lock-wrap{ background:rgba(30,22,34,.82); border-color:rgba(255,255,255,.08); }
+  .lock-wrap .lock-badge{
+    width:76px; height:76px; margin:0 auto 12px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:36px;
+    background:linear-gradient(135deg,#FF7AA2,#C86DD7);
+    box-shadow:0 12px 26px -8px rgba(200,60,120,.6);
+  }
   .lock-wrap .lock-icon{ font-size:34px; margin-bottom:6px; }
-  .lock-wrap h2{ font-size:20px; margin-bottom:4px; }
+  .lock-wrap h2{
+    font-size:23px; margin-bottom:4px;
+    background:linear-gradient(135deg,#E23E68,#8A4FD6);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;
+  }
   .lock-wrap p{ color:var(--muted); font-size:13.5px; margin:0 0 18px; }
+  .lock-wrap #lockPassword{
+    border-radius:999px; padding:12px 18px; border:1.5px solid var(--accent-soft);
+    background:#fff; color:#2B2130;
+  }
+  .lock-wrap #lockPassword:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(195,49,73,.15); }
+  .lock-wrap button[type="submit"]{
+    border-radius:999px; padding:12px 16px; font-size:15.5px; border:none;
+    background:linear-gradient(135deg,#FF6F91,#C33149);
+    box-shadow:0 14px 26px -12px rgba(195,49,73,.75);
+  }
+  .lock-wrap button[type="submit"]:active{ transform:translateY(1px); }
 
   [hidden]{ display:none !important; }
 
@@ -196,10 +282,20 @@
 
 <!-- ================= LOCK SCREEN ================= -->
 <div class="overlay" id="lockOverlay" style="align-items:center; position:fixed;">
+  <div class="lock-hearts" aria-hidden="true">
+    <span style="left:6%; font-size:20px; animation-duration:9s; animation-delay:0s;">💕</span>
+    <span style="left:18%; font-size:15px; animation-duration:12s; animation-delay:2.5s;">💘</span>
+    <span style="left:32%; font-size:24px; animation-duration:10.5s; animation-delay:1s;">✨</span>
+    <span style="left:48%; font-size:17px; animation-duration:8.5s; animation-delay:3.5s;">💗</span>
+    <span style="left:62%; font-size:22px; animation-duration:11.5s; animation-delay:.5s;">💖</span>
+    <span style="left:76%; font-size:16px; animation-duration:9.5s; animation-delay:4s;">💞</span>
+    <span style="left:88%; font-size:20px; animation-duration:13s; animation-delay:2s;">✨</span>
+    <span style="left:40%; font-size:14px; animation-duration:14s; animation-delay:5.5s;">💓</span>
+  </div>
   <div class="dialog lock-wrap">
-    <div class="lock-icon">🧵</div>
+    <div class="lock-badge">💘</div>
     <h2>인연 다이어리</h2>
-    <p>주선자 공용 비밀번호를 입력해 주세요</p>
+    <p>주선자 공용 비밀번호를 입력하고<br>오늘의 인연을 이어보세요</p>
     <form id="lockForm">
       <div class="field">
         <input type="password" id="lockPassword" class="field-input" placeholder="비밀번호" autocomplete="off" style="text-align:center; letter-spacing:.25em; font-size:18px;">
