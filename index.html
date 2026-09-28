@@ -1,0 +1,1414 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>인연 다이어리 (공유형)</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#2B2130;
+    --bg:#FBF6F5;
+    --surface:#FFFFFF;
+    --surface-2:#F3E9E8;
+    --accent:#C33149;
+    --accent-ink:#FFFFFF;
+    --accent-soft:#F3D3D8;
+    --line:#E7DAD8;
+    --muted:#8A7A7E;
+    --success:#3F8F63;
+    --success-soft:#DCEFE3;
+    --warn:#B4791F;
+    --warn-soft:#F5E7CE;
+    --danger:#A6483B;
+    --danger-soft:#F3DCD8;
+    --info:#3B6EA5;
+    --info-soft:#DCE7F2;
+    --radius:14px;
+    --radius-sm:9px;
+    --shadow:0 1px 2px rgba(43,33,48,.07), 0 10px 28px -14px rgba(43,33,48,.22);
+    --font-display:'Noto Serif KR', serif;
+    --font-body:'Noto Sans KR', sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#F3E9EA; --bg:#1D1720; --surface:#272029; --surface-2:#332830;
+      --accent:#F0637A; --accent-ink:#241017; --accent-soft:#4A2A34; --line:#3D2E36;
+      --muted:#B39CA2; --success:#6FCB9A; --success-soft:#20362B; --warn:#E2B25A;
+      --warn-soft:#3A2E1B; --danger:#E08776; --danger-soft:#3B2420; --info:#8AB4E0;
+      --info-soft:#20303F; --shadow:0 1px 2px rgba(0,0,0,.35), 0 10px 28px -14px rgba(0,0,0,.55);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#F3E9EA; --bg:#1D1720; --surface:#272029; --surface-2:#332830;
+    --accent:#F0637A; --accent-ink:#241017; --accent-soft:#4A2A34; --line:#3D2E36;
+    --muted:#B39CA2; --success:#6FCB9A; --success-soft:#20362B; --warn:#E2B25A;
+    --warn-soft:#3A2E1B; --danger:#E08776; --danger-soft:#3B2420; --info:#8AB4E0;
+    --info-soft:#20303F; --shadow:0 1px 2px rgba(0,0,0,.35), 0 10px 28px -14px rgba(0,0,0,.55);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--font-body), -apple-system, sans-serif;
+    margin:0; line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family:var(--font-display), serif; font-weight:700; margin:0; text-wrap:balance; }
+  button{ font-family:inherit; }
+  input,select,textarea{ font-family:inherit; font-size:14px; }
+  ::selection{ background:var(--accent-soft); }
+
+  .app{ max-width:960px; margin:0 auto; padding-inline:20px; padding-block:22px 72px; display:flex; flex-direction:column; gap:22px; }
+
+  .app-header{ position:relative; overflow:hidden; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:26px 24px; box-shadow:var(--shadow); }
+  .thread-svg{ position:absolute; inset:0; width:100%; height:100%; opacity:.55; pointer-events:none; }
+  .header-inner{ position:relative; display:flex; flex-direction:column; gap:6px; }
+  .eyebrow{ font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); font-weight:600; }
+  .app-header h1{ font-size:clamp(22px,4.2vw,28px); color:var(--ink); }
+  .app-header p{ margin:0; color:var(--muted); font-size:14px; max-width:52ch; }
+  .stat-strip{ display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:14px; }
+  .stat-chip{ display:flex; align-items:baseline; gap:6px; font-size:13px; color:var(--muted); }
+  .stat-chip b{ font-family:var(--font-display); font-size:18px; color:var(--ink); font-variant-numeric:tabular-nums; }
+
+  .tabs{ display:flex; gap:6px; border-bottom:1px solid var(--line); }
+  .tab-btn{ appearance:none; border:none; background:none; cursor:pointer; padding:10px 4px; margin-bottom:-1px; font-size:15px; font-weight:600; color:var(--muted); border-bottom:2px solid transparent; }
+  .tab-btn + .tab-btn{ margin-left:14px; }
+  .tab-btn[aria-selected="true"]{ color:var(--ink); border-bottom-color:var(--accent); }
+  .tab-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
+
+  .toolbar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .toolbar .search{ flex:1 1 200px; min-width:160px; }
+  .field-input, .search input, select.select-input{ width:100%; padding:9px 12px; border-radius:var(--radius-sm); border:1px solid var(--line); background:var(--surface); color:var(--ink); }
+  .field-input:focus, select.select-input:focus, textarea.field-input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  select.select-input{ min-width:132px; }
+
+  .btn{ display:inline-flex; align-items:center; gap:6px; justify-content:center; padding:9px 15px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .btn-primary{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .btn-ghost{ background:transparent; border-color:transparent; padding:6px 8px; color:var(--muted); }
+  .btn-ghost:hover{ color:var(--ink); background:var(--surface-2); }
+  .btn-danger-ghost{ background:transparent; border-color:transparent; padding:6px 8px; color:var(--danger); }
+  .btn-danger-ghost:hover{ background:var(--danger-soft); }
+  .btn svg{ width:15px; height:15px; }
+  .btn:disabled{ opacity:.55; cursor:default; }
+
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(272px,1fr)); gap:14px; }
+  .card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:16px; display:flex; flex-direction:column; gap:10px; box-shadow:var(--shadow); }
+  .card-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .card-name{ font-family:var(--font-display); font-size:17px; font-weight:700; }
+  .card-meta{ font-size:13px; color:var(--muted); display:flex; flex-wrap:wrap; gap:4px 10px; }
+  .card-body{ font-size:13.5px; color:var(--ink); }
+  .card-body .row{ display:flex; gap:6px; margin-bottom:3px; }
+  .card-body .row .k{ color:var(--muted); flex:0 0 auto; }
+  .card-body .row .v{ overflow-wrap:anywhere; }
+  .card-actions{ display:flex; justify-content:flex-end; gap:2px; margin-top:auto; padding-top:4px; }
+
+  .badge{ display:inline-flex; align-items:center; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .badge-neutral{ background:var(--surface-2); color:var(--muted); }
+  .badge-accent{ background:var(--accent-soft); color:var(--accent); }
+  .badge-success{ background:var(--success-soft); color:var(--success); }
+  .badge-warn{ background:var(--warn-soft); color:var(--warn); }
+  .badge-danger{ background:var(--danger-soft); color:var(--danger); }
+  .badge-info{ background:var(--info-soft); color:var(--info); }
+
+  .avatar{ width:44px; height:44px; border-radius:50%; object-fit:cover; background:var(--surface-2); flex:none; display:block; }
+  .avatar-placeholder{ width:44px; height:44px; border-radius:50%; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-family:var(--font-display); font-size:16px; flex:none; }
+  .avatar-btn{ position:relative; border:none; background:none; padding:0; cursor:pointer; border-radius:50%; flex:none; }
+  .avatar-btn[data-action="noop"]{ cursor:default; }
+  .avatar-count{ position:absolute; right:-2px; bottom:-2px; background:var(--accent); color:var(--accent-ink); font-size:9px; font-weight:700; border-radius:999px; padding:1px 4px; border:2px solid var(--surface); line-height:1.3; }
+
+  .match-row{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; display:flex; flex-direction:column; gap:8px; box-shadow:var(--shadow); }
+  .match-pair{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-family:var(--font-display); font-size:16px; font-weight:700; }
+  .match-pair .thread-icon{ width:16px; height:16px; color:var(--accent); flex:none; }
+  .match-sub{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .match-memo{ font-size:13.5px; color:var(--ink); }
+  .match-footer{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .match-matchmaker{ display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted); }
+  .match-matchmaker-label{ font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--accent); background:var(--accent-soft); padding:1px 7px; border-radius:999px; flex:none; }
+  .deleted-tag{ font-size:11px; color:var(--danger); border:1px solid var(--danger-soft); background:var(--danger-soft); padding:1px 6px; border-radius:6px; }
+
+  .empty-state{ border:1px dashed var(--line); border-radius:var(--radius); padding:40px 20px; text-align:center; color:var(--muted); display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .empty-state svg{ width:34px; height:34px; color:var(--accent); opacity:.8; }
+  .empty-state h3{ color:var(--ink); font-size:16px; }
+  .empty-state p{ margin:0; font-size:13.5px; max-width:34ch; }
+  .skeleton{ display:grid; grid-template-columns:repeat(auto-fill, minmax(272px,1fr)); gap:14px; }
+  .skel-card{ height:132px; border-radius:var(--radius); background:linear-gradient(100deg, var(--surface-2) 30%, var(--surface) 50%, var(--surface-2) 70%); background-size:200% 100%; animation:shimmer 1.4s infinite; border:1px solid var(--line); }
+  @keyframes shimmer{ 0%{ background-position:0 0; } 100%{ background-position:-200% 0; } }
+
+  .banner{ display:flex; gap:10px; align-items:flex-start; background:var(--warn-soft); color:var(--warn); border:1px solid var(--warn-soft); border-radius:var(--radius-sm); padding:12px 14px; font-size:13.5px; }
+  .banner svg{ width:18px; height:18px; flex:none; margin-top:1px; }
+  .banner[hidden]{ display:none; }
+
+  .overlay{ position:fixed; inset:0; background:rgba(20,14,18,.45); display:flex; align-items:flex-end; justify-content:center; padding:0; z-index:50; }
+  .overlay[hidden]{ display:none; }
+  .dialog{ background:var(--surface); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:22px 22px calc(22px + env(safe-area-inset-bottom, 0px)); max-height:88vh; overflow-y:auto; box-shadow:var(--shadow); }
+  @media (min-width:640px){ .overlay{ align-items:center; padding:20px; } .dialog{ border-radius:var(--radius); max-height:82vh; } }
+  .dialog-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .dialog-head h2{ font-size:19px; }
+  .dialog form{ display:flex; flex-direction:column; gap:12px; }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{ font-size:12.5px; color:var(--muted); font-weight:600; }
+  .field-row{ display:flex; gap:10px; }
+  .field-row .field{ flex:1; }
+  textarea.field-input{ resize:vertical; min-height:64px; }
+  .dialog-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:6px; }
+  .required-mark{ color:var(--accent); }
+  .helper-text{ font-size:12px; color:var(--muted); margin-top:-4px; }
+
+  .photo-strip{ display:flex; flex-wrap:wrap; gap:10px; }
+  .photo-thumb{ position:relative; width:72px; height:72px; border-radius:14px; overflow:hidden; background:var(--surface-2); flex:none; }
+  .photo-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .photo-thumb .cover-badge{ position:absolute; left:4px; bottom:4px; background:rgba(20,14,18,.6); color:#fff; font-size:9.5px; padding:1px 6px; border-radius:999px; font-weight:600; }
+  .thumb-btn{ position:absolute; width:20px; height:20px; border-radius:50%; border:none; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; line-height:1; padding:0; }
+  .thumb-remove{ top:4px; right:4px; background:rgba(20,14,18,.65); }
+  .thumb-remove:hover{ background:var(--danger); }
+  .thumb-cover{ top:4px; left:4px; background:rgba(20,14,18,.5); font-size:10px; }
+  .thumb-cover:hover{ background:var(--accent); }
+  .photo-add-tile{ width:72px; height:72px; border-radius:14px; border:1.5px dashed var(--line); background:transparent; color:var(--muted); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; cursor:pointer; font-size:11px; flex:none; }
+  .photo-add-tile svg{ width:20px; height:20px; }
+  .photo-add-tile:hover{ border-color:var(--accent); color:var(--accent); }
+  .visually-hidden-input{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+
+  .viewer-strip{ display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; }
+  .viewer-item{ position:relative; flex:none; }
+  .viewer-item img{ height:min(60vh,340px); width:auto; max-width:100%; border-radius:var(--radius-sm); display:block; background:var(--surface-2); }
+  .viewer-actions{ position:absolute; right:8px; bottom:8px; display:flex; gap:6px; }
+  .viewer-btn{ width:32px; height:32px; border-radius:50%; border:none; background:rgba(20,14,18,.6); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .viewer-btn:hover{ background:rgba(20,14,18,.85); }
+  .viewer-btn svg{ width:16px; height:16px; }
+  .viewer-hint{ font-size:12px; color:var(--muted); margin:10px 0 0; }
+
+  .toast{ position:fixed; left:50%; bottom:calc(22px + env(safe-area-inset-bottom, 0px)); transform:translateX(-50%) translateY(12px); background:var(--ink); color:var(--bg); padding:10px 18px; border-radius:999px; font-size:13.5px; box-shadow:var(--shadow); opacity:0; transition:opacity .2s ease, transform .2s ease; z-index:80; pointer-events:none; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .lock-wrap{ text-align:center; max-width:340px; }
+  .lock-wrap .lock-icon{ font-size:34px; margin-bottom:6px; }
+  .lock-wrap h2{ font-size:20px; margin-bottom:4px; }
+  .lock-wrap p{ color:var(--muted); font-size:13.5px; margin:0 0 18px; }
+
+  [hidden]{ display:none !important; }
+
+  @media (max-width:480px){ .field-row{ flex-direction:column; } .card-top{ flex-direction:column; } }
+</style>
+</head>
+<body>
+
+<!-- ================= LOCK SCREEN ================= -->
+<div class="overlay" id="lockOverlay" style="align-items:center; position:fixed;">
+  <div class="dialog lock-wrap">
+    <div class="lock-icon">🧵</div>
+    <h2>인연 다이어리</h2>
+    <p>주선자 공용 비밀번호를 입력해 주세요</p>
+    <form id="lockForm">
+      <div class="field">
+        <input type="password" id="lockPassword" class="field-input" placeholder="비밀번호" autocomplete="off" style="text-align:center; letter-spacing:.25em; font-size:18px;">
+      </div>
+      <p id="lockError" class="helper-text" style="color:var(--danger); min-height:16px; margin-top:8px;">&nbsp;</p>
+      <button type="submit" class="btn btn-primary" style="width:100%; margin-top:2px;">입장하기</button>
+    </form>
+  </div>
+</div>
+
+<div class="app" id="mainApp" hidden>
+
+  <header class="app-header">
+    <svg class="thread-svg" viewBox="0 0 600 160" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M -20 130 C 120 40, 220 190, 340 90 S 560 10, 640 70" fill="none" stroke="currentColor" stroke-width="1.6" style="color:var(--accent)" opacity="0.55"/>
+      <circle cx="94" cy="96" r="3.5" fill="var(--accent)" opacity="0.7"/>
+      <circle cx="430" cy="66" r="3.5" fill="var(--accent)" opacity="0.7"/>
+    </svg>
+    <div class="header-inner">
+      <span class="eyebrow">주선자 공용 · 실시간 공유</span>
+      <h1>인연 다이어리</h1>
+      <p>여러 주선자가 함께 참가자와 매칭 기록을 실시간으로 정리해요.</p>
+      <div class="stat-strip">
+        <span class="stat-chip"><b id="statMembers">–</b>명 등록</span>
+        <span class="stat-chip"><b id="statOngoing">–</b>건 진행중</span>
+        <span class="stat-chip"><b id="statSuccess">–</b>건 성사</span>
+      </div>
+    </div>
+  </header>
+
+  <div id="dbBanner" class="banner" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>서버에 연결하지 못했어요. 인터넷 연결을 확인하거나 잠시 후 새로고침 해주세요.</span>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn" role="tab" id="tabBtn-members" aria-selected="true" aria-controls="panel-members" data-tab="members">참가자 관리</button>
+    <button class="tab-btn" role="tab" id="tabBtn-matches" aria-selected="false" aria-controls="panel-matches" data-tab="matches">매칭 기록</button>
+  </nav>
+
+  <!-- ================= MEMBERS PANEL ================= -->
+  <section id="panel-members" role="tabpanel" aria-labelledby="tabBtn-members" style="display:flex; flex-direction:column; gap:14px;">
+    <div class="toolbar">
+      <div class="search">
+        <input id="memberSearch" class="field-input" type="search" placeholder="이름으로 검색">
+      </div>
+      <select id="memberStatusFilter" class="select-input">
+        <option value="">모든 상태</option>
+        <option value="available">소개 가능</option>
+        <option value="in_progress">소개 진행중</option>
+        <option value="matched">매칭 완료</option>
+        <option value="hold">보류</option>
+      </select>
+      <button class="btn btn-primary" id="btnAddMember" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+        새 참가자
+      </button>
+    </div>
+
+    <div id="membersLoading" class="skeleton" hidden>
+      <div class="skel-card"></div><div class="skel-card"></div><div class="skel-card"></div>
+    </div>
+
+    <div id="membersEmpty" class="empty-state" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h3 id="membersEmptyTitle">아직 등록된 참가자가 없어요</h3>
+      <p id="membersEmptyText">소개팅을 주선할 지인을 등록하면 여기 카드로 모아서 보여드려요.</p>
+    </div>
+
+    <div id="membersList" class="grid" hidden></div>
+  </section>
+
+  <!-- ================= MATCHES PANEL ================= -->
+  <section id="panel-matches" role="tabpanel" aria-labelledby="tabBtn-matches" style="display:none; flex-direction:column; gap:14px;">
+    <div class="toolbar">
+      <select id="matchStatusFilter" class="select-input">
+        <option value="">모든 상태</option>
+        <option value="proposed">제안됨</option>
+        <option value="in_progress">진행중</option>
+        <option value="success">성사</option>
+        <option value="failed">불발</option>
+        <option value="hold">보류</option>
+      </select>
+      <span style="flex:1"></span>
+      <button class="btn btn-primary" id="btnAddMatch" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+        새 매칭 등록
+      </button>
+    </div>
+
+    <div id="matchesLoading" class="skeleton" hidden>
+      <div class="skel-card"></div><div class="skel-card"></div>
+    </div>
+
+    <div id="matchesEmpty" class="empty-state" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h3 id="matchesEmptyTitle">아직 매칭 기록이 없어요</h3>
+      <p id="matchesEmptyText">참가자 두 명을 이어주면 여기에 날짜와 진행 상황이 남아요.</p>
+    </div>
+
+    <div id="matchesList" style="display:flex; flex-direction:column; gap:12px;" hidden></div>
+  </section>
+</div>
+
+<!-- ================= MEMBER MODAL ================= -->
+<div class="overlay" id="memberOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="memberModalTitle">
+    <div class="dialog-head">
+      <h2 id="memberModalTitle">새 참가자</h2>
+      <button class="btn btn-ghost" type="button" id="memberClose" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <form id="memberForm">
+      <div class="field">
+        <label>사진 (최대 6장)</label>
+        <div class="photo-strip" id="m-photo-strip"></div>
+        <span class="helper-text" id="m-photo-status">&nbsp;</span>
+        <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" id="m-photo-input" class="visually-hidden-input" multiple>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="m-name">이름</label>
+          <input class="field-input" id="m-name" maxlength="40" placeholder="예: 김지수 (모르면 비워두세요)">
+          <span class="helper-text" id="m-name-hint">&nbsp;</span>
+        </div>
+        <div class="field" style="max-width:140px">
+          <label for="m-birthyear">출생연도</label>
+          <input class="field-input" id="m-birthyear" type="number" min="1930" placeholder="1997">
+          <span class="helper-text" id="m-age-preview">&nbsp;</span>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="m-gender">성별</label>
+          <select class="select-input" id="m-gender">
+            <option value="">선택 안 함</option>
+            <option value="female">여성</option>
+            <option value="male">남성</option>
+            <option value="other">기타</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="m-status">상태</label>
+          <select class="select-input" id="m-status">
+            <option value="available">소개 가능</option>
+            <option value="in_progress">소개 진행중</option>
+            <option value="matched">매칭 완료</option>
+            <option value="hold">보류</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="m-contact">연락처</label>
+        <input class="field-input" id="m-contact" placeholder="전화번호나 메신저 아이디">
+      </div>
+      <div class="field">
+        <label for="m-job">직업 / 소개</label>
+        <input class="field-input" id="m-job" maxlength="60" placeholder="예: 마케터, 3년차">
+      </div>
+      <div class="field">
+        <label for="m-referrer">주선자</label>
+        <input class="field-input" id="m-referrer" maxlength="40" placeholder="이 사람을 소개해준 사람 (예: 나, 민지)">
+      </div>
+      <div class="field">
+        <label for="m-personality">성격 · 특징</label>
+        <textarea class="field-input" id="m-personality" maxlength="300" placeholder="차분하고 유머 있음, 운동 좋아함"></textarea>
+      </div>
+      <div class="field">
+        <label for="m-ideal">이상형 조건</label>
+        <textarea class="field-input" id="m-ideal" maxlength="300" placeholder="비흡연, 30km 이내, 강아지 좋아하는 사람"></textarea>
+      </div>
+      <div class="field">
+        <label for="m-memo">메모</label>
+        <textarea class="field-input" id="m-memo" maxlength="500" placeholder="그 외 참고할 내용"></textarea>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn" id="memberCancel">취소</button>
+        <button type="submit" class="btn btn-primary" id="memberSubmitBtn">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= MATCH MODAL ================= -->
+<div class="overlay" id="matchOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="matchModalTitle">
+    <div class="dialog-head">
+      <h2 id="matchModalTitle">새 매칭 등록</h2>
+      <button class="btn btn-ghost" type="button" id="matchClose" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <form id="matchForm">
+      <div class="field-row">
+        <div class="field">
+          <label for="x-a">참가자 A <span class="required-mark">*</span></label>
+          <select class="select-input" id="x-a" required></select>
+        </div>
+        <div class="field">
+          <label for="x-b">참가자 B <span class="required-mark">*</span></label>
+          <select class="select-input" id="x-b" required></select>
+        </div>
+      </div>
+      <p class="helper-text" id="matchMembersHint" hidden>매칭을 만들려면 참가자가 2명 이상 필요해요.</p>
+      <div class="field">
+        <label for="x-matchmaker">주선인</label>
+        <input class="field-input" id="x-matchmaker" maxlength="40" placeholder="이 매칭을 주선한 사람 (예: 나, 민지)">
+        <span class="helper-text">참가자 명단과는 별도로, 이 매칭을 이어준 사람을 적어두는 칸이에요.</span>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="x-date">소개 날짜</label>
+          <input class="field-input" id="x-date" type="date">
+        </div>
+        <div class="field">
+          <label for="x-status">진행 상태</label>
+          <select class="select-input" id="x-status">
+            <option value="proposed">제안됨</option>
+            <option value="in_progress">진행중</option>
+            <option value="success">성사</option>
+            <option value="failed">불발</option>
+            <option value="hold">보류</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="x-followup">다음 일정 (선택)</label>
+        <input class="field-input" id="x-followup" type="date">
+      </div>
+      <div class="field">
+        <label for="x-memo">메모</label>
+        <textarea class="field-input" id="x-memo" maxlength="500" placeholder="분위기, 반응, 다음 액션 등"></textarea>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn" id="matchCancel">취소</button>
+        <button type="submit" class="btn btn-primary" id="matchSubmitBtn">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= CONFIRM DELETE MODAL ================= -->
+<div class="overlay" id="confirmOverlay" hidden>
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" style="max-width:380px;">
+    <div class="dialog-head">
+      <h2 id="confirmTitle">삭제할까요?</h2>
+    </div>
+    <p id="confirmBody" style="font-size:14px; color:var(--muted); margin:0 0 16px;"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn" id="confirmCancel">취소</button>
+      <button type="button" class="btn" id="confirmOk" style="background:var(--danger); border-color:var(--danger); color:#fff;">삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= PHOTO VIEWER MODAL ================= -->
+<div class="overlay" id="photoViewerOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="photoViewerTitle" style="max-width:640px;">
+    <div class="dialog-head">
+      <h2 id="photoViewerTitle">사진</h2>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button class="btn" type="button" id="photoViewerSaveAll" hidden>전체 저장</button>
+        <button class="btn btn-ghost" type="button" id="photoViewerClose" aria-label="닫기">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="viewer-strip" id="photoViewerStrip"></div>
+    <p class="viewer-hint">사진 한 장은 복사 아이콘으로 바로 붙여넣을 수 있어요. 여러 장을 한 번에 복사하는 건 브라우저 제약으로 안 돼서, 여러 장을 보낼 땐 '전체 저장' 후 카톡에서 한 번에 골라 보내보세요.</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ===================== 여기만 바꾸면 됩니다 =====================
+  var SUPABASE_URL = 'https://ewaoqjswatdcdylkqzrz.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_aBsZlfvB97lt5wNqnMzuSQ_AUUuo-Kt';
+  var SHARED_PASSWORD = '1004';
+  // ================================================================
+
+  var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  var PHOTO_BUCKET = 'photos';
+
+  var photoViewerMemberName = '';
+  var photoViewerIds = [];
+  var members = [];
+  var matches = [];
+  var membersLoaded = false, matchesLoaded = false;
+  var membersFailed = false, matchesFailed = false;
+  var editingMemberId = null;
+  var editingMatchId = null;
+  var pendingDelete = null; // {kind:'member'|'match', id, label, photoPaths}
+  var memberPhoto = { original:[], working:[] };
+  var MAX_PHOTOS = 6;
+
+  var GENDER_LABEL = { female:'여성', male:'남성', other:'기타' };
+  var MEMBER_STATUS = {
+    available:  { label:'소개 가능',   cls:'badge-info' },
+    in_progress:{ label:'소개 진행중', cls:'badge-warn' },
+    matched:    { label:'매칭 완료',   cls:'badge-success' },
+    hold:       { label:'보류',        cls:'badge-neutral' }
+  };
+  var MATCH_STATUS = {
+    proposed:    { label:'제안됨',  cls:'badge-neutral' },
+    in_progress: { label:'진행중',  cls:'badge-warn' },
+    success:     { label:'성사',    cls:'badge-success' },
+    failed:      { label:'불발',    cls:'badge-danger' },
+    hold:        { label:'보류',    cls:'badge-info' }
+  };
+
+  function $(id){ return document.getElementById(id); }
+  function ageFromBirthYear(y){
+    if(!y || isNaN(y)) return null;
+    var age = new Date().getFullYear() - y;
+    return (age >= 0 && age < 130) ? age : null;
+  }
+  function updateAgePreview(){
+    var y = Number($('m-birthyear').value);
+    var age = ageFromBirthYear(y);
+    $('m-age-preview').innerHTML = age != null ? ('올해 기준 만 '+age+'세 전후') : '&nbsp;';
+  }
+  function codePrefixForGender(g){
+    if(g === 'female') return '여자';
+    if(g === 'male') return '남자';
+    return '참가자';
+  }
+  function nextCodeName(gender, excludeId){
+    var prefix = codePrefixForGender(gender);
+    var maxNum = 0;
+    members.forEach(function(mem){
+      if(excludeId && mem.id === excludeId) return;
+      if(codePrefixForGender(mem.gender) !== prefix) return;
+      var m = /^(.+?)(\d+)$/.exec(mem.name || '');
+      if(m && m[1] === prefix){
+        var n = parseInt(m[2], 10);
+        if(!isNaN(n) && n > maxNum) maxNum = n;
+      }
+    });
+    return prefix + (maxNum + 1);
+  }
+  function updateNameHint(){
+    var hint = $('m-name-hint');
+    if(!hint) return;
+    if($('m-name').value.trim()){ hint.innerHTML = '&nbsp;'; return; }
+    var preview = nextCodeName($('m-gender').value || '', editingMemberId);
+    hint.textContent = '비워두면 "' + preview + '"로 자동 저장돼요';
+  }
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  function todayStr(){
+    var d = new Date();
+    var mm = String(d.getMonth()+1).padStart(2,'0');
+    var dd = String(d.getDate()).padStart(2,'0');
+    return d.getFullYear() + '-' + mm + '-' + dd;
+  }
+  function fmtDate(iso){
+    if(!iso) return '';
+    var parts = iso.split('-');
+    if(parts.length !== 3) return iso;
+    return parts[0] + '.' + parts[1] + '.' + parts[2];
+  }
+  function showToast(msg){
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(showToast._tm);
+    showToast._tm = setTimeout(function(){ t.classList.remove('show'); }, 1800);
+  }
+
+  /* ---------------- lock screen ---------------- */
+  function initLock(){
+    if(localStorage.getItem('idiary_unlocked') === '1'){
+      unlock();
+      return;
+    }
+    $('lockForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      var v = $('lockPassword').value;
+      if(v === SHARED_PASSWORD){
+        localStorage.setItem('idiary_unlocked', '1');
+        unlock();
+      } else {
+        $('lockError').textContent = '비밀번호가 맞지 않아요';
+        $('lockPassword').value = '';
+        $('lockPassword').focus();
+      }
+    });
+  }
+  function unlock(){
+    $('lockOverlay').hidden = true;
+    $('mainApp').hidden = false;
+    start();
+  }
+
+  /* ---------------- data mapping (Postgres <-> JS) ---------------- */
+  function rowToMember(row){
+    return {
+      id: row.id,
+      name: row.name,
+      birthYear: row.birth_year,
+      gender: row.gender,
+      status: row.status,
+      contact: row.contact,
+      job: row.job,
+      referrer: row.referrer,
+      personality: row.personality,
+      idealType: row.ideal_type,
+      memo: row.memo,
+      photoPaths: row.photo_paths || [],
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  }
+  function memberToRow(data){
+    return {
+      name: data.name,
+      birth_year: data.birthYear,
+      gender: data.gender,
+      status: data.status,
+      contact: data.contact,
+      job: data.job,
+      referrer: data.referrer,
+      personality: data.personality,
+      ideal_type: data.idealType,
+      memo: data.memo,
+      photo_paths: data.photoPaths
+    };
+  }
+  function rowToMatch(row){
+    return {
+      id: row.id,
+      aId: row.a_id,
+      bId: row.b_id,
+      aName: row.a_name,
+      bName: row.b_name,
+      matchmaker: row.matchmaker,
+      date: row.match_date,
+      status: row.status,
+      followUpDate: row.follow_up_date,
+      memo: row.memo,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  }
+  function matchToRow(data){
+    return {
+      a_id: data.aId,
+      b_id: data.bId,
+      a_name: data.aName,
+      b_name: data.bName,
+      matchmaker: data.matchmaker,
+      match_date: data.date,
+      status: data.status,
+      follow_up_date: data.followUpDate,
+      memo: data.memo
+    };
+  }
+
+  /* ---------------- photo storage helpers ---------------- */
+  function photoUrl(path){
+    return SUPABASE_URL + '/storage/v1/object/public/' + PHOTO_BUCKET + '/' + encodeURIComponent(path);
+  }
+  function extFromType(type){
+    if(type === 'image/png') return 'png';
+    if(type === 'image/webp') return 'webp';
+    if(type === 'image/gif') return 'gif';
+    return 'jpg';
+  }
+  function uploadPhoto(file){
+    var ext = extFromType(file.type) || (file.name.split('.').pop() || 'jpg').toLowerCase();
+    var rand = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : (Date.now() + '_' + Math.random().toString(36).slice(2));
+    var path = rand + '.' + ext;
+    return supabase.storage.from(PHOTO_BUCKET).upload(path, file, { upsert:false, contentType:file.type }).then(function(res){
+      if(res.error) throw res.error;
+      return path;
+    });
+  }
+  function deletePhoto(path){
+    return supabase.storage.from(PHOTO_BUCKET).remove([path]).catch(function(){});
+  }
+  function fetchPhotoBlob(path){
+    return fetch(photoUrl(path)).then(function(res){
+      if(!res.ok) throw new Error('photo fetch failed');
+      return res.blob();
+    });
+  }
+  function triggerDownload(blob, filename){
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  }
+
+  /* ---------------- tabs ---------------- */
+  function initTabs(){
+    var btns = document.querySelectorAll('.tab-btn');
+    btns.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        btns.forEach(function(b){ b.setAttribute('aria-selected', b === btn ? 'true':'false'); });
+        var membersPanel = $('panel-members'), matchesP = $('panel-matches');
+        if(btn.dataset.tab === 'members'){
+          membersPanel.style.display = 'flex'; matchesP.style.display = 'none';
+        } else {
+          membersPanel.style.display = 'none'; matchesP.style.display = 'flex';
+        }
+      });
+    });
+  }
+
+  /* ---------------- stats ---------------- */
+  function renderStats(){
+    $('statMembers').textContent = membersLoaded ? String(members.length) : '–';
+    if(matchesLoaded){
+      var ongoing = matches.filter(function(m){ return m.status === 'proposed' || m.status === 'in_progress'; }).length;
+      var success = matches.filter(function(m){ return m.status === 'success'; }).length;
+      $('statOngoing').textContent = String(ongoing);
+      $('statSuccess').textContent = String(success);
+    } else {
+      $('statOngoing').textContent = '–';
+      $('statSuccess').textContent = '–';
+    }
+  }
+
+  /* ---------------- members render ---------------- */
+  function memberById(id){
+    for(var i=0;i<members.length;i++){ if(members[i].id === id) return members[i]; }
+    return null;
+  }
+  function getPhotoPaths(m){
+    if(!m || !m.photoPaths) return [];
+    return m.photoPaths.slice();
+  }
+
+  function renderMembers(){
+    var listEl = $('membersList');
+    var loadingEl = $('membersLoading');
+    var emptyEl = $('membersEmpty');
+
+    if(!membersLoaded && !membersFailed){
+      loadingEl.hidden = false; listEl.hidden = true; emptyEl.hidden = true;
+      return;
+    }
+    loadingEl.hidden = true;
+
+    var q = ($('memberSearch').value || '').trim().toLowerCase();
+    var statusFilter = $('memberStatusFilter').value;
+    var filtered = members.filter(function(m){
+      if(statusFilter && m.status !== statusFilter) return false;
+      if(q && (m.name || '').toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    });
+
+    if(members.length === 0){
+      emptyEl.hidden = false; listEl.hidden = true;
+      $('membersEmptyTitle').textContent = '아직 등록된 참가자가 없어요';
+      $('membersEmptyText').textContent = '소개팅을 주선할 지인을 등록하면 여기 카드로 모아서 보여드려요.';
+      return;
+    }
+    if(filtered.length === 0){
+      emptyEl.hidden = false; listEl.hidden = true;
+      $('membersEmptyTitle').textContent = '검색 결과가 없어요';
+      $('membersEmptyText').textContent = '다른 이름이나 상태로 다시 찾아보세요.';
+      return;
+    }
+    emptyEl.hidden = true; listEl.hidden = false;
+
+    listEl.innerHTML = filtered.map(function(m){
+      var st = MEMBER_STATUS[m.status] || MEMBER_STATUS.available;
+      var metaBits = [];
+      if(m.gender && GENDER_LABEL[m.gender]) metaBits.push(GENDER_LABEL[m.gender]);
+      if(m.birthYear){
+        var computedAge = ageFromBirthYear(m.birthYear);
+        metaBits.push((computedAge != null ? computedAge + '세 · ' : '') + String(m.birthYear).slice(-2) + '년생');
+      }
+      var rows = '';
+      if(m.job) rows += '<div class="row"><span class="k">직업</span><span class="v">'+esc(m.job)+'</span></div>';
+      if(m.referrer) rows += '<div class="row"><span class="k">주선자</span><span class="v">'+esc(m.referrer)+'</span></div>';
+      if(m.contact) rows += '<div class="row"><span class="k">연락처</span><span class="v">'+esc(m.contact)+'</span></div>';
+      if(m.personality) rows += '<div class="row"><span class="k">특징</span><span class="v">'+esc(m.personality)+'</span></div>';
+      if(m.idealType) rows += '<div class="row"><span class="k">이상형</span><span class="v">'+esc(m.idealType)+'</span></div>';
+      if(m.memo) rows += '<div class="row"><span class="k">메모</span><span class="v">'+esc(m.memo)+'</span></div>';
+      var photoPaths = getPhotoPaths(m);
+      var avatarInner = photoPaths.length
+        ? '<img class="avatar" src="'+esc(photoUrl(photoPaths[0]))+'" alt="">'
+        : '<div class="avatar-placeholder">'+esc((m.name||'?').trim().charAt(0) || '?')+'</div>';
+      var countBadge = photoPaths.length > 1 ? '<span class="avatar-count">+'+(photoPaths.length-1)+'</span>' : '';
+      var avatarHtml = '<button type="button" class="avatar-btn" data-action="'+(photoPaths.length ? 'view-photos' : 'noop')+'" data-id="'+esc(m.id)+'" aria-label="사진 보기">' + avatarInner + countBadge + '</button>';
+      return (
+        '<div class="card" data-id="'+esc(m.id)+'">' +
+          '<div class="card-top">' +
+            '<div style="display:flex; gap:10px; align-items:center; min-width:0;">' +
+              avatarHtml +
+              '<div style="min-width:0;">' +
+                '<div class="card-name">'+esc(m.name)+'</div>' +
+                '<div class="card-meta">'+metaBits.map(esc).join(' · ')+'</div>' +
+              '</div>' +
+            '</div>' +
+            '<span class="badge '+st.cls+'">'+st.label+'</span>' +
+          '</div>' +
+          (rows ? '<div class="card-body">'+rows+'</div>' : '') +
+          '<div class="card-actions">' +
+            '<button class="btn btn-ghost" type="button" data-action="copy-member" data-id="'+esc(m.id)+'" aria-label="카톡 공유용 정보 복사">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" stroke-linecap="round"/></svg>' +
+            '</button>' +
+            '<button class="btn btn-ghost" type="button" data-action="edit-member" data-id="'+esc(m.id)+'" aria-label="수정">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+            '</button>' +
+            '<button class="btn btn-danger-ghost" type="button" data-action="delete-member" data-id="'+esc(m.id)+'" aria-label="삭제">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0-.8 13.2a2 2 0 0 1-2 1.8H8.8a2 2 0 0 1-2-1.8L6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+            '</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  /* ---------------- matches render ---------------- */
+  function renderMatches(){
+    var listEl = $('matchesList');
+    var loadingEl = $('matchesLoading');
+    var emptyEl = $('matchesEmpty');
+
+    if(!matchesLoaded && !matchesFailed){
+      loadingEl.hidden = false; listEl.hidden = true; emptyEl.hidden = true;
+      return;
+    }
+    loadingEl.hidden = true;
+
+    var statusFilter = $('matchStatusFilter').value;
+    var filtered = matches.filter(function(x){
+      if(statusFilter && x.status !== statusFilter) return false;
+      return true;
+    });
+
+    if(matches.length === 0){
+      emptyEl.hidden = false; listEl.hidden = true;
+      $('matchesEmptyTitle').textContent = '아직 매칭 기록이 없어요';
+      $('matchesEmptyText').textContent = '참가자 두 명을 이어주면 여기에 날짜와 진행 상황이 남아요.';
+      return;
+    }
+    if(filtered.length === 0){
+      emptyEl.hidden = false; listEl.hidden = true;
+      $('matchesEmptyTitle').textContent = '해당 상태의 기록이 없어요';
+      $('matchesEmptyText').textContent = '다른 상태로 필터를 바꿔보세요.';
+      return;
+    }
+    emptyEl.hidden = true; listEl.hidden = false;
+
+    listEl.innerHTML = filtered.map(function(x){
+      var st = MATCH_STATUS[x.status] || MATCH_STATUS.proposed;
+      var aExists = !!memberById(x.aId);
+      var bExists = !!memberById(x.bId);
+      var aName = (memberById(x.aId) || {}).name || x.aName || '(삭제된 참가자)';
+      var bName = (memberById(x.bId) || {}).name || x.bName || '(삭제된 참가자)';
+      var subBits = [];
+      if(x.date) subBits.push('소개일 ' + fmtDate(x.date));
+      if(x.followUpDate) subBits.push('다음 일정 ' + fmtDate(x.followUpDate));
+      return (
+        '<div class="match-row" data-id="'+esc(x.id)+'">' +
+          '<div class="match-footer">' +
+            '<div class="match-pair">' +
+              '<span>'+esc(aName)+'</span>' + (aExists ? '' : ' <span class="deleted-tag">삭제됨</span>') +
+              '<svg class="thread-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M14 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+              '<span>'+esc(bName)+'</span>' + (bExists ? '' : ' <span class="deleted-tag">삭제됨</span>') +
+            '</div>' +
+            '<span class="badge '+st.cls+'">'+st.label+'</span>' +
+          '</div>' +
+          (x.matchmaker ? '<div class="match-matchmaker"><span class="match-matchmaker-label">주선</span>'+esc(x.matchmaker)+'</div>' : '') +
+          (subBits.length ? '<div class="match-sub">'+subBits.map(esc).join(' · ')+'</div>' : '') +
+          (x.memo ? '<div class="match-memo">'+esc(x.memo)+'</div>' : '') +
+          '<div class="card-actions">' +
+            '<button class="btn btn-ghost" type="button" data-action="edit-match" data-id="'+esc(x.id)+'" aria-label="수정">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+            '</button>' +
+            '<button class="btn btn-danger-ghost" type="button" data-action="delete-match" data-id="'+esc(x.id)+'" aria-label="삭제">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0-.8 13.2a2 2 0 0 1-2 1.8H8.8a2 2 0 0 1-2-1.8L6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+            '</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  /* ---------------- photo strip (multi-photo editor) ---------------- */
+  function renderPhotoStrip(){
+    var strip = $('m-photo-strip');
+    var html = memberPhoto.working.map(function(path, idx){
+      return '<div class="photo-thumb" data-path="'+esc(path)+'">' +
+        '<img src="'+esc(photoUrl(path))+'" alt="">' +
+        (idx === 0
+          ? '<span class="cover-badge">대표</span>'
+          : '<button type="button" class="thumb-btn thumb-cover" data-path="'+esc(path)+'" title="대표 사진으로 설정">★</button>') +
+        '<button type="button" class="thumb-btn thumb-remove" data-path="'+esc(path)+'" title="사진 삭제">×</button>' +
+      '</div>';
+    }).join('');
+    if(memberPhoto.working.length < MAX_PHOTOS){
+      html += '<button type="button" class="photo-add-tile" id="m-photo-add-tile">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>' +
+        '<span>추가</span>' +
+      '</button>';
+    }
+    strip.innerHTML = html;
+  }
+
+  /* ---------------- photo viewer ---------------- */
+  function openPhotoViewer(id){
+    var m = memberById(id);
+    if(!m) return;
+    var paths = getPhotoPaths(m);
+    if(!paths.length) return;
+    photoViewerMemberName = m.name || '사진';
+    photoViewerIds = paths.slice();
+    $('photoViewerTitle').textContent = m.name + ' 사진';
+    $('photoViewerSaveAll').hidden = paths.length < 2;
+    $('photoViewerSaveAll').disabled = false;
+    $('photoViewerSaveAll').textContent = '전체 저장';
+    $('photoViewerStrip').innerHTML = paths.map(function(p){
+      return (
+        '<div class="viewer-item">' +
+          '<img src="'+esc(photoUrl(p))+'" alt="'+esc(m.name)+'">' +
+          '<div class="viewer-actions">' +
+            '<button type="button" class="viewer-btn" data-action="copy-photo" data-path="'+esc(p)+'" title="사진 복사 (카톡에 붙여넣기)">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+            '</button>' +
+            '<button type="button" class="viewer-btn" data-action="save-photo" data-path="'+esc(p)+'" title="사진 저장">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+            '</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+    $('photoViewerOverlay').hidden = false;
+  }
+  function closePhotoViewer(){ $('photoViewerOverlay').hidden = true; }
+
+  function savePhoto(path, idx){
+    fetchPhotoBlob(path).then(function(blob){
+      var ext = extFromType(blob.type);
+      var filename = (photoViewerMemberName || '사진') + '_' + (idx + 1) + '.' + ext;
+      triggerDownload(blob, filename);
+      showToast('저장했어요. 카톡에서 사진으로 첨부해 보내세요');
+    }).catch(function(err){
+      console.error(err);
+      showToast('저장하지 못했어요');
+    });
+  }
+  function saveAllPhotos(paths){
+    var queue = paths.slice();
+    var total = queue.length;
+    var done = 0;
+    var btn = $('photoViewerSaveAll');
+    btn.disabled = true;
+    btn.textContent = '저장 중...';
+    function next(){
+      if(!queue.length){
+        btn.disabled = false;
+        btn.textContent = '전체 저장';
+        showToast('사진 '+total+'장을 모두 저장했어요. 카톡에서 여러 장을 골라 보내보세요');
+        return;
+      }
+      var path = queue.shift();
+      done++;
+      fetchPhotoBlob(path).then(function(blob){
+        var ext = extFromType(blob.type);
+        var filename = (photoViewerMemberName || '사진') + '_' + done + '.' + ext;
+        triggerDownload(blob, filename);
+        setTimeout(next, 350);
+      }).catch(function(err){
+        btn.disabled = false;
+        btn.textContent = '전체 저장';
+        console.error(err);
+        showToast(done+'번째 사진 저장에 실패했어요');
+      });
+    }
+    next();
+  }
+  function copyPhoto(path){
+    if(!navigator.clipboard || !navigator.clipboard.write || typeof ClipboardItem === 'undefined'){
+      showToast('이 브라우저에서는 사진 복사를 지원하지 않아요. 저장 버튼을 이용해 주세요.');
+      return;
+    }
+    fetchPhotoBlob(path).then(function(blob){
+      return createImageBitmap(blob).then(function(bitmap){
+        var canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0);
+        return new Promise(function(resolve, reject){
+          canvas.toBlob(function(pngBlob){
+            if(pngBlob) resolve(pngBlob); else reject(new Error('canvas export failed'));
+          }, 'image/png');
+        });
+      });
+    }).then(function(pngBlob){
+      return navigator.clipboard.write([ new ClipboardItem({ 'image/png': pngBlob }) ]);
+    }).then(function(){
+      showToast('사진을 복사했어요. 카톡 창에 붙여넣기(Ctrl/Cmd+V) 해보세요');
+    }).catch(function(err){
+      console.error(err);
+      showToast('사진 복사에 실패했어요. 저장 버튼을 이용해 주세요.');
+    });
+  }
+
+  /* ---------------- share / copy to clipboard ---------------- */
+  function buildMemberShareText(m){
+    var lines = [];
+    lines.push('[' + m.name + ' 프로필]');
+    var ageBit = null;
+    if(m.birthYear){
+      var a = ageFromBirthYear(m.birthYear);
+      ageBit = (a != null ? a + '세 ' : '') + '(' + m.birthYear + '년생)';
+    }
+    if(ageBit) lines.push('나이: ' + ageBit);
+    if(m.gender && GENDER_LABEL[m.gender]) lines.push('성별: ' + GENDER_LABEL[m.gender]);
+    if(m.job) lines.push('직업: ' + m.job);
+    if(m.personality) lines.push('성격: ' + m.personality);
+    if(m.idealType) lines.push('이상형: ' + m.idealType);
+    if(m.memo) lines.push('메모: ' + m.memo);
+    return lines.join('\n');
+  }
+  function fallbackCopy(text, cb){
+    try{
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      cb(ok);
+    } catch(e){ cb(false); }
+  }
+  function copyText(text){
+    function done(ok){ showToast(ok ? '복사했어요. 카톡에 붙여넣기 해보세요' : '복사에 실패했어요'); }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ done(true); }).catch(function(){ fallbackCopy(text, done); });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+  function copyMemberInfo(id){
+    var m = memberById(id);
+    if(!m) return;
+    copyText(buildMemberShareText(m));
+  }
+
+  /* ---------------- member modal ---------------- */
+  function openMemberModal(id){
+    editingMemberId = id || null;
+    var m = id ? memberById(id) : null;
+    $('memberModalTitle').textContent = m ? '참가자 수정' : '새 참가자';
+    memberPhoto.original = getPhotoPaths(m);
+    memberPhoto.working = memberPhoto.original.slice();
+    renderPhotoStrip();
+    $('m-photo-status').innerHTML = '&nbsp;';
+    $('m-name').value = m ? (m.name || '') : '';
+    $('m-birthyear').value = m && m.birthYear ? m.birthYear : '';
+    updateAgePreview();
+    $('m-gender').value = m ? (m.gender || '') : '';
+    updateNameHint();
+    $('m-status').value = m ? (m.status || 'available') : 'available';
+    $('m-contact').value = m ? (m.contact || '') : '';
+    $('m-job').value = m ? (m.job || '') : '';
+    $('m-referrer').value = m ? (m.referrer || '') : '';
+    $('m-personality').value = m ? (m.personality || '') : '';
+    $('m-ideal').value = m ? (m.idealType || '') : '';
+    $('m-memo').value = m ? (m.memo || '') : '';
+    $('memberOverlay').hidden = false;
+    setTimeout(function(){ $('m-name').focus(); }, 30);
+  }
+  function closeMemberModal(skipCleanup){
+    $('memberOverlay').hidden = true;
+    editingMemberId = null;
+    if(!skipCleanup){
+      var orphans = memberPhoto.working.filter(function(p){ return memberPhoto.original.indexOf(p) === -1; });
+      orphans.forEach(function(p){ deletePhoto(p); });
+    }
+    memberPhoto.original = [];
+    memberPhoto.working = [];
+  }
+
+  function onMemberSubmit(e){
+    e.preventDefault();
+    var name = $('m-name').value.trim();
+    if(!name){ name = nextCodeName($('m-gender').value || '', editingMemberId); }
+    var birthYearVal = $('m-birthyear').value ? Number($('m-birthyear').value) : null;
+    var data = {
+      name: name,
+      birthYear: birthYearVal,
+      gender: $('m-gender').value || null,
+      status: $('m-status').value || 'available',
+      contact: $('m-contact').value.trim(),
+      job: $('m-job').value.trim(),
+      referrer: $('m-referrer').value.trim(),
+      personality: $('m-personality').value.trim(),
+      idealType: $('m-ideal').value.trim(),
+      memo: $('m-memo').value.trim(),
+      photoPaths: memberPhoto.working.slice()
+    };
+    var row = memberToRow(data);
+    var btn = $('memberSubmitBtn');
+    btn.disabled = true;
+    var req = editingMemberId
+      ? supabase.from('participants').update(row).eq('id', editingMemberId)
+      : supabase.from('participants').insert(row);
+    Promise.resolve(req).then(function(res){
+      if(res.error) throw res.error;
+      var removed = memberPhoto.original.filter(function(p){ return memberPhoto.working.indexOf(p) === -1; });
+      showToast(editingMemberId ? '수정했어요' : '등록했어요');
+      closeMemberModal(true);
+      removed.forEach(function(p){ deletePhoto(p); });
+      refetchParticipants();
+    }).catch(function(err){
+      console.error(err);
+      showToast('저장하지 못했어요. 다시 시도해 주세요.');
+    }).finally(function(){ btn.disabled = false; });
+  }
+
+  /* ---------------- match modal ---------------- */
+  function populateMemberSelects(preferA, preferB){
+    var aSel = $('x-a'), bSel = $('x-b');
+    var prevA = preferA !== undefined ? preferA : aSel.value;
+    var prevB = preferB !== undefined ? preferB : bSel.value;
+    var opts = '<option value="">선택</option>' + members.map(function(m){
+      return '<option value="'+esc(m.id)+'">'+esc(m.name)+'</option>';
+    }).join('');
+    aSel.innerHTML = opts;
+    bSel.innerHTML = opts;
+    aSel.value = prevA || '';
+    bSel.value = prevB || '';
+    $('matchMembersHint').hidden = members.length >= 2;
+  }
+
+  function openMatchModal(id){
+    editingMatchId = id || null;
+    var x = id ? matches.filter(function(m){ return m.id === id; })[0] : null;
+    $('matchModalTitle').textContent = x ? '매칭 수정' : '새 매칭 등록';
+    populateMemberSelects(x ? x.aId : '', x ? x.bId : '');
+    $('x-matchmaker').value = x ? (x.matchmaker || '') : '';
+    $('x-date').value = x ? (x.date || '') : todayStr();
+    $('x-status').value = x ? (x.status || 'proposed') : 'proposed';
+    $('x-followup').value = x ? (x.followUpDate || '') : '';
+    $('x-memo').value = x ? (x.memo || '') : '';
+    $('matchOverlay').hidden = false;
+  }
+  function closeMatchModal(){ $('matchOverlay').hidden = true; editingMatchId = null; }
+
+  function onMatchSubmit(e){
+    e.preventDefault();
+    var aId = $('x-a').value, bId = $('x-b').value;
+    if(!aId || !bId){ showToast('참가자 두 명을 모두 선택해 주세요'); return; }
+    if(aId === bId){ showToast('서로 다른 두 참가자를 선택해 주세요'); return; }
+    var a = memberById(aId), b = memberById(bId);
+    var data = {
+      aId: aId, bId: bId,
+      aName: a ? a.name : '', bName: b ? b.name : '',
+      matchmaker: $('x-matchmaker').value.trim(),
+      date: $('x-date').value || null,
+      status: $('x-status').value || 'proposed',
+      followUpDate: $('x-followup').value || null,
+      memo: $('x-memo').value.trim()
+    };
+    var row = matchToRow(data);
+    var btn = $('matchSubmitBtn');
+    btn.disabled = true;
+    var req = editingMatchId
+      ? supabase.from('matches').update(row).eq('id', editingMatchId)
+      : supabase.from('matches').insert(row);
+    Promise.resolve(req).then(function(res){
+      if(res.error) throw res.error;
+      showToast(editingMatchId ? '수정했어요' : '등록했어요');
+      closeMatchModal();
+      refetchMatches();
+    }).catch(function(err){
+      console.error(err);
+      showToast('저장하지 못했어요. 다시 시도해 주세요.');
+    }).finally(function(){ btn.disabled = false; });
+  }
+
+  /* ---------------- delete confirm ---------------- */
+  function askDelete(kind, id, label, photoPaths){
+    pendingDelete = { kind: kind, id: id, photoPaths: photoPaths || [] };
+    $('confirmBody').textContent = kind === 'member'
+      ? ('"'+label+'" 참가자 정보를 삭제할까요? 관련된 매칭 기록의 이름은 그대로 남아요.')
+      : ('"'+label+'" 매칭 기록을 삭제할까요? 이 작업은 되돌릴 수 없어요.');
+    $('confirmOverlay').hidden = false;
+  }
+  function closeConfirm(){ $('confirmOverlay').hidden = true; pendingDelete = null; }
+
+  function onConfirmOk(){
+    if(!pendingDelete) { closeConfirm(); return; }
+    var table = pendingDelete.kind === 'member' ? 'participants' : 'matches';
+    var id = pendingDelete.id;
+    var photoPaths = pendingDelete.photoPaths || [];
+    supabase.from(table).delete().eq('id', id).then(function(res){
+      if(res.error) throw res.error;
+      showToast('삭제했어요');
+      photoPaths.forEach(function(p){ deletePhoto(p); });
+      refetchParticipants();
+      refetchMatches();
+    }).catch(function(err){
+      console.error(err);
+      showToast('삭제하지 못했어요. 다시 시도해 주세요.');
+    });
+    closeConfirm();
+  }
+
+  /* ---------------- delegated click handling ---------------- */
+  function initDelegation(){
+    $('membersList').addEventListener('click', function(e){
+      var btn = e.target.closest('button[data-action]');
+      if(!btn) return;
+      var id = btn.dataset.id;
+      if(btn.dataset.action === 'edit-member') openMemberModal(id);
+      if(btn.dataset.action === 'view-photos') openPhotoViewer(id);
+      if(btn.dataset.action === 'copy-member') copyMemberInfo(id);
+      if(btn.dataset.action === 'delete-member'){
+        var m = memberById(id);
+        askDelete('member', id, m ? m.name : '', m ? getPhotoPaths(m) : []);
+      }
+    });
+    $('matchesList').addEventListener('click', function(e){
+      var btn = e.target.closest('button[data-action]');
+      if(!btn) return;
+      var id = btn.dataset.id;
+      if(btn.dataset.action === 'edit-match') openMatchModal(id);
+      if(btn.dataset.action === 'delete-match'){
+        var x = matches.filter(function(mm){ return mm.id === id; })[0];
+        var label = x ? ((x.aName||'')+' · '+(x.bName||'')) : '';
+        askDelete('match', id, label);
+      }
+    });
+  }
+
+  function initStaticUI(){
+    initTabs();
+    initDelegation();
+
+    $('btnAddMember').addEventListener('click', function(){ openMemberModal(null); });
+    $('memberClose').addEventListener('click', function(){ closeMemberModal(); });
+    $('memberCancel').addEventListener('click', function(){ closeMemberModal(); });
+    $('memberOverlay').addEventListener('click', function(e){ if(e.target === this) closeMemberModal(); });
+    $('memberForm').addEventListener('submit', onMemberSubmit);
+    $('m-birthyear').addEventListener('input', updateAgePreview);
+    $('m-birthyear').max = String(new Date().getFullYear());
+    $('m-name').addEventListener('input', updateNameHint);
+    $('m-gender').addEventListener('change', updateNameHint);
+    $('memberSearch').addEventListener('input', renderMembers);
+    $('memberStatusFilter').addEventListener('change', renderMembers);
+
+    $('m-photo-strip').addEventListener('click', function(e){
+      var btn = e.target.closest('button');
+      if(!btn) return;
+      if(btn.id === 'm-photo-add-tile'){
+        $('m-photo-input').click();
+        return;
+      }
+      var path = btn.dataset.path;
+      if(!path) return;
+      if(btn.classList.contains('thumb-remove')){
+        memberPhoto.working = memberPhoto.working.filter(function(x){ return x !== path; });
+        renderPhotoStrip();
+      } else if(btn.classList.contains('thumb-cover')){
+        memberPhoto.working = [path].concat(memberPhoto.working.filter(function(x){ return x !== path; }));
+        renderPhotoStrip();
+      }
+    });
+    $('m-photo-input').addEventListener('change', function(){
+      var input = this;
+      var files = Array.prototype.slice.call(input.files || []);
+      input.value = '';
+      if(!files.length) return;
+      var room = MAX_PHOTOS - memberPhoto.working.length;
+      if(room <= 0){ showToast('사진은 최대 '+MAX_PHOTOS+'장까지 등록할 수 있어요'); return; }
+      if(files.length > room){
+        files = files.slice(0, room);
+        showToast('최대 '+MAX_PHOTOS+'장까지만 추가했어요');
+      }
+      var status = $('m-photo-status');
+      var total = files.length, done = 0;
+      function next(){
+        if(!files.length){ status.innerHTML = '&nbsp;'; return; }
+        var file = files.shift();
+        done++;
+        status.textContent = '업로드 중 ('+done+'/'+total+')...';
+        uploadPhoto(file).then(function(path){
+          memberPhoto.working.push(path);
+          renderPhotoStrip();
+        }).catch(function(err){
+          console.error(err);
+          showToast(file.name+': 업로드 실패');
+        }).then(next);
+      }
+      next();
+    });
+
+    $('btnAddMatch').addEventListener('click', function(){
+      if(members.length < 2){ showToast('참가자를 2명 이상 등록해 주세요'); return; }
+      openMatchModal(null);
+    });
+    $('matchClose').addEventListener('click', closeMatchModal);
+    $('matchCancel').addEventListener('click', closeMatchModal);
+    $('matchOverlay').addEventListener('click', function(e){ if(e.target === this) closeMatchModal(); });
+    $('matchForm').addEventListener('submit', onMatchSubmit);
+    $('matchStatusFilter').addEventListener('change', renderMatches);
+    $('x-a').addEventListener('change', function(){
+      if($('x-a').value && $('x-a').value === $('x-b').value){ $('x-b').value = ''; }
+    });
+    $('x-b').addEventListener('change', function(){
+      if($('x-b').value && $('x-a').value === $('x-b').value){ $('x-a').value = ''; }
+    });
+
+    $('confirmCancel').addEventListener('click', closeConfirm);
+    $('confirmOverlay').addEventListener('click', function(e){ if(e.target === this) closeConfirm(); });
+    $('confirmOk').addEventListener('click', onConfirmOk);
+
+    $('photoViewerClose').addEventListener('click', closePhotoViewer);
+    $('photoViewerOverlay').addEventListener('click', function(e){ if(e.target === this) closePhotoViewer(); });
+    $('photoViewerSaveAll').addEventListener('click', function(){ saveAllPhotos(photoViewerIds); });
+    $('photoViewerStrip').addEventListener('click', function(e){
+      var btn = e.target.closest('button[data-action]');
+      if(!btn) return;
+      var path = btn.dataset.path;
+      if(btn.dataset.action === 'save-photo'){
+        var idx = Array.prototype.indexOf.call(btn.closest('.viewer-strip').querySelectorAll('.viewer-item'), btn.closest('.viewer-item'));
+        savePhoto(path, idx < 0 ? 0 : idx);
+      }
+      if(btn.dataset.action === 'copy-photo') copyPhoto(path);
+    });
+
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape'){
+        if(!$('memberOverlay').hidden) closeMemberModal();
+        if(!$('matchOverlay').hidden) closeMatchModal();
+        if(!$('confirmOverlay').hidden) closeConfirm();
+        if(!$('photoViewerOverlay').hidden) closePhotoViewer();
+      }
+    });
+  }
+
+  /* ---------------- data fetch + realtime ---------------- */
+  function refetchParticipants(){
+    return supabase.from('participants').select('*').order('name', { ascending:true }).then(function(res){
+      if(res.error) throw res.error;
+      members = res.data.map(rowToMember);
+      membersLoaded = true;
+      membersFailed = false;
+      renderMembers();
+      renderMatches();
+      renderStats();
+      if(!$('matchOverlay').hidden){ populateMemberSelects(); }
+    }).catch(function(err){
+      console.error('participants fetch error', err);
+      membersFailed = true;
+      $('dbBanner').hidden = false;
+      renderMembers();
+    });
+  }
+  function refetchMatches(){
+    return supabase.from('matches').select('*').order('created_at', { ascending:false }).then(function(res){
+      if(res.error) throw res.error;
+      matches = res.data.map(rowToMatch);
+      matchesLoaded = true;
+      matchesFailed = false;
+      renderMatches();
+      renderStats();
+    }).catch(function(err){
+      console.error('matches fetch error', err);
+      matchesFailed = true;
+      $('dbBanner').hidden = false;
+      renderMatches();
+    });
+  }
+  function subscribeRealtime(){
+    supabase.channel('idiary-changes')
+      .on('postgres_changes', { event:'*', schema:'public', table:'participants' }, function(){ refetchParticipants(); })
+      .on('postgres_changes', { event:'*', schema:'public', table:'matches' }, function(){ refetchMatches(); })
+      .subscribe();
+  }
+
+  function start(){
+    initStaticUI();
+    renderMembers();
+    renderMatches();
+    renderStats();
+    refetchParticipants();
+    refetchMatches();
+    subscribeRealtime();
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initLock);
+  } else {
+    initLock();
+  }
+})();
+</script>
+</body>
+</html>
