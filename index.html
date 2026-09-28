@@ -98,10 +98,12 @@
   /* ---- Read-only participant role ---- */
   body.role-readonly #btnAddMember,
   body.role-readonly #btnAddMatch,
+  body.role-readonly #memberSearch,
   body.role-readonly [data-action="edit-member"],
   body.role-readonly [data-action="delete-member"],
   body.role-readonly [data-action="edit-match"],
   body.role-readonly [data-action="delete-match"],
+  body.role-readonly [data-action="copy-member"],
   body.role-readonly .row-contact{ display:none !important; }
   .stat-strip{ display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:14px; }
   .stat-chip{ display:flex; align-items:baseline; gap:6px; font-size:13px; color:var(--muted); }
@@ -687,6 +689,12 @@
       return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
     });
   }
+  function displayName(m){
+    if(!m) return '';
+    if(!isReadOnly()) return m.name;
+    var idx = members.indexOf(m);
+    return '참가자 ' + (idx >= 0 ? (idx + 1) : '');
+  }
   function todayStr(){
     var d = new Date();
     var mm = String(d.getMonth()+1).padStart(2,'0');
@@ -914,7 +922,7 @@
     var statusFilter = $('memberStatusFilter').value;
     var filtered = members.filter(function(m){
       if(statusFilter && m.status !== statusFilter) return false;
-      if(q && (m.name || '').toLowerCase().indexOf(q) === -1) return false;
+      if(q && !isReadOnly() && (m.name || '').toLowerCase().indexOf(q) === -1) return false;
       return true;
     });
 
@@ -950,7 +958,7 @@
       var photoPaths = getPhotoPaths(m);
       var avatarInner = photoPaths.length
         ? '<img class="avatar" src="'+esc(photoUrl(photoPaths[0]))+'" alt="">'
-        : '<div class="avatar-placeholder">'+esc((m.name||'?').trim().charAt(0) || '?')+'</div>';
+        : '<div class="avatar-placeholder">'+esc((displayName(m)||'?').trim().charAt(0) || '?')+'</div>';
       var countBadge = photoPaths.length > 1 ? '<span class="avatar-count">+'+(photoPaths.length-1)+'</span>' : '';
       var avatarHtml = '<button type="button" class="avatar-btn" data-action="'+(photoPaths.length ? 'view-photos' : 'noop')+'" data-id="'+esc(m.id)+'" aria-label="사진 보기">' + avatarInner + countBadge + '</button>';
       return (
@@ -959,7 +967,7 @@
             '<div style="display:flex; gap:10px; align-items:center; min-width:0;">' +
               avatarHtml +
               '<div style="min-width:0;">' +
-                '<div class="card-name">'+esc(m.name)+'</div>' +
+                '<div class="card-name">'+esc(displayName(m))+'</div>' +
                 '<div class="card-meta">'+metaBits.map(esc).join(' · ')+'</div>' +
               '</div>' +
             '</div>' +
@@ -1016,10 +1024,12 @@
 
     listEl.innerHTML = filtered.map(function(x){
       var st = MATCH_STATUS[x.status] || MATCH_STATUS.proposed;
-      var aExists = !!memberById(x.aId);
-      var bExists = !!memberById(x.bId);
-      var aName = (memberById(x.aId) || {}).name || x.aName || '(삭제된 참가자)';
-      var bName = (memberById(x.bId) || {}).name || x.bName || '(삭제된 참가자)';
+      var aMember = memberById(x.aId);
+      var bMember = memberById(x.bId);
+      var aExists = !!aMember;
+      var bExists = !!bMember;
+      var aName = aMember ? displayName(aMember) : (isReadOnly() ? '(참가자)' : (x.aName || '(삭제된 참가자)'));
+      var bName = bMember ? displayName(bMember) : (isReadOnly() ? '(참가자)' : (x.bName || '(삭제된 참가자)'));
       var subBits = [];
       if(x.date) subBits.push('소개일 ' + fmtDate(x.date));
       if(x.followUpDate) subBits.push('다음 일정 ' + fmtDate(x.followUpDate));
@@ -1076,16 +1086,17 @@
     if(!m) return;
     var paths = getPhotoPaths(m);
     if(!paths.length) return;
-    photoViewerMemberName = m.name || '사진';
+    var shownName = displayName(m) || '사진';
+    photoViewerMemberName = shownName;
     photoViewerIds = paths.slice();
-    $('photoViewerTitle').textContent = m.name + ' 사진';
+    $('photoViewerTitle').textContent = shownName + ' 사진';
     $('photoViewerSaveAll').hidden = paths.length < 2;
     $('photoViewerSaveAll').disabled = false;
     $('photoViewerSaveAll').textContent = '전체 저장';
     $('photoViewerStrip').innerHTML = paths.map(function(p){
       return (
         '<div class="viewer-item">' +
-          '<img src="'+esc(photoUrl(p))+'" alt="'+esc(m.name)+'">' +
+          '<img src="'+esc(photoUrl(p))+'" alt="'+esc(shownName)+'">' +
           '<div class="viewer-actions">' +
             '<button type="button" class="viewer-btn" data-action="copy-photo" data-path="'+esc(p)+'" title="사진 복사 (카톡에 붙여넣기)">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
@@ -1211,6 +1222,7 @@
     }
   }
   function copyMemberInfo(id){
+    if(isReadOnly()){ showToast('읽기 전용 모드예요'); return; }
     var m = memberById(id);
     if(!m) return;
     copyText(buildMemberShareText(m));
@@ -1393,7 +1405,7 @@
       if(btn.dataset.action === 'copy-member') copyMemberInfo(id);
       if(btn.dataset.action === 'delete-member'){
         var m = memberById(id);
-        askDelete('member', id, m ? m.name : '', m ? getPhotoPaths(m) : []);
+        askDelete('member', id, m ? displayName(m) : '', m ? getPhotoPaths(m) : []);
       }
     });
     $('matchesList').addEventListener('click', function(e){
