@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>인연 다이어리 (공유형)</title>
+<title>매칭메이커</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -90,6 +90,19 @@
   .eyebrow{ font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); font-weight:600; }
   .app-header h1{ font-size:clamp(22px,4.2vw,28px); color:var(--ink); }
   .app-header p{ margin:0; color:var(--muted); font-size:14px; max-width:52ch; }
+  .role-indicator{ position:absolute; top:16px; right:16px; z-index:2; display:flex; align-items:center; gap:8px; }
+  .role-badge{ font-size:12px; font-weight:700; padding:5px 12px; border-radius:999px; background:linear-gradient(135deg,#FF7AA2,#C86DD7); color:#fff; white-space:nowrap; }
+  .role-indicator .btn{ padding:6px 12px; font-size:12.5px; }
+  @media (max-width:480px){ .role-indicator{ position:static; justify-content:flex-end; margin-bottom:10px; } }
+
+  /* ---- Read-only participant role ---- */
+  body.role-readonly #btnAddMember,
+  body.role-readonly #btnAddMatch,
+  body.role-readonly [data-action="edit-member"],
+  body.role-readonly [data-action="delete-member"],
+  body.role-readonly [data-action="edit-match"],
+  body.role-readonly [data-action="delete-match"],
+  body.role-readonly .row-contact{ display:none !important; }
   .stat-strip{ display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:14px; }
   .stat-chip{ display:flex; align-items:baseline; gap:6px; font-size:13px; color:var(--muted); }
   .stat-chip b{ font-family:var(--font-display); font-size:18px; color:var(--ink); font-variant-numeric:tabular-nums; }
@@ -261,6 +274,10 @@
     -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;
   }
   .lock-wrap p{ color:var(--muted); font-size:13.5px; margin:0 0 18px; }
+  .role-tabs{ display:flex; gap:6px; background:rgba(195,49,73,.08); padding:4px; border-radius:999px; margin:0 0 16px; }
+  .role-tab{ flex:1; appearance:none; border:none; background:transparent; cursor:pointer; padding:8px 6px; border-radius:999px; font-size:13px; font-weight:700; color:var(--muted); font-family:inherit; }
+  .role-tab.active{ background:linear-gradient(135deg,#FF7AA2,#C86DD7); color:#fff; box-shadow:0 6px 14px -6px rgba(200,60,120,.6); }
+  .role-tab:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
   .lock-wrap #lockPassword{
     border-radius:999px; padding:12px 18px; border:1.5px solid var(--accent-soft);
     background:#fff; color:#2B2130;
@@ -294,8 +311,13 @@
   </div>
   <div class="dialog lock-wrap">
     <div class="lock-badge">💘</div>
-    <h2>인연 다이어리</h2>
-    <p>주선자 공용 비밀번호를 입력하고<br>오늘의 인연을 이어보세요</p>
+    <h2>매칭메이커</h2>
+    <p>역할을 선택하고 비밀번호를 입력해 주세요</p>
+    <div class="role-tabs" id="roleTabs" role="tablist">
+      <button type="button" class="role-tab" data-role="admin" role="tab" aria-selected="false">관리자</button>
+      <button type="button" class="role-tab active" data-role="matchmaker" role="tab" aria-selected="true">주선자</button>
+      <button type="button" class="role-tab" data-role="participant" role="tab" aria-selected="false">참가자</button>
+    </div>
     <form id="lockForm">
       <div class="field">
         <input type="password" id="lockPassword" class="field-input" placeholder="비밀번호" autocomplete="off" style="text-align:center; letter-spacing:.25em; font-size:18px;">
@@ -314,10 +336,14 @@
       <circle cx="94" cy="96" r="3.5" fill="var(--accent)" opacity="0.7"/>
       <circle cx="430" cy="66" r="3.5" fill="var(--accent)" opacity="0.7"/>
     </svg>
+    <div class="role-indicator">
+      <span class="role-badge" id="roleBadge">주선자</span>
+      <button type="button" class="btn btn-ghost" id="btnLogout">로그아웃</button>
+    </div>
     <div class="header-inner">
-      <span class="eyebrow">주선자 공용 · 실시간 공유</span>
-      <h1>인연 다이어리</h1>
-      <p>여러 주선자가 함께 참가자와 매칭 기록을 실시간으로 정리해요.</p>
+      <span class="eyebrow">실시간 공유 · 매칭 관리</span>
+      <h1>매칭메이커</h1>
+      <p>담당자가 함께 참가자와 매칭 기록을 실시간으로 정리해요.</p>
       <div class="stat-strip">
         <span class="stat-chip"><b id="statMembers">–</b>명 등록</span>
         <span class="stat-chip"><b id="statOngoing">–</b>건 진행중</span>
@@ -578,8 +604,16 @@
   // ===================== 여기만 바꾸면 됩니다 =====================
   var SUPABASE_URL = 'https://ewaoqjswatdcdylkqzrz.supabase.co';
   var SUPABASE_ANON_KEY = 'sb_publishable_aBsZlfvB97lt5wNqnMzuSQ_AUUuo-Kt';
-  var SHARED_PASSWORD = '1004';
+  var ROLE_PASSWORDS = {
+    admin: '8000',
+    matchmaker: '1004',
+    participant: '6000'
+  };
   // ================================================================
+
+  var ROLE_LABEL = { admin:'관리자', matchmaker:'주선자', participant:'참가자' };
+  var selectedRole = 'matchmaker';
+  var currentRole = null;
 
   var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   var PHOTO_BUCKET = 'photos';
@@ -674,16 +708,33 @@
   }
 
   /* ---------------- lock screen ---------------- */
+  function isReadOnly(){ return currentRole === 'participant'; }
+
   function initLock(){
-    if(localStorage.getItem('idiary_unlocked') === '1'){
+    var savedRole = localStorage.getItem('mm_role');
+    if(localStorage.getItem('idiary_unlocked') === '1' && savedRole && ROLE_PASSWORDS[savedRole]){
+      currentRole = savedRole;
       unlock();
       return;
     }
+    $('roleTabs').addEventListener('click', function(e){
+      var btn = e.target.closest('.role-tab');
+      if(!btn) return;
+      selectedRole = btn.dataset.role;
+      Array.prototype.forEach.call($('roleTabs').children, function(c){
+        var active = c === btn;
+        c.classList.toggle('active', active);
+        c.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      $('lockError').innerHTML = '&nbsp;';
+    });
     $('lockForm').addEventListener('submit', function(e){
       e.preventDefault();
       var v = $('lockPassword').value;
-      if(v === SHARED_PASSWORD){
+      if(v && v === ROLE_PASSWORDS[selectedRole]){
+        currentRole = selectedRole;
         localStorage.setItem('idiary_unlocked', '1');
+        localStorage.setItem('mm_role', selectedRole);
         unlock();
       } else {
         $('lockError').textContent = '비밀번호가 맞지 않아요';
@@ -692,9 +743,19 @@
       }
     });
   }
+  function applyRolePermissions(){
+    document.body.classList.toggle('role-readonly', isReadOnly());
+    $('roleBadge').textContent = ROLE_LABEL[currentRole] || '';
+  }
+  function logout(){
+    localStorage.removeItem('idiary_unlocked');
+    localStorage.removeItem('mm_role');
+    location.reload();
+  }
   function unlock(){
     $('lockOverlay').hidden = true;
     $('mainApp').hidden = false;
+    applyRolePermissions();
     start();
   }
 
@@ -882,7 +943,7 @@
       var rows = '';
       if(m.job) rows += '<div class="row"><span class="k">직업</span><span class="v">'+esc(m.job)+'</span></div>';
       if(m.referrer) rows += '<div class="row"><span class="k">주선자</span><span class="v">'+esc(m.referrer)+'</span></div>';
-      if(m.contact) rows += '<div class="row"><span class="k">연락처</span><span class="v">'+esc(m.contact)+'</span></div>';
+      if(m.contact && !isReadOnly()) rows += '<div class="row row-contact"><span class="k">연락처</span><span class="v">'+esc(m.contact)+'</span></div>';
       if(m.personality) rows += '<div class="row"><span class="k">특징</span><span class="v">'+esc(m.personality)+'</span></div>';
       if(m.idealType) rows += '<div class="row"><span class="k">이상형</span><span class="v">'+esc(m.idealType)+'</span></div>';
       if(m.memo) rows += '<div class="row"><span class="k">메모</span><span class="v">'+esc(m.memo)+'</span></div>';
@@ -1157,6 +1218,7 @@
 
   /* ---------------- member modal ---------------- */
   function openMemberModal(id){
+    if(isReadOnly()) return;
     editingMemberId = id || null;
     var m = id ? memberById(id) : null;
     $('memberModalTitle').textContent = m ? '참가자 수정' : '새 참가자';
@@ -1192,6 +1254,7 @@
 
   function onMemberSubmit(e){
     e.preventDefault();
+    if(isReadOnly()){ showToast('읽기 전용 모드예요'); return; }
     var name = $('m-name').value.trim();
     if(!name){ name = nextCodeName($('m-gender').value || '', editingMemberId); }
     var birthYearVal = $('m-birthyear').value ? Number($('m-birthyear').value) : null;
@@ -1243,6 +1306,7 @@
   }
 
   function openMatchModal(id){
+    if(isReadOnly()) return;
     editingMatchId = id || null;
     var x = id ? matches.filter(function(m){ return m.id === id; })[0] : null;
     $('matchModalTitle').textContent = x ? '매칭 수정' : '새 매칭 등록';
@@ -1258,6 +1322,7 @@
 
   function onMatchSubmit(e){
     e.preventDefault();
+    if(isReadOnly()){ showToast('읽기 전용 모드예요'); return; }
     var aId = $('x-a').value, bId = $('x-b').value;
     if(!aId || !bId){ showToast('참가자 두 명을 모두 선택해 주세요'); return; }
     if(aId === bId){ showToast('서로 다른 두 참가자를 선택해 주세요'); return; }
@@ -1299,6 +1364,7 @@
   function closeConfirm(){ $('confirmOverlay').hidden = true; pendingDelete = null; }
 
   function onConfirmOk(){
+    if(isReadOnly()){ closeConfirm(); showToast('읽기 전용 모드예요'); return; }
     if(!pendingDelete) { closeConfirm(); return; }
     var table = pendingDelete.kind === 'member' ? 'participants' : 'matches';
     var id = pendingDelete.id;
@@ -1347,6 +1413,7 @@
     initTabs();
     initDelegation();
 
+    $('btnLogout').addEventListener('click', logout);
     $('btnAddMember').addEventListener('click', function(){ openMemberModal(null); });
     $('memberClose').addEventListener('click', function(){ closeMemberModal(); });
     $('memberCancel').addEventListener('click', function(){ closeMemberModal(); });
