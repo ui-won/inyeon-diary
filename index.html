@@ -292,6 +292,8 @@
   }
   .lock-wrap button[type="submit"]:active{ transform:translateY(1px); }
 
+  .btn-link{ appearance:none; border:none; background:none; padding:0; color:var(--accent); font-weight:700; font-size:13px; cursor:pointer; text-decoration:underline; font-family:inherit; }
+
   [hidden]{ display:none !important; }
 
   @media (max-width:480px){ .field-row{ flex-direction:column; } .card-top{ flex-direction:column; } }
@@ -318,7 +320,6 @@
     <div class="role-tabs" id="roleTabs" role="tablist">
       <button type="button" class="role-tab" data-role="admin" role="tab" aria-selected="false">관리자</button>
       <button type="button" class="role-tab active" data-role="matchmaker" role="tab" aria-selected="true">주선자</button>
-      <button type="button" class="role-tab" data-role="participant" role="tab" aria-selected="false">참가자</button>
     </div>
     <form id="lockForm">
       <div class="field">
@@ -327,6 +328,83 @@
       <p id="lockError" class="helper-text" style="color:var(--danger); min-height:16px; margin-top:8px;">&nbsp;</p>
       <button type="submit" class="btn btn-primary" style="width:100%; margin-top:2px;">입장하기</button>
     </form>
+    <p style="text-align:center; font-size:13px; color:var(--muted); margin:16px 0 0;">
+      참가자이신가요? <button type="button" id="btnGoToRegister" class="btn-link">등록 신청하기</button>
+    </p>
+  </div>
+</div>
+
+<!-- ================= PARTICIPANT REGISTRATION (public, no login) ================= -->
+<div class="overlay" id="regOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="regModalTitle">
+    <div class="dialog-head">
+      <h2 id="regModalTitle">참가자 등록 신청</h2>
+      <button class="btn btn-ghost" type="button" id="regClose" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <form id="regForm">
+      <p class="helper-text" style="margin:0 0 4px;">신청 내용은 주선자가 확인 후 승인해요. 승인 전까지는 다른 사람에게 보이지 않아요.</p>
+      <div class="field">
+        <label>사진 (최대 6장, 선택)</label>
+        <div class="photo-strip" id="reg-photo-strip"></div>
+        <span class="helper-text" id="reg-photo-status">&nbsp;</span>
+        <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" id="reg-photo-input" class="visually-hidden-input" multiple>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="reg-name">이름</label>
+          <input class="field-input" id="reg-name" maxlength="40" placeholder="예: 김지수 (모르면 비워두세요)">
+        </div>
+        <div class="field" style="max-width:140px">
+          <label for="reg-birthyear">출생연도</label>
+          <input class="field-input" id="reg-birthyear" type="number" min="1930" placeholder="1997">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="reg-gender">성별</label>
+          <select class="select-input" id="reg-gender">
+            <option value="">선택 안 함</option>
+            <option value="female">여성</option>
+            <option value="male">남성</option>
+            <option value="other">기타</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="reg-contact">연락처 <span class="required-mark">*</span></label>
+          <input class="field-input" id="reg-contact" placeholder="전화번호나 메신저 아이디" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="reg-job">직업 / 소개</label>
+        <input class="field-input" id="reg-job" maxlength="60" placeholder="예: 마케터, 3년차">
+      </div>
+      <div class="field">
+        <label for="reg-referrer">추천인 (선택)</label>
+        <input class="field-input" id="reg-referrer" maxlength="40" placeholder="누구 소개로 신청하셨나요? (예: 민지)">
+      </div>
+      <div class="field">
+        <label for="reg-personality">성격 · 특징</label>
+        <textarea class="field-input" id="reg-personality" maxlength="300" placeholder="차분하고 유머 있음, 운동 좋아함"></textarea>
+      </div>
+      <div class="field">
+        <label for="reg-ideal">이상형 조건</label>
+        <textarea class="field-input" id="reg-ideal" maxlength="300" placeholder="비흡연, 30km 이내, 강아지 좋아하는 사람"></textarea>
+      </div>
+      <div class="field">
+        <label for="reg-memo">하고 싶은 말 (선택)</label>
+        <textarea class="field-input" id="reg-memo" maxlength="500" placeholder="그 외 전달하고 싶은 내용"></textarea>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn" id="regCancel">취소</button>
+        <button type="submit" class="btn btn-primary" id="regSubmitBtn">신청하기</button>
+      </div>
+    </form>
+    <div id="regSuccess" hidden style="text-align:center; padding:12px 4px;">
+      <p style="font-size:15px;">신청이 접수됐어요!<br>주선자가 확인 후 연락드릴게요.</p>
+      <button type="button" class="btn btn-primary" id="regBackBtn" style="margin-top:8px;">확인</button>
+    </div>
   </div>
 </div>
 
@@ -348,6 +426,7 @@
       <p>담당자가 함께 참가자와 매칭 기록을 실시간으로 정리해요.</p>
       <div class="stat-strip">
         <span class="stat-chip"><b id="statMembers">–</b>명 등록</span>
+        <span class="stat-chip"><b id="statPending">–</b>건 승인대기</span>
         <span class="stat-chip"><b id="statOngoing">–</b>건 진행중</span>
         <span class="stat-chip"><b id="statSuccess">–</b>건 성사</span>
       </div>
@@ -376,6 +455,11 @@
         <option value="in_progress">소개 진행중</option>
         <option value="matched">매칭 완료</option>
         <option value="hold">보류</option>
+      </select>
+      <select id="memberGenderFilter" class="select-input">
+        <option value="">모든 성별</option>
+        <option value="male">남성</option>
+        <option value="female">여성</option>
       </select>
       <button class="btn btn-primary" id="btnAddMember" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
@@ -608,12 +692,11 @@
   var SUPABASE_ANON_KEY = 'sb_publishable_aBsZlfvB97lt5wNqnMzuSQ_AUUuo-Kt';
   var ROLE_PASSWORDS = {
     admin: '8000',
-    matchmaker: '1004',
-    participant: '6000'
+    matchmaker: '1004'
   };
   // ================================================================
 
-  var ROLE_LABEL = { admin:'관리자', matchmaker:'주선자', participant:'참가자' };
+  var ROLE_LABEL = { admin:'관리자', matchmaker:'주선자' };
   var selectedRole = 'matchmaker';
   var currentRole = null;
 
@@ -630,6 +713,7 @@
   var editingMatchId = null;
   var pendingDelete = null; // {kind:'member'|'match', id, label, photoPaths}
   var memberPhoto = { original:[], working:[] };
+  var regPhoto = { working:[] };
   var MAX_PHOTOS = 6;
 
   var GENDER_LABEL = { female:'여성', male:'남성', other:'기타' };
@@ -750,6 +834,62 @@
         $('lockPassword').focus();
       }
     });
+    initRegForm();
+  }
+
+  function initRegForm(){
+    $('btnGoToRegister').addEventListener('click', openRegForm);
+    $('regClose').addEventListener('click', closeRegForm);
+    $('regCancel').addEventListener('click', closeRegForm);
+    $('regBackBtn').addEventListener('click', closeRegForm);
+    $('regOverlay').addEventListener('click', function(e){ if(e.target === this) closeRegForm(); });
+    $('regForm').addEventListener('submit', onRegSubmit);
+    $('reg-photo-strip').addEventListener('click', function(e){
+      var btn = e.target.closest('button');
+      if(!btn) return;
+      if(btn.id === 'reg-photo-add-tile'){
+        $('reg-photo-input').click();
+        return;
+      }
+      var path = btn.dataset.path;
+      if(!path) return;
+      if(btn.classList.contains('thumb-remove')){
+        regPhoto.working = regPhoto.working.filter(function(x){ return x !== path; });
+        deletePhoto(path);
+        renderRegPhotoStrip();
+      } else if(btn.classList.contains('thumb-cover')){
+        regPhoto.working = [path].concat(regPhoto.working.filter(function(x){ return x !== path; }));
+        renderRegPhotoStrip();
+      }
+    });
+    $('reg-photo-input').addEventListener('change', function(){
+      var input = this;
+      var files = Array.prototype.slice.call(input.files || []);
+      input.value = '';
+      if(!files.length) return;
+      var room = MAX_PHOTOS - regPhoto.working.length;
+      if(room <= 0){ showToast('사진은 최대 '+MAX_PHOTOS+'장까지 등록할 수 있어요'); return; }
+      if(files.length > room){
+        files = files.slice(0, room);
+        showToast('최대 '+MAX_PHOTOS+'장까지만 추가했어요');
+      }
+      var status = $('reg-photo-status');
+      var total = files.length, done = 0;
+      function next(){
+        if(!files.length){ status.innerHTML = '&nbsp;'; return; }
+        var file = files.shift();
+        done++;
+        status.textContent = '업로드 중 ('+done+'/'+total+')...';
+        uploadPhoto(file).then(function(path){
+          regPhoto.working.push(path);
+          renderRegPhotoStrip();
+        }).catch(function(err){
+          console.error(err);
+          showToast(file.name+': 업로드 실패');
+        }).then(next);
+      }
+      next();
+    });
   }
   function applyRolePermissions(){
     document.body.classList.toggle('role-readonly', isReadOnly());
@@ -782,6 +922,7 @@
       idealType: row.ideal_type,
       memo: row.memo,
       photoPaths: row.photo_paths || [],
+      approved: row.approved !== false,
       createdAt: row.created_at,
       updatedAt: row.updated_at
     };
@@ -885,7 +1026,15 @@
 
   /* ---------------- stats ---------------- */
   function renderStats(){
-    $('statMembers').textContent = membersLoaded ? String(members.length) : '–';
+    if(membersLoaded){
+      var approvedCount = members.filter(function(m){ return m.approved !== false; }).length;
+      var pendingCount = members.filter(function(m){ return m.approved === false; }).length;
+      $('statMembers').textContent = String(approvedCount);
+      $('statPending').textContent = String(pendingCount);
+    } else {
+      $('statMembers').textContent = '–';
+      $('statPending').textContent = '–';
+    }
     if(matchesLoaded){
       var ongoing = matches.filter(function(m){ return m.status === 'proposed' || m.status === 'in_progress'; }).length;
       var success = matches.filter(function(m){ return m.status === 'success'; }).length;
@@ -920,10 +1069,17 @@
 
     var q = ($('memberSearch').value || '').trim().toLowerCase();
     var statusFilter = $('memberStatusFilter').value;
+    var genderFilter = $('memberGenderFilter').value;
     var filtered = members.filter(function(m){
       if(statusFilter && m.status !== statusFilter) return false;
+      if(genderFilter && m.gender !== genderFilter) return false;
       if(q && !isReadOnly() && (m.name || '').toLowerCase().indexOf(q) === -1) return false;
       return true;
+    });
+    filtered.sort(function(a, b){
+      var pa = a.approved === false ? 0 : 1;
+      var pb = b.approved === false ? 0 : 1;
+      return pa - pb;
     });
 
     if(members.length === 0){
@@ -942,6 +1098,7 @@
 
     listEl.innerHTML = filtered.map(function(m){
       var st = MEMBER_STATUS[m.status] || MEMBER_STATUS.available;
+      var pending = m.approved === false;
       var metaBits = [];
       if(m.gender && GENDER_LABEL[m.gender]) metaBits.push(GENDER_LABEL[m.gender]);
       if(m.birthYear){
@@ -971,10 +1128,15 @@
                 '<div class="card-meta">'+metaBits.map(esc).join(' · ')+'</div>' +
               '</div>' +
             '</div>' +
+            (pending ? '<span class="badge badge-warn" style="margin-right:6px;">승인 대기</span>' : '') +
             '<span class="badge '+st.cls+'">'+st.label+'</span>' +
           '</div>' +
           (rows ? '<div class="card-body">'+rows+'</div>' : '') +
           '<div class="card-actions">' +
+            (pending ?
+              '<button class="btn btn-primary" type="button" data-action="approve-member" data-id="'+esc(m.id)+'">승인</button>' +
+              '<button class="btn btn-danger-ghost" type="button" data-action="reject-member" data-id="'+esc(m.id)+'">거절</button>'
+            : '') +
             '<button class="btn btn-ghost" type="button" data-action="copy-member" data-id="'+esc(m.id)+'" aria-label="카톡 공유용 정보 복사">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" stroke-linecap="round"/></svg>' +
             '</button>' +
@@ -1078,6 +1240,77 @@
       '</button>';
     }
     strip.innerHTML = html;
+  }
+  function renderRegPhotoStrip(){
+    var strip = $('reg-photo-strip');
+    var html = regPhoto.working.map(function(path, idx){
+      return '<div class="photo-thumb" data-path="'+esc(path)+'">' +
+        '<img src="'+esc(photoUrl(path))+'" alt="">' +
+        (idx === 0
+          ? '<span class="cover-badge">대표</span>'
+          : '<button type="button" class="thumb-btn thumb-cover" data-path="'+esc(path)+'" title="대표 사진으로 설정">★</button>') +
+        '<button type="button" class="thumb-btn thumb-remove" data-path="'+esc(path)+'" title="사진 삭제">×</button>' +
+      '</div>';
+    }).join('');
+    if(regPhoto.working.length < MAX_PHOTOS){
+      html += '<button type="button" class="photo-add-tile" id="reg-photo-add-tile">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>' +
+        '<span>추가</span>' +
+      '</button>';
+    }
+    strip.innerHTML = html;
+  }
+
+  /* ---------------- participant registration (public) ---------------- */
+  function openRegForm(){
+    regPhoto.working = [];
+    renderRegPhotoStrip();
+    $('reg-photo-status').innerHTML = '&nbsp;';
+    $('regForm').reset();
+    $('regForm').hidden = false;
+    $('regSuccess').hidden = true;
+    $('lockOverlay').hidden = true;
+    $('regOverlay').hidden = false;
+    setTimeout(function(){ $('reg-name').focus(); }, 30);
+  }
+  function closeRegForm(){
+    var orphans = regPhoto.working.slice();
+    orphans.forEach(function(p){ deletePhoto(p); });
+    regPhoto.working = [];
+    $('regOverlay').hidden = true;
+    $('lockOverlay').hidden = false;
+  }
+  function onRegSubmit(e){
+    e.preventDefault();
+    var name = $('reg-name').value.trim();
+    if(!name){ name = nextCodeName($('reg-gender').value || '', null); }
+    var birthYearVal = $('reg-birthyear').value ? Number($('reg-birthyear').value) : null;
+    var row = {
+      name: name,
+      birth_year: birthYearVal,
+      gender: $('reg-gender').value || null,
+      status: 'available',
+      contact: $('reg-contact').value.trim(),
+      job: $('reg-job').value.trim(),
+      referrer: $('reg-referrer').value.trim(),
+      personality: $('reg-personality').value.trim(),
+      ideal_type: $('reg-ideal').value.trim(),
+      memo: $('reg-memo').value.trim(),
+      photo_paths: regPhoto.working.slice(),
+      approved: false
+    };
+    if(!row.contact){ showToast('연락처를 입력해 주세요'); return; }
+    var btn = $('regSubmitBtn');
+    btn.disabled = true;
+    supabase.from('participants').insert(row).then(function(res){
+      if(res.error) throw res.error;
+      regPhoto.working = [];
+      $('regForm').hidden = true;
+      $('regSuccess').hidden = false;
+    }).catch(function(err){
+      console.error(err);
+      showToast('신청하지 못했어요. 다시 시도해 주세요.');
+    }).finally(function(){ btn.disabled = false; });
   }
 
   /* ---------------- photo viewer ---------------- */
@@ -1370,6 +1603,8 @@
     pendingDelete = { kind: kind, id: id, photoPaths: photoPaths || [] };
     $('confirmBody').textContent = kind === 'member'
       ? ('"'+label+'" 참가자 정보를 삭제할까요? 관련된 매칭 기록의 이름은 그대로 남아요.')
+      : kind === 'reject'
+      ? ('"'+label+'" 신청을 거절할까요? 거절하면 바로 삭제되고 되돌릴 수 없어요.')
       : ('"'+label+'" 매칭 기록을 삭제할까요? 이 작업은 되돌릴 수 없어요.');
     $('confirmOverlay').hidden = false;
   }
@@ -1378,12 +1613,13 @@
   function onConfirmOk(){
     if(isReadOnly()){ closeConfirm(); showToast('읽기 전용 모드예요'); return; }
     if(!pendingDelete) { closeConfirm(); return; }
-    var table = pendingDelete.kind === 'member' ? 'participants' : 'matches';
+    var kind = pendingDelete.kind;
+    var table = (kind === 'member' || kind === 'reject') ? 'participants' : 'matches';
     var id = pendingDelete.id;
     var photoPaths = pendingDelete.photoPaths || [];
     supabase.from(table).delete().eq('id', id).then(function(res){
       if(res.error) throw res.error;
-      showToast('삭제했어요');
+      showToast(kind === 'reject' ? '거절했어요' : '삭제했어요');
       photoPaths.forEach(function(p){ deletePhoto(p); });
       refetchParticipants();
       refetchMatches();
@@ -1392,6 +1628,17 @@
       showToast('삭제하지 못했어요. 다시 시도해 주세요.');
     });
     closeConfirm();
+  }
+
+  function approveMember(id){
+    supabase.from('participants').update({ approved: true }).eq('id', id).then(function(res){
+      if(res.error) throw res.error;
+      showToast('승인했어요');
+      refetchParticipants();
+    }).catch(function(err){
+      console.error(err);
+      showToast('승인하지 못했어요. 다시 시도해 주세요.');
+    });
   }
 
   /* ---------------- delegated click handling ---------------- */
@@ -1403,6 +1650,11 @@
       if(btn.dataset.action === 'edit-member') openMemberModal(id);
       if(btn.dataset.action === 'view-photos') openPhotoViewer(id);
       if(btn.dataset.action === 'copy-member') copyMemberInfo(id);
+      if(btn.dataset.action === 'approve-member') approveMember(id);
+      if(btn.dataset.action === 'reject-member'){
+        var rm = memberById(id);
+        askDelete('reject', id, rm ? displayName(rm) : '', rm ? getPhotoPaths(rm) : []);
+      }
       if(btn.dataset.action === 'delete-member'){
         var m = memberById(id);
         askDelete('member', id, m ? displayName(m) : '', m ? getPhotoPaths(m) : []);
@@ -1437,6 +1689,7 @@
     $('m-gender').addEventListener('change', updateNameHint);
     $('memberSearch').addEventListener('input', renderMembers);
     $('memberStatusFilter').addEventListener('change', renderMembers);
+    $('memberGenderFilter').addEventListener('change', renderMembers);
 
     $('m-photo-strip').addEventListener('click', function(e){
       var btn = e.target.closest('button');
@@ -1587,4 +1840,3 @@
 </script>
 </body>
 </html>
-
