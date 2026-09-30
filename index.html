@@ -351,20 +351,24 @@
         <span class="helper-text" id="reg-photo-status">&nbsp;</span>
         <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" id="reg-photo-input" class="visually-hidden-input" multiple>
       </div>
+      <div class="field">
+        <label for="reg-name">이름 <span class="required-mark">*</span></label>
+        <input class="field-input" id="reg-name" maxlength="40" placeholder="예: 김지수" required>
+      </div>
       <div class="field-row">
-        <div class="field">
-          <label for="reg-name">이름</label>
-          <input class="field-input" id="reg-name" maxlength="40" placeholder="예: 김지수 (모르면 비워두세요)">
+        <div class="field" style="max-width:140px">
+          <label for="reg-birthyear">출생연도 <span class="required-mark">*</span></label>
+          <input class="field-input" id="reg-birthyear" type="number" min="1930" placeholder="1997" required>
         </div>
         <div class="field" style="max-width:140px">
-          <label for="reg-birthyear">출생연도</label>
-          <input class="field-input" id="reg-birthyear" type="number" min="1930" placeholder="1997">
+          <label for="reg-height">키(cm) <span class="required-mark">*</span></label>
+          <input class="field-input" id="reg-height" type="number" min="100" max="250" placeholder="170" required>
         </div>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="reg-gender">성별</label>
-          <select class="select-input" id="reg-gender">
+          <label for="reg-gender">성별 <span class="required-mark">*</span></label>
+          <select class="select-input" id="reg-gender" required>
             <option value="">선택 안 함</option>
             <option value="female">여성</option>
             <option value="male">남성</option>
@@ -376,20 +380,44 @@
           <input class="field-input" id="reg-contact" placeholder="전화번호나 메신저 아이디" required>
         </div>
       </div>
-      <div class="field">
-        <label for="reg-job">직업 / 소개</label>
-        <input class="field-input" id="reg-job" maxlength="60" placeholder="예: 마케터, 3년차">
+      <div class="field-row">
+        <div class="field">
+          <label for="reg-job">직업 / 소개 <span class="required-mark">*</span></label>
+          <input class="field-input" id="reg-job" maxlength="60" placeholder="예: 마케터, 3년차" required>
+        </div>
+        <div class="field">
+          <label for="reg-mbti">MBTI <span class="required-mark">*</span></label>
+          <select class="select-input" id="reg-mbti" required>
+            <option value="">선택 안 함</option>
+            <option value="ENFJ">ENFJ</option>
+            <option value="ENFP">ENFP</option>
+            <option value="ENTJ">ENTJ</option>
+            <option value="ENTP">ENTP</option>
+            <option value="ESFJ">ESFJ</option>
+            <option value="ESFP">ESFP</option>
+            <option value="ESTJ">ESTJ</option>
+            <option value="ESTP">ESTP</option>
+            <option value="INFJ">INFJ</option>
+            <option value="INFP">INFP</option>
+            <option value="INTJ">INTJ</option>
+            <option value="INTP">INTP</option>
+            <option value="ISFJ">ISFJ</option>
+            <option value="ISFP">ISFP</option>
+            <option value="ISTJ">ISTJ</option>
+            <option value="ISTP">ISTP</option>
+          </select>
+        </div>
       </div>
       <div class="field">
-        <label for="reg-referrer">추천인 (선택)</label>
-        <input class="field-input" id="reg-referrer" maxlength="40" placeholder="누구 소개로 신청하셨나요? (예: 민지)">
+        <label for="reg-referrer">추천인 <span class="required-mark">*</span></label>
+        <input class="field-input" id="reg-referrer" maxlength="40" placeholder="누구 소개로 신청하셨나요? (예: 민지)" required>
       </div>
       <div class="field">
-        <label for="reg-personality">성격 · 특징</label>
+        <label for="reg-personality">성격 · 특징 (선택)</label>
         <textarea class="field-input" id="reg-personality" maxlength="300" placeholder="차분하고 유머 있음, 운동 좋아함"></textarea>
       </div>
       <div class="field">
-        <label for="reg-ideal">이상형 조건</label>
+        <label for="reg-ideal">이상형 조건 (선택)</label>
         <textarea class="field-input" id="reg-ideal" maxlength="300" placeholder="비흡연, 30km 이내, 강아지 좋아하는 사람"></textarea>
       </div>
       <div class="field">
@@ -528,16 +556,20 @@
         <span class="helper-text" id="m-photo-status">&nbsp;</span>
         <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" id="m-photo-input" class="visually-hidden-input" multiple>
       </div>
+      <div class="field">
+        <label for="m-name">이름</label>
+        <input class="field-input" id="m-name" maxlength="40" placeholder="예: 김지수 (모르면 비워두세요)">
+        <span class="helper-text" id="m-name-hint">&nbsp;</span>
+      </div>
       <div class="field-row">
-        <div class="field">
-          <label for="m-name">이름</label>
-          <input class="field-input" id="m-name" maxlength="40" placeholder="예: 김지수 (모르면 비워두세요)">
-          <span class="helper-text" id="m-name-hint">&nbsp;</span>
-        </div>
         <div class="field" style="max-width:140px">
           <label for="m-birthyear">출생연도</label>
           <input class="field-input" id="m-birthyear" type="number" min="1930" placeholder="1997">
           <span class="helper-text" id="m-age-preview">&nbsp;</span>
+        </div>
+        <div class="field" style="max-width:140px">
+          <label for="m-height">키(cm)</label>
+          <input class="field-input" id="m-height" type="number" min="100" max="250" placeholder="170">
         </div>
       </div>
       <div class="field-row">
@@ -564,9 +596,33 @@
         <label for="m-contact">연락처</label>
         <input class="field-input" id="m-contact" placeholder="전화번호나 메신저 아이디">
       </div>
-      <div class="field">
-        <label for="m-job">직업 / 소개</label>
-        <input class="field-input" id="m-job" maxlength="60" placeholder="예: 마케터, 3년차">
+      <div class="field-row">
+        <div class="field">
+          <label for="m-job">직업 / 소개</label>
+          <input class="field-input" id="m-job" maxlength="60" placeholder="예: 마케터, 3년차">
+        </div>
+        <div class="field">
+          <label for="m-mbti">MBTI</label>
+          <select class="select-input" id="m-mbti">
+            <option value="">선택 안 함</option>
+            <option value="ENFJ">ENFJ</option>
+            <option value="ENFP">ENFP</option>
+            <option value="ENTJ">ENTJ</option>
+            <option value="ENTP">ENTP</option>
+            <option value="ESFJ">ESFJ</option>
+            <option value="ESFP">ESFP</option>
+            <option value="ESTJ">ESTJ</option>
+            <option value="ESTP">ESTP</option>
+            <option value="INFJ">INFJ</option>
+            <option value="INFP">INFP</option>
+            <option value="INTJ">INTJ</option>
+            <option value="INTP">INTP</option>
+            <option value="ISFJ">ISFJ</option>
+            <option value="ISFP">ISFP</option>
+            <option value="ISTJ">ISTJ</option>
+            <option value="ISTP">ISTP</option>
+          </select>
+        </div>
       </div>
       <div class="field">
         <label for="m-referrer">주선자</label>
@@ -913,10 +969,12 @@
       id: row.id,
       name: row.name,
       birthYear: row.birth_year,
+      height: row.height,
       gender: row.gender,
       status: row.status,
       contact: row.contact,
       job: row.job,
+      mbti: row.mbti,
       referrer: row.referrer,
       personality: row.personality,
       idealType: row.ideal_type,
@@ -931,10 +989,12 @@
     return {
       name: data.name,
       birth_year: data.birthYear,
+      height: data.height,
       gender: data.gender,
       status: data.status,
       contact: data.contact,
       job: data.job,
+      mbti: data.mbti,
       referrer: data.referrer,
       personality: data.personality,
       ideal_type: data.idealType,
@@ -1107,6 +1167,8 @@
       }
       var rows = '';
       if(m.job) rows += '<div class="row"><span class="k">직업</span><span class="v">'+esc(m.job)+'</span></div>';
+      if(m.height) rows += '<div class="row"><span class="k">키</span><span class="v">'+esc(String(m.height))+'cm</span></div>';
+      if(m.mbti) rows += '<div class="row"><span class="k">MBTI</span><span class="v">'+esc(m.mbti)+'</span></div>';
       if(m.referrer) rows += '<div class="row"><span class="k">주선자</span><span class="v">'+esc(m.referrer)+'</span></div>';
       if(m.contact && !isReadOnly()) rows += '<div class="row row-contact"><span class="k">연락처</span><span class="v">'+esc(m.contact)+'</span></div>';
       if(m.personality) rows += '<div class="row"><span class="k">특징</span><span class="v">'+esc(m.personality)+'</span></div>';
@@ -1283,23 +1345,37 @@
   function onRegSubmit(e){
     e.preventDefault();
     var name = $('reg-name').value.trim();
-    if(!name){ name = nextCodeName($('reg-gender').value || '', null); }
     var birthYearVal = $('reg-birthyear').value ? Number($('reg-birthyear').value) : null;
+    var heightVal = $('reg-height').value ? Number($('reg-height').value) : null;
+    var gender = $('reg-gender').value || '';
+    var contact = $('reg-contact').value.trim();
+    var job = $('reg-job').value.trim();
+    var mbti = $('reg-mbti').value || '';
+    var referrer = $('reg-referrer').value.trim();
+    if(!name){ showToast('이름을 입력해 주세요'); return; }
+    if(!birthYearVal){ showToast('출생연도를 입력해 주세요'); return; }
+    if(!heightVal){ showToast('키를 입력해 주세요'); return; }
+    if(!gender){ showToast('성별을 선택해 주세요'); return; }
+    if(!contact){ showToast('연락처를 입력해 주세요'); return; }
+    if(!job){ showToast('직업 / 소개를 입력해 주세요'); return; }
+    if(!mbti){ showToast('MBTI를 선택해 주세요'); return; }
+    if(!referrer){ showToast('추천인을 입력해 주세요'); return; }
     var row = {
       name: name,
       birth_year: birthYearVal,
-      gender: $('reg-gender').value || null,
+      height: heightVal,
+      gender: gender,
       status: 'available',
-      contact: $('reg-contact').value.trim(),
-      job: $('reg-job').value.trim(),
-      referrer: $('reg-referrer').value.trim(),
+      contact: contact,
+      job: job,
+      mbti: mbti,
+      referrer: referrer,
       personality: $('reg-personality').value.trim(),
       ideal_type: $('reg-ideal').value.trim(),
       memo: $('reg-memo').value.trim(),
       photo_paths: regPhoto.working.slice(),
       approved: false
     };
-    if(!row.contact){ showToast('연락처를 입력해 주세요'); return; }
     var btn = $('regSubmitBtn');
     btn.disabled = true;
     supabase.from('participants').insert(row).then(function(res){
@@ -1426,6 +1502,8 @@
     if(ageBit) lines.push('나이: ' + ageBit);
     if(m.gender && GENDER_LABEL[m.gender]) lines.push('성별: ' + GENDER_LABEL[m.gender]);
     if(m.job) lines.push('직업: ' + m.job);
+    if(m.height) lines.push('키: ' + m.height + 'cm');
+    if(m.mbti) lines.push('MBTI: ' + m.mbti);
     if(m.personality) lines.push('성격: ' + m.personality);
     if(m.idealType) lines.push('이상형: ' + m.idealType);
     if(m.memo) lines.push('메모: ' + m.memo);
@@ -1473,12 +1551,14 @@
     $('m-photo-status').innerHTML = '&nbsp;';
     $('m-name').value = m ? (m.name || '') : '';
     $('m-birthyear').value = m && m.birthYear ? m.birthYear : '';
+    $('m-height').value = m && m.height ? m.height : '';
     updateAgePreview();
     $('m-gender').value = m ? (m.gender || '') : '';
     updateNameHint();
     $('m-status').value = m ? (m.status || 'available') : 'available';
     $('m-contact').value = m ? (m.contact || '') : '';
     $('m-job').value = m ? (m.job || '') : '';
+    $('m-mbti').value = m ? (m.mbti || '') : '';
     $('m-referrer').value = m ? (m.referrer || '') : '';
     $('m-personality').value = m ? (m.personality || '') : '';
     $('m-ideal').value = m ? (m.idealType || '') : '';
@@ -1503,13 +1583,16 @@
     var name = $('m-name').value.trim();
     if(!name){ name = nextCodeName($('m-gender').value || '', editingMemberId); }
     var birthYearVal = $('m-birthyear').value ? Number($('m-birthyear').value) : null;
+    var heightVal = $('m-height').value ? Number($('m-height').value) : null;
     var data = {
       name: name,
       birthYear: birthYearVal,
+      height: heightVal,
       gender: $('m-gender').value || null,
       status: $('m-status').value || 'available',
       contact: $('m-contact').value.trim(),
       job: $('m-job').value.trim(),
+      mbti: $('m-mbti').value || '',
       referrer: $('m-referrer').value.trim(),
       personality: $('m-personality').value.trim(),
       idealType: $('m-ideal').value.trim(),
