@@ -104,6 +104,8 @@
   body.role-readonly [data-action="edit-match"],
   body.role-readonly [data-action="delete-match"],
   body.role-readonly [data-action="copy-member"],
+  body.role-readonly [data-action="quick-match"],
+  body.role-readonly #tabBtn-quickmatch,
   body.role-readonly .row-contact{ display:none !important; }
   .stat-strip{ display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:14px; }
   .stat-chip{ display:flex; align-items:baseline; gap:6px; font-size:13px; color:var(--muted); }
@@ -165,6 +167,20 @@
   .match-matchmaker{ display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted); }
   .match-matchmaker-label{ font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--accent); background:var(--accent-soft); padding:1px 7px; border-radius:999px; flex:none; }
   .deleted-tag{ font-size:11px; color:var(--danger); border:1px solid var(--danger-soft); background:var(--danger-soft); padding:1px 6px; border-radius:6px; }
+
+  .qm-columns{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:640px){ .qm-columns{ grid-template-columns:1fr; } }
+  .qm-column-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:8px; }
+  .qm-column-head select{ max-width:150px; }
+  .qm-card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px 14px; display:flex; flex-direction:column; gap:6px; cursor:pointer; transition:border-color .15s ease, background .15s ease; }
+  .qm-card:hover{ border-color:var(--accent); }
+  .qm-card.selected{ border-color:var(--accent); background:var(--accent-soft); }
+  .qm-card-top{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .qm-card-name{ font-family:var(--font-display); font-weight:700; font-size:15px; }
+  .qm-card-badges{ display:flex; gap:4px; align-items:center; flex:none; }
+  .qm-card-meta{ font-size:12.5px; color:var(--muted); }
+  .qm-bar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:var(--success-soft); color:var(--success); border:1px solid var(--success-soft); border-radius:var(--radius-sm); padding:10px 14px; font-size:13.5px; font-weight:600; }
+  .qm-bar[hidden]{ display:none; }
 
   .empty-state{ border:1px dashed var(--line); border-radius:var(--radius); padding:40px 20px; text-align:center; color:var(--muted); display:flex; flex-direction:column; align-items:center; gap:10px; }
   .empty-state svg{ width:34px; height:34px; color:var(--accent); opacity:.8; }
@@ -468,6 +484,7 @@
 
   <nav class="tabs" role="tablist">
     <button class="tab-btn" role="tab" id="tabBtn-members" aria-selected="true" aria-controls="panel-members" data-tab="members">참가자 관리</button>
+    <button class="tab-btn" role="tab" id="tabBtn-quickmatch" aria-selected="false" aria-controls="panel-quickmatch" data-tab="quickmatch">빠른 매칭</button>
     <button class="tab-btn" role="tab" id="tabBtn-matches" aria-selected="false" aria-controls="panel-matches" data-tab="matches">매칭 기록</button>
   </nav>
 
@@ -489,6 +506,34 @@
         <option value="male">남성</option>
         <option value="female">여성</option>
       </select>
+      <input id="memberAgeMin" class="field-input" type="number" placeholder="나이(최소)" style="max-width:104px;">
+      <input id="memberAgeMax" class="field-input" type="number" placeholder="나이(최대)" style="max-width:104px;">
+      <select id="memberMbtiFilter" class="select-input">
+        <option value="">모든 MBTI</option>
+        <option value="ENFJ">ENFJ</option>
+        <option value="ENFP">ENFP</option>
+        <option value="ENTJ">ENTJ</option>
+        <option value="ENTP">ENTP</option>
+        <option value="ESFJ">ESFJ</option>
+        <option value="ESFP">ESFP</option>
+        <option value="ESTJ">ESTJ</option>
+        <option value="ESTP">ESTP</option>
+        <option value="INFJ">INFJ</option>
+        <option value="INFP">INFP</option>
+        <option value="INTJ">INTJ</option>
+        <option value="INTP">INTP</option>
+        <option value="ISFJ">ISFJ</option>
+        <option value="ISFP">ISFP</option>
+        <option value="ISTJ">ISTJ</option>
+        <option value="ISTP">ISTP</option>
+      </select>
+      <select id="memberSort" class="select-input">
+        <option value="default">기본 정렬</option>
+        <option value="age_asc">나이 어린순</option>
+        <option value="age_desc">나이 많은순</option>
+        <option value="name">이름순</option>
+        <option value="recent">최근 등록순</option>
+      </select>
       <button class="btn btn-primary" id="btnAddMember" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
         새 참가자
@@ -506,6 +551,77 @@
     </div>
 
     <div id="membersList" class="grid" hidden></div>
+  </section>
+
+  <!-- ================= QUICK MATCH PANEL ================= -->
+  <section id="panel-quickmatch" role="tabpanel" aria-labelledby="tabBtn-quickmatch" style="display:none; flex-direction:column; gap:14px;">
+    <p class="helper-text" style="margin:0;">양쪽에서 한 명씩 선택하면 궁합을 참고해서 바로 매칭을 만들 수 있어요.</p>
+    <div class="toolbar">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span class="helper-text" style="margin:0; white-space:nowrap;">나이</span>
+        <input id="qmAgeMin" class="field-input" type="number" placeholder="최소" style="max-width:80px;">
+        <span class="helper-text" style="margin:0;">~</span>
+        <input id="qmAgeMax" class="field-input" type="number" placeholder="최대" style="max-width:80px;">
+      </div>
+      <select id="qmMbtiFilter" class="select-input">
+        <option value="">모든 MBTI</option>
+        <option value="ENFJ">ENFJ</option>
+        <option value="ENFP">ENFP</option>
+        <option value="ENTJ">ENTJ</option>
+        <option value="ENTP">ENTP</option>
+        <option value="ESFJ">ESFJ</option>
+        <option value="ESFP">ESFP</option>
+        <option value="ESTJ">ESTJ</option>
+        <option value="ESTP">ESTP</option>
+        <option value="INFJ">INFJ</option>
+        <option value="INFP">INFP</option>
+        <option value="INTJ">INTJ</option>
+        <option value="INTP">INTP</option>
+        <option value="ISFJ">ISFJ</option>
+        <option value="ISFP">ISFP</option>
+        <option value="ISTJ">ISTJ</option>
+        <option value="ISTP">ISTP</option>
+      </select>
+      <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; color:var(--muted);">
+        <input type="checkbox" id="qmAvailableOnly" checked style="width:16px; height:16px;">
+        소개 가능만 보기
+      </label>
+    </div>
+
+    <div class="qm-bar" id="qmSelectionBar" hidden>
+      <span id="qmSelectionText"></span>
+      <span style="flex:1"></span>
+      <button class="btn btn-ghost" type="button" id="qmClearSelectionBtn">선택 취소</button>
+      <button class="btn btn-primary" type="button" id="qmCreateMatchBtn">매칭 만들기</button>
+    </div>
+
+    <div class="qm-columns">
+      <div>
+        <div class="qm-column-head">
+          <select id="qmLeftGender" class="select-input">
+            <option value="male">남성</option>
+            <option value="female">여성</option>
+            <option value="">전체</option>
+          </select>
+          <span class="helper-text" id="qmLeftCount">&nbsp;</span>
+        </div>
+        <div id="qmLeftList" style="display:flex; flex-direction:column; gap:10px;"></div>
+        <p class="helper-text" id="qmLeftEmpty" hidden>조건에 맞는 참가자가 없어요.</p>
+      </div>
+      <div>
+        <div class="qm-column-head">
+          <select id="qmRightGender" class="select-input">
+            <option value="female">여성</option>
+            <option value="male">남성</option>
+            <option value="">전체</option>
+          </select>
+          <span class="helper-text" id="qmRightCount">&nbsp;</span>
+        </div>
+        <div id="qmRightList" style="display:flex; flex-direction:column; gap:10px;"></div>
+        <p class="helper-text" id="qmRightEmpty" hidden>조건에 맞는 참가자가 없어요.</p>
+      </div>
+    </div>
+    <p class="helper-text" style="margin:0;">* 궁합 점수는 나이 차이, MBTI 성향, 이상형 키워드를 참고한 간단한 추정치예요. 재미로만 참고해 주세요.</p>
   </section>
 
   <!-- ================= MATCHES PANEL ================= -->
@@ -768,6 +884,8 @@
   var editingMemberId = null;
   var editingMatchId = null;
   var pendingDelete = null; // {kind:'member'|'match', id, label, photoPaths}
+  var qmLeftSelectedId = null;
+  var qmRightSelectedId = null;
   var memberPhoto = { original:[], working:[] };
   var regPhoto = { working:[] };
   var MAX_PHOTOS = 6;
@@ -1069,18 +1187,19 @@
   }
 
   /* ---------------- tabs ---------------- */
+  function switchToTab(tabName){
+    var btns = document.querySelectorAll('.tab-btn');
+    btns.forEach(function(b){ b.setAttribute('aria-selected', b.dataset.tab === tabName ? 'true':'false'); });
+    var membersPanel = $('panel-members'), qmPanel = $('panel-quickmatch'), matchesP = $('panel-matches');
+    membersPanel.style.display = tabName === 'members' ? 'flex' : 'none';
+    qmPanel.style.display = tabName === 'quickmatch' ? 'flex' : 'none';
+    matchesP.style.display = tabName === 'matches' ? 'flex' : 'none';
+    if(tabName === 'quickmatch') renderQuickMatch();
+  }
   function initTabs(){
     var btns = document.querySelectorAll('.tab-btn');
     btns.forEach(function(btn){
-      btn.addEventListener('click', function(){
-        btns.forEach(function(b){ b.setAttribute('aria-selected', b === btn ? 'true':'false'); });
-        var membersPanel = $('panel-members'), matchesP = $('panel-matches');
-        if(btn.dataset.tab === 'members'){
-          membersPanel.style.display = 'flex'; matchesP.style.display = 'none';
-        } else {
-          membersPanel.style.display = 'none'; matchesP.style.display = 'flex';
-        }
-      });
+      btn.addEventListener('click', function(){ switchToTab(btn.dataset.tab); });
     });
   }
 
@@ -1116,6 +1235,194 @@
     return m.photoPaths.slice();
   }
 
+  /* ---------------- quick match: compatibility scoring ---------------- */
+  function mbtiTemperament(mbti){
+    if(!mbti) return null;
+    var t = String(mbti).toUpperCase().trim();
+    if(t.length < 4) return null;
+    var sn = t.charAt(1), tf = t.charAt(2), jp = t.charAt(3);
+    if(sn === 'N'){ if(tf === 'F') return 'NF'; if(tf === 'T') return 'NT'; return null; }
+    if(sn === 'S'){ if(jp === 'J') return 'SJ'; if(jp === 'P') return 'SP'; return null; }
+    return null;
+  }
+  function tokenizeKeywords(text){
+    if(!text) return [];
+    return String(text).split(/[\s,\.\/·、，;:]+/).map(function(s){ return s.trim(); }).filter(function(s){ return s.length >= 2; });
+  }
+  function textIncludesToken(text, token){
+    if(!text || !token) return false;
+    return String(text).toLowerCase().indexOf(String(token).toLowerCase()) !== -1;
+  }
+  function compatibilityScore(a, b){
+    var reasons = [];
+    var score = 0;
+    var ageA = ageFromBirthYear(a.birthYear), ageB = ageFromBirthYear(b.birthYear);
+    if(ageA != null && ageB != null){
+      var diff = Math.abs(ageA - ageB);
+      var ageScore = Math.max(0, 20 - diff * 4);
+      score += ageScore;
+      if(diff <= 2) reasons.push('나이 차이가 적어요');
+    }
+    if(a.mbti && b.mbti){
+      var ma = String(a.mbti).toUpperCase().trim(), mb = String(b.mbti).toUpperCase().trim();
+      if(ma === mb){
+        score += 6;
+        reasons.push('MBTI가 같아요('+ma+')');
+      } else {
+        var ta = mbtiTemperament(ma), tb = mbtiTemperament(mb);
+        if(ta && ta === tb){
+          score += 8;
+          reasons.push('MBTI 성향이 비슷해요('+ta+')');
+        }
+      }
+    }
+    var aIdealTokens = tokenizeKeywords(a.idealType);
+    var bText = [b.personality, b.job, b.memo].filter(Boolean).join(' ');
+    var matchedA = 0;
+    aIdealTokens.forEach(function(tok){ if(textIncludesToken(bText, tok)) matchedA++; });
+    var bIdealTokens = tokenizeKeywords(b.idealType);
+    var aText = [a.personality, a.job, a.memo].filter(Boolean).join(' ');
+    var matchedB = 0;
+    bIdealTokens.forEach(function(tok){ if(textIncludesToken(aText, tok)) matchedB++; });
+    var keywordScore = Math.min(20, (matchedA + matchedB) * 5);
+    score += keywordScore;
+    if(keywordScore > 0) reasons.push('이상형 키워드가 겹쳐요');
+    if(a.status === 'available' && b.status === 'available'){
+      score += 10;
+    } else {
+      score -= 5;
+    }
+    var pct = Math.round(score / 58 * 100);
+    if(pct < 0) pct = 0;
+    if(pct > 100) pct = 100;
+    return { score: score, pct: pct, reasons: reasons };
+  }
+
+  /* ---------------- quick match: list + render ---------------- */
+  function qmFilteredList(genderFilter){
+    var ageMinRaw = $('qmAgeMin').value.trim();
+    var ageMaxRaw = $('qmAgeMax').value.trim();
+    var ageMin = ageMinRaw === '' ? null : Number(ageMinRaw);
+    var ageMax = ageMaxRaw === '' ? null : Number(ageMaxRaw);
+    var mbtiFilter = $('qmMbtiFilter').value;
+    var availableOnly = $('qmAvailableOnly').checked;
+    return members.filter(function(m){
+      if(m.approved === false) return false;
+      if(genderFilter && m.gender !== genderFilter) return false;
+      if(mbtiFilter && String(m.mbti || '').toUpperCase() !== mbtiFilter) return false;
+      if(availableOnly && m.status !== 'available') return false;
+      if(ageMin != null || ageMax != null){
+        var age = ageFromBirthYear(m.birthYear);
+        if(age == null) return false;
+        if(ageMin != null && age < ageMin) return false;
+        if(ageMax != null && age > ageMax) return false;
+      }
+      return true;
+    });
+  }
+  function qmCardHtml(m, otherSelected, side){
+    var selectedId = side === 'left' ? qmLeftSelectedId : qmRightSelectedId;
+    var isSelected = selectedId === m.id;
+    var st = MEMBER_STATUS[m.status] || MEMBER_STATUS.available;
+    var metaBits = [];
+    if(m.gender && GENDER_LABEL[m.gender]) metaBits.push(GENDER_LABEL[m.gender]);
+    var age = ageFromBirthYear(m.birthYear);
+    if(age != null) metaBits.push(age + '세');
+    if(m.job) metaBits.push(esc(m.job));
+    if(m.mbti) metaBits.push(esc(m.mbti));
+    if(m.height) metaBits.push(esc(String(m.height)) + 'cm');
+    var compatHtml = '';
+    if(otherSelected && otherSelected.id !== m.id){
+      var c = compatibilityScore(otherSelected, m);
+      var cls = c.pct >= 70 ? 'badge-success' : (c.pct >= 40 ? 'badge-accent' : 'badge-neutral');
+      compatHtml = '<span class="badge '+cls+'">궁합 '+c.pct+'%</span>';
+    }
+    return (
+      '<div class="qm-card'+(isSelected ? ' selected' : '')+'" data-id="'+esc(m.id)+'" data-side="'+side+'">' +
+        '<div class="qm-card-top">' +
+          '<span class="qm-card-name">'+esc(displayName(m))+'</span>' +
+          '<span class="qm-card-badges"><span class="badge '+st.cls+'">'+st.label+'</span>'+compatHtml+'</span>' +
+        '</div>' +
+        '<div class="qm-card-meta">'+metaBits.join(' · ')+'</div>' +
+      '</div>'
+    );
+  }
+  function renderQuickMatch(){
+    if(!membersLoaded) return;
+    var leftGender = $('qmLeftGender').value;
+    var rightGender = $('qmRightGender').value;
+    var leftList = qmFilteredList(leftGender);
+    var rightList = qmFilteredList(rightGender);
+
+    var leftSelectedMember = qmLeftSelectedId ? memberById(qmLeftSelectedId) : null;
+    var rightSelectedMember = qmRightSelectedId ? memberById(qmRightSelectedId) : null;
+
+    if(rightSelectedMember){
+      leftList = leftList.slice().sort(function(a,b){
+        return compatibilityScore(rightSelectedMember, b).score - compatibilityScore(rightSelectedMember, a).score;
+      });
+    }
+    if(leftSelectedMember){
+      rightList = rightList.slice().sort(function(a,b){
+        return compatibilityScore(leftSelectedMember, b).score - compatibilityScore(leftSelectedMember, a).score;
+      });
+    }
+
+    $('qmLeftCount').textContent = leftList.length + '명';
+    $('qmRightCount').textContent = rightList.length + '명';
+    $('qmLeftEmpty').hidden = leftList.length > 0;
+    $('qmRightEmpty').hidden = rightList.length > 0;
+
+    $('qmLeftList').innerHTML = leftList.map(function(m){ return qmCardHtml(m, rightSelectedMember, 'left'); }).join('');
+    $('qmRightList').innerHTML = rightList.map(function(m){ return qmCardHtml(m, leftSelectedMember, 'right'); }).join('');
+
+    var bar = $('qmSelectionBar');
+    var createBtn = $('qmCreateMatchBtn');
+    if(leftSelectedMember && rightSelectedMember){
+      bar.hidden = false;
+      if(leftSelectedMember.id === rightSelectedMember.id){
+        $('qmSelectionText').textContent = '같은 참가자는 매칭할 수 없어요';
+        createBtn.disabled = true;
+      } else {
+        var c = compatibilityScore(leftSelectedMember, rightSelectedMember);
+        $('qmSelectionText').textContent = displayName(leftSelectedMember) + ' + ' + displayName(rightSelectedMember) + ' · 궁합 ' + c.pct + '%';
+        createBtn.disabled = false;
+      }
+    } else {
+      bar.hidden = true;
+    }
+  }
+  function presetQuickMatchMember(m){
+    if(!m) return;
+    if(m.gender === 'female'){
+      qmRightSelectedId = m.id;
+      qmLeftSelectedId = null;
+      $('qmRightGender').value = 'female';
+    } else if(m.gender === 'male'){
+      qmLeftSelectedId = m.id;
+      qmRightSelectedId = null;
+      $('qmLeftGender').value = 'male';
+    } else {
+      qmLeftSelectedId = m.id;
+      qmRightSelectedId = null;
+      $('qmLeftGender').value = '';
+    }
+    switchToTab('quickmatch');
+  }
+  function qmCardClickHandler(side){
+    return function(e){
+      var card = e.target.closest('.qm-card');
+      if(!card) return;
+      var id = card.dataset.id;
+      if(side === 'left'){
+        qmLeftSelectedId = (qmLeftSelectedId === id) ? null : id;
+      } else {
+        qmRightSelectedId = (qmRightSelectedId === id) ? null : id;
+      }
+      renderQuickMatch();
+    };
+  }
+
   function renderMembers(){
     var listEl = $('membersList');
     var loadingEl = $('membersLoading');
@@ -1130,16 +1437,41 @@
     var q = ($('memberSearch').value || '').trim().toLowerCase();
     var statusFilter = $('memberStatusFilter').value;
     var genderFilter = $('memberGenderFilter').value;
+    var ageMinRaw = $('memberAgeMin').value.trim();
+    var ageMaxRaw = $('memberAgeMax').value.trim();
+    var mbtiFilter = $('memberMbtiFilter').value;
+    var sortMode = $('memberSort').value;
     var filtered = members.filter(function(m){
       if(statusFilter && m.status !== statusFilter) return false;
       if(genderFilter && m.gender !== genderFilter) return false;
+      if(mbtiFilter && String(m.mbti || '').toUpperCase() !== mbtiFilter) return false;
+      if(ageMinRaw !== '' || ageMaxRaw !== ''){
+        var age = ageFromBirthYear(m.birthYear);
+        if(age == null) return false;
+        if(ageMinRaw !== '' && age < Number(ageMinRaw)) return false;
+        if(ageMaxRaw !== '' && age > Number(ageMaxRaw)) return false;
+      }
       if(q && !isReadOnly() && (m.name || '').toLowerCase().indexOf(q) === -1) return false;
       return true;
     });
     filtered.sort(function(a, b){
       var pa = a.approved === false ? 0 : 1;
       var pb = b.approved === false ? 0 : 1;
-      return pa - pb;
+      if(pa !== pb) return pa - pb;
+      if(sortMode === 'age_asc' || sortMode === 'age_desc'){
+        var ageA = ageFromBirthYear(a.birthYear), ageB = ageFromBirthYear(b.birthYear);
+        if(ageA == null && ageB == null) return 0;
+        if(ageA == null) return 1;
+        if(ageB == null) return -1;
+        return sortMode === 'age_asc' ? (ageA - ageB) : (ageB - ageA);
+      }
+      if(sortMode === 'name'){
+        return (a.name || '').localeCompare(b.name || '', 'ko');
+      }
+      if(sortMode === 'recent'){
+        return (b.createdAt || '').localeCompare(a.createdAt || '');
+      }
+      return 0;
     });
 
     if(members.length === 0){
@@ -1198,6 +1530,11 @@
             (pending ?
               '<button class="btn btn-primary" type="button" data-action="approve-member" data-id="'+esc(m.id)+'">승인</button>' +
               '<button class="btn btn-danger-ghost" type="button" data-action="reject-member" data-id="'+esc(m.id)+'">거절</button>'
+            : '') +
+            (!pending ?
+              '<button class="btn btn-ghost" type="button" data-action="quick-match" data-id="'+esc(m.id)+'" aria-label="빠른 매칭">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+              '</button>'
             : '') +
             '<button class="btn btn-ghost" type="button" data-action="copy-member" data-id="'+esc(m.id)+'" aria-label="카톡 공유용 정보 복사">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" stroke-linecap="round"/></svg>' +
@@ -1633,12 +1970,12 @@
     $('matchMembersHint').hidden = members.length >= 2;
   }
 
-  function openMatchModal(id){
+  function openMatchModal(id, presetA, presetB){
     if(isReadOnly()) return;
     editingMatchId = id || null;
     var x = id ? matches.filter(function(m){ return m.id === id; })[0] : null;
     $('matchModalTitle').textContent = x ? '매칭 수정' : '새 매칭 등록';
-    populateMemberSelects(x ? x.aId : '', x ? x.bId : '');
+    populateMemberSelects(x ? x.aId : (presetA || ''), x ? x.bId : (presetB || ''));
     $('x-matchmaker').value = x ? (x.matchmaker || '') : '';
     $('x-date').value = x ? (x.date || '') : todayStr();
     $('x-status').value = x ? (x.status || 'proposed') : 'proposed';
@@ -1733,6 +2070,10 @@
       if(btn.dataset.action === 'edit-member') openMemberModal(id);
       if(btn.dataset.action === 'view-photos') openPhotoViewer(id);
       if(btn.dataset.action === 'copy-member') copyMemberInfo(id);
+      if(btn.dataset.action === 'quick-match'){
+        var qmMember = memberById(id);
+        if(qmMember) presetQuickMatchMember(qmMember);
+      }
       if(btn.dataset.action === 'approve-member') approveMember(id);
       if(btn.dataset.action === 'reject-member'){
         var rm = memberById(id);
@@ -1773,6 +2114,27 @@
     $('memberSearch').addEventListener('input', renderMembers);
     $('memberStatusFilter').addEventListener('change', renderMembers);
     $('memberGenderFilter').addEventListener('change', renderMembers);
+    $('memberAgeMin').addEventListener('input', renderMembers);
+    $('memberAgeMax').addEventListener('input', renderMembers);
+    $('memberMbtiFilter').addEventListener('change', renderMembers);
+    $('memberSort').addEventListener('change', renderMembers);
+
+    $('qmLeftList').addEventListener('click', qmCardClickHandler('left'));
+    $('qmRightList').addEventListener('click', qmCardClickHandler('right'));
+    $('qmClearSelectionBtn').addEventListener('click', function(){
+      qmLeftSelectedId = null; qmRightSelectedId = null; renderQuickMatch();
+    });
+    $('qmCreateMatchBtn').addEventListener('click', function(){
+      if(qmLeftSelectedId && qmRightSelectedId && qmLeftSelectedId !== qmRightSelectedId){
+        openMatchModal(null, qmLeftSelectedId, qmRightSelectedId);
+      }
+    });
+    $('qmAgeMin').addEventListener('input', renderQuickMatch);
+    $('qmAgeMax').addEventListener('input', renderQuickMatch);
+    $('qmMbtiFilter').addEventListener('change', renderQuickMatch);
+    $('qmAvailableOnly').addEventListener('change', renderQuickMatch);
+    $('qmLeftGender').addEventListener('change', renderQuickMatch);
+    $('qmRightGender').addEventListener('change', renderQuickMatch);
 
     $('m-photo-strip').addEventListener('click', function(e){
       var btn = e.target.closest('button');
@@ -1874,6 +2236,7 @@
       renderMembers();
       renderMatches();
       renderStats();
+      renderQuickMatch();
       if(!$('matchOverlay').hidden){ populateMemberSelects(); }
     }).catch(function(err){
       console.error('participants fetch error', err);
