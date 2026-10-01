@@ -110,6 +110,47 @@
   .reveal-box{ display:flex; flex-direction:column; gap:4px; font-size:13px; background:var(--success-soft); color:var(--ink); border-radius:10px; padding:8px 10px; }
   .reveal-box b{ font-weight:700; }
   .reveal-hint{ font-size:12.5px; color:var(--muted); }
+  .decision-box{ display:flex; flex-direction:column; gap:8px; font-size:13px; background:var(--surface-2); border-radius:10px; padding:10px 12px; }
+  .decision-title{ font-weight:700; font-size:13px; }
+  .decision-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .decision-row .who{ font-weight:600; }
+  .decision-row .btn{ padding:5px 12px; font-size:12.5px; margin-left:auto; }
+  /* AI 추천 */
+  .rec-group{ display:flex; flex-direction:column; gap:10px; padding:14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
+  .rec-head{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .rec-head b{ font-size:16px; }
+  .rec-head span{ color:var(--muted); font-size:13px; }
+  .rec-item{ display:flex; flex-direction:column; gap:6px; padding:10px 12px; border-radius:var(--radius-sm); background:var(--surface-2); }
+  .rec-item-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .rec-item-top .nm{ font-weight:700; }
+  .rec-item-top .meta{ color:var(--muted); font-size:13px; }
+  .rec-item-top .btn{ margin-left:auto; padding:6px 14px; font-size:13px; }
+  .rec-empty{ color:var(--muted); font-size:13.5px; }
+  /* 참가자 결정 화면 */
+  #offerOverlay{ align-items:stretch; padding:0; z-index:60; }
+  #offerOverlay .dialog{ max-width:none; width:100%; height:100%; max-height:none; border-radius:0; padding:0; display:flex; flex-direction:column; overflow:hidden; }
+  #offerOverlay .dialog-head{ margin:0; padding:18px 20px 14px; border-bottom:1px solid var(--line); }
+  #offerOverlay .dialog-head h2{ font-size:24px; }
+  .offer-scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .offer-body{ width:100%; max-width:640px; margin:0 auto; padding:20px; display:flex; flex-direction:column; gap:18px; font-size:16px; line-height:1.6; }
+  .offer-note{ padding:14px 16px; border-radius:var(--radius-sm); background:var(--accent-soft); font-size:16px; }
+  .offer-note b{ display:block; font-size:13px; color:var(--accent); margin-bottom:2px; }
+  .offer-photos{ display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:4px; }
+  .offer-photos img{ height:min(62vh,420px); max-width:86vw; border-radius:var(--radius); object-fit:cover; scroll-snap-align:center; background:var(--surface-2); flex:none; }
+  .offer-facts{ display:grid; grid-template-columns:auto 1fr; gap:8px 14px; }
+  .offer-facts dt{ color:var(--muted); font-weight:600; }
+  .offer-facts dd{ margin:0; }
+  .offer-text h3{ font-size:16px; margin:0 0 4px; }
+  .offer-text p{ margin:0; white-space:pre-wrap; }
+  .offer-actions{ position:sticky; bottom:0; display:flex; gap:10px; padding:14px 20px calc(14px + env(safe-area-inset-bottom, 0px)); background:var(--surface); border-top:1px solid var(--line); }
+  .offer-actions .btn{ flex:1; font-size:18px; padding:16px; }
+  .offer-actions .btn-primary{ flex:2; }
+  .offer-result{ text-align:center; padding:40px 10px; font-size:19px; line-height:1.7; }
+  .offer-result .big{ font-size:44px; display:block; margin-bottom:6px; }
+  @media (min-width:640px){
+    #offerOverlay{ align-items:center; padding:24px; }
+    #offerOverlay .dialog{ max-width:720px; height:auto; max-height:94vh; border-radius:var(--radius); }
+  }
   .request-box{ display:flex; flex-direction:column; gap:6px; font-size:13px; background:var(--warn-soft); color:var(--ink); border-radius:10px; padding:10px 12px; }
   .request-box .request-actions{ display:flex; gap:6px; flex-wrap:wrap; }
   .consent-chips{ display:flex; gap:6px; flex-wrap:wrap; }
@@ -531,17 +572,18 @@
     </div>
     <div class="guide-body">
       <section>
-        <p class="guide-lead">참가자를 모으고, 다른 주선자의 참가자와 매칭을 요청하고, 양쪽 동의와 관리자 승인을 받으면 두 사람의 연락처가 공개돼요.</p>
+        <p class="guide-lead">AI가 궁합으로 후보를 찾고, 주선자가 검토해서 제안하고, 관리자 승인 뒤 참가자 본인이 최종 결정해요. 두 사람이 모두 만나보기로 하면 연락처가 공개돼요.</p>
       </section>
 
       <section>
         <h3>한눈에 보는 매칭 순서</h3>
         <div class="guide-flow" aria-label="매칭 순서">
-          <span class="gf-step"><b>1</b>참가자 모으기</span><span class="gf-arrow">→</span>
-          <span class="gf-step"><b>2</b>매칭 요청</span><span class="gf-arrow">→</span>
+          <span class="gf-step"><b>1</b>AI 추천</span><span class="gf-arrow">→</span>
+          <span class="gf-step"><b>2</b>주선자 검토·제안</span><span class="gf-arrow">→</span>
           <span class="gf-step"><b>3</b>상대 담당 수락</span><span class="gf-arrow">→</span>
           <span class="gf-step"><b>4</b>관리자 승인</span><span class="gf-arrow">→</span>
-          <span class="gf-step"><b>5</b>연락처 공개 · 소개</span>
+          <span class="gf-step"><b>5</b>참가자 최종 결정</span><span class="gf-arrow">→</span>
+          <span class="gf-step"><b>6</b>연락처 공개 · 소개</span>
         </div>
       </section>
 
@@ -551,55 +593,50 @@
           <li>
             <span class="guide-num">1</span>
             <div>
-              <h4>참가자 모으기 <span class="who">나</span></h4>
+              <h4>참가자 모으기 · 정보 채우기 <span class="who">나</span></h4>
               <ul>
-                <li>화면 위쪽 <span class="guide-ui">내 등록 링크</span>를 눌러 링크를 복사하고, 소개할 지인에게 카톡으로 보내세요.</li>
-                <li>그 링크로 신청한 사람은 자동으로 <b>내 담당</b>이 돼요.</li>
-                <li>관리자가 신청을 승인하면 모든 주선자의 참가자 목록에 나타나요. 승인 전에는 나와 관리자만 볼 수 있어요.</li>
+                <li>화면 위쪽 <span class="guide-ui">내 등록 링크</span>를 복사해 지인에게 보내면, 그 링크로 신청한 사람은 자동으로 <b>내 담당</b>이 돼요.</li>
+                <li>내 담당 참가자는 카드의 연필 버튼으로 지역·만남 목적·흡연·관심사 같은 <b>궁합 정보</b>를 채워 주세요. 많이 채울수록 추천이 정확해져요.</li>
               </ul>
             </div>
           </li>
           <li>
             <span class="guide-num">2</span>
             <div>
-              <h4>내 담당 참가자 관리 <span class="who">나</span></h4>
+              <h4>AI 추천 보고 제안하기 <span class="who">나</span></h4>
               <ul>
-                <li><span class="guide-ui">참가자 관리</span> 탭에서 담당 필터를 <span class="guide-ui">내 담당</span>으로 바꾸면 내 참가자만 볼 수 있어요.</li>
-                <li>카드의 연필 버튼으로 사진·직업·성격·연락처 같은 정보를 고칠 수 있어요.</li>
-                <li>내 담당 참가자는 이름과 연락처가 보이고, 다른 참가자는 <b>여자1·남자2</b> 같은 코드명과 프로필만 보여요.</li>
+                <li><span class="guide-ui">AI 추천</span> 탭에서 내 참가자마다 잘 맞을 후보와 이유를 자동으로 보여줘요. 조건이 안 맞는 사람과 이미 제안한 짝은 빠져 있어요.</li>
+                <li>후보를 살펴보고 괜찮으면 <span class="guide-ui">제안하기</span>를 눌러요. 직접 고르고 싶으면 <span class="guide-ui">빠른 매칭</span>이나 <span class="guide-ui">새 매칭 등록</span>을 써도 돼요.</li>
               </ul>
             </div>
           </li>
           <li>
             <span class="guide-num">3</span>
             <div>
-              <h4>매칭 요청하기 <span class="who">나</span></h4>
+              <h4>상대 담당 주선자의 수락 <span class="who">상대 주선자</span></h4>
               <ul>
-                <li>참가자 카드의 하트 버튼, <span class="guide-ui">빠른 매칭</span> 탭, 또는 <span class="guide-ui">매칭 기록</span> 탭의 <span class="guide-ui">새 매칭 등록</span>에서 두 사람을 골라 저장하세요.</li>
-                <li>보통은 내 참가자 한 명과, 잘 맞을 것 같은 다른 주선자의 참가자 한 명을 고르면 돼요.</li>
-                <li>저장하면 상대 참가자의 담당 주선자에게 요청이 가고, 관리자에게도 승인 요청이 가요.</li>
+                <li>요청을 받은 주선자의 <span class="guide-ui">매칭 기록</span> 탭에 <b>받은 요청</b>이 떠요. 검토하고 <span class="guide-ui">수락</span> 또는 <span class="guide-ui">거절</span>을 눌러요.</li>
+                <li>두 사람이 모두 내 담당이면 이 단계는 자동으로 넘어가요.</li>
               </ul>
             </div>
           </li>
           <li>
             <span class="guide-num">4</span>
             <div>
-              <h4>상대 담당 주선자의 수락 <span class="who">상대 주선자</span></h4>
+              <h4>관리자 승인 <span class="who">관리자</span></h4>
               <ul>
-                <li>요청을 받은 주선자의 <span class="guide-ui">매칭 기록</span> 탭에 숫자 배지와 함께 <b>받은 요청</b>이 맨 위에 떠요.</li>
-                <li>자기 참가자에게 물어본 뒤 <span class="guide-ui">수락</span> 또는 <span class="guide-ui">거절</span>을 눌러요.</li>
-                <li>나도 다른 주선자에게서 요청을 받으면 같은 곳에서 수락·거절하면 돼요.</li>
-                <li>두 사람이 모두 내 담당이면 이 단계는 자동으로 넘어가요.</li>
+                <li>관리자가 매칭을 확인하고 승인해야 참가자에게 보낼 수 있어요.</li>
               </ul>
             </div>
           </li>
           <li>
             <span class="guide-num">5</span>
             <div>
-              <h4>관리자 승인 <span class="who">관리자</span></h4>
+              <h4>참가자에게 결정 링크 보내기 <span class="who">각 담당 주선자 → 참가자</span></h4>
               <ul>
-                <li>관리자가 매칭을 확인하고 승인해요. 수락과 승인은 어느 쪽이 먼저 되어도 괜찮아요.</li>
-                <li>매칭 카드의 표시로 지금 무엇을 기다리는지 알 수 있어요. 예: <b>관리자 승인 대기</b>, <b>여자1 담당 민지 · 수락 대기</b></li>
+                <li>승인된 매칭 카드에 <b>참가자 최종 결정</b> 칸이 생겨요. 내 참가자 옆의 <span class="guide-ui">결정 링크 보내기</span>를 누르고 한마디를 적으면 카톡용 메시지가 만들어져요.</li>
+                <li>참가자는 로그인 없이 링크에서 상대의 프로필과 사진(이름·연락처 제외)을 보고 <b>만나볼게요 / 이번엔 괜찮아요</b>를 골라요.</li>
+                <li>사진은 7일 동안 열려요. 기간이 지나면 <span class="guide-ui">링크 다시 만들기</span>를 누르세요. 주소는 그대로예요.</li>
               </ul>
             </div>
           </li>
@@ -608,9 +645,8 @@
             <div>
               <h4>연락처 공개 · 소개 진행 <span class="who">나 + 상대 주선자</span></h4>
               <ul>
-                <li>상대 수락과 관리자 승인이 모두 끝나면, 요청한 주선자와 양쪽 담당 주선자에게 <b>두 사람의 이름과 연락처</b>가 보여요.</li>
-                <li>담당 주선자끼리 연락해서 소개를 진행하고, 매칭 카드의 상태를 <b>제안됨 → 진행중 → 성사·불발·보류</b>로 바꿔 주세요.</li>
-                <li>후속 연락 날짜와 메모를 적어 두면 다음 할 일을 놓치지 않아요.</li>
+                <li>두 참가자가 모두 만나보기로 하면, 요청한 주선자와 양쪽 담당 주선자에게 <b>두 사람의 이름과 연락처</b>가 보이고 상태가 <b>진행중</b>으로 바뀌어요.</li>
+                <li>서로 연락처를 전해 주고, 결과에 따라 상태를 <b>성사·불발·보류</b>로 바꿔 주세요.</li>
               </ul>
             </div>
           </li>
@@ -622,7 +658,8 @@
         <ul>
           <li><b>모든 주선자:</b> 승인된 참가자의 코드명, 나이, 키, 직업, MBTI, 지역, 만남 목적, 생활 습관, 관심사, 원하는 상대 조건, 성격, 이상형, 사진</li>
           <li><b>담당 주선자:</b> 내 담당 참가자의 이름과 연락처 (언제나)</li>
-          <li><b>매칭 관련 주선자:</b> 수락과 승인이 끝난 매칭의 두 사람 이름과 연락처</li>
+          <li><b>매칭 관련 주선자:</b> 두 참가자가 모두 만나보기로 한 매칭의 두 사람 이름과 연락처</li>
+          <li><b>참가자:</b> 결정 링크에서 상대의 프로필과 사진만 (이름·연락처는 안 보여요)</li>
           <li><b>관리자:</b> 전체</li>
         </ul>
       </section>
@@ -630,6 +667,8 @@
       <section>
         <h3>자주 묻는 질문</h3>
         <dl class="guide-faq">
+          <dt>참가자가 '이번엔 괜찮아요'를 누르면요?</dt>
+          <dd>매칭 카드에 '참가자 거절'로 표시되고 연락처는 공개되지 않아요. 그 짝은 AI 추천에 다시 나오지 않아요.</dd>
           <dt>상대 주선자가 거절하면요?</dt>
           <dd>그 매칭은 공개되지 않아요. 카드에 '상대측 거절'로 표시되니 다른 분으로 다시 요청해 보세요.</dd>
           <dt>승인된 매칭의 사람을 바꿀 수 있나요?</dt>
@@ -758,7 +797,7 @@
             <dt>이용 목적</dt>
             <dd>소개팅 상대 추천과 주선, 주선 진행을 위한 연락</dd>
             <dt>공개 범위</dt>
-            <dd>이름·연락처는 관리자, 담당 주선자, 그리고 양쪽 동의와 관리자 승인을 거친 매칭의 주선자에게만 공개돼요. 그 밖의 프로필은 승인된 주선자들이 코드명(예: 여자1)으로 볼 수 있어요.</dd>
+            <dd>이름·연락처는 관리자와 담당 주선자, 그리고 두 분이 모두 만나보기로 한 매칭의 주선자에게만 공개돼요. 그 밖의 프로필은 승인된 주선자들이 코드명(예: 여자1)으로 볼 수 있어요. 소개를 제안할 때는 상대 참가자에게 이름·연락처를 뺀 프로필과 사진을 보여드려요.</dd>
             <dt>보관 기간</dt>
             <dd>참가를 그만두실 때까지 보관해요. 담당 주선자나 관리자에게 삭제를 요청하시면 지체 없이 삭제해요.</dd>
             <dt>동의 거부</dt>
@@ -815,6 +854,7 @@
 
   <nav class="tabs" role="tablist">
     <button class="tab-btn" role="tab" id="tabBtn-members" aria-selected="true" aria-controls="panel-members" data-tab="members">참가자 관리</button>
+    <button class="tab-btn" role="tab" id="tabBtn-recommend" aria-selected="false" aria-controls="panel-recommend" data-tab="recommend">AI 추천</button>
     <button class="tab-btn" role="tab" id="tabBtn-quickmatch" aria-selected="false" aria-controls="panel-quickmatch" data-tab="quickmatch">빠른 매칭</button>
     <button class="tab-btn" role="tab" id="tabBtn-matches" aria-selected="false" aria-controls="panel-matches" data-tab="matches">매칭 기록<span class="tab-count" id="pendingMatchCount" hidden></span></button>
     <button class="tab-btn admin-only" role="tab" id="tabBtn-accounts" aria-selected="false" aria-controls="panel-accounts" data-tab="accounts">주선자 관리<span class="tab-count" id="pendingAccountCount" hidden></span></button>
@@ -891,6 +931,14 @@
   </section>
 
   <!-- ================= QUICK MATCH PANEL ================= -->
+  <section id="panel-recommend" role="tabpanel" aria-labelledby="tabBtn-recommend" style="display:none; flex-direction:column; gap:14px;">
+    <p class="helper-text" style="margin:0;">궁합 점수로 참가자마다 잘 맞을 후보를 자동으로 골라요. 조건이 안 맞는 사람과 이미 제안한 짝은 빼요. 마음에 드는 후보는 <b>제안하기</b>를 누르면 매칭 요청이 만들어지고, 상대 담당 수락과 관리자 승인 뒤 참가자에게 결정 링크를 보내요.</p>
+    <div class="toolbar">
+      <select id="recTarget" class="select-input" style="flex:1 1 220px;"></select>
+    </div>
+    <div id="recList" style="display:flex; flex-direction:column; gap:14px;"></div>
+  </section>
+
   <section id="panel-quickmatch" role="tabpanel" aria-labelledby="tabBtn-quickmatch" style="display:none; flex-direction:column; gap:14px;">
     <p class="helper-text" style="margin:0;">양쪽에서 한 명씩 선택하면 궁합을 참고해서 바로 매칭을 만들 수 있어요.</p>
     <div class="toolbar">
@@ -1192,6 +1240,54 @@
     <div class="dialog-actions">
       <button type="button" class="btn" id="confirmCancel">취소</button>
       <button type="button" class="btn" id="confirmOk" style="background:var(--danger); border-color:var(--danger); color:#fff;">삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= OFFER LINK MODAL (matchmaker) ================= -->
+<div class="overlay" id="offerLinkOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="offerLinkTitle" style="max-width:480px;">
+    <div class="dialog-head">
+      <h2 id="offerLinkTitle">참가자에게 결정 링크 보내기</h2>
+      <button class="btn btn-ghost" type="button" id="offerLinkClose" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="offerLinkStep1" style="display:flex; flex-direction:column; gap:10px;">
+      <p id="offerLinkWho" style="margin:0; font-size:14.5px;"></p>
+      <div class="field">
+        <label for="offerNote">참가자에게 보일 한마디 (선택)</label>
+        <textarea class="field-input" id="offerNote" maxlength="300" placeholder="예: 둘 다 여행을 좋아하고 사는 곳도 가까워요"></textarea>
+        <span class="helper-text" style="margin:0;">링크에서는 상대의 이름·연락처를 뺀 프로필과 사진, 그리고 이 한마디가 보여요. 사진은 7일 동안 열려요.</span>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn" id="offerLinkCancel">취소</button>
+        <button type="button" class="btn btn-primary" id="offerLinkCreate">링크 만들기</button>
+      </div>
+    </div>
+    <div id="offerLinkStep2" hidden style="display:flex; flex-direction:column; gap:10px;">
+      <p style="margin:0; font-size:14.5px;">아래 메시지를 복사해서 참가자 본인에게 카톡으로 보내 주세요.</p>
+      <textarea class="field-input" id="offerMsg" readonly style="min-height:150px;"></textarea>
+      <div class="dialog-actions">
+        <button type="button" class="btn" id="offerLinkDone">닫기</button>
+        <button type="button" class="btn btn-primary" id="offerMsgCopy">메시지 복사</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= OFFER PAGE (participant, no login) ================= -->
+<div class="overlay" id="offerOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="offerTitle">
+    <div class="dialog-head">
+      <h2 id="offerTitle">소개 제안이 도착했어요</h2>
+    </div>
+    <div class="offer-scroll">
+      <div class="offer-body" id="offerBody"><p class="helper-text">불러오는 중…</p></div>
+    </div>
+    <div class="offer-actions" id="offerActions" hidden>
+      <button type="button" class="btn" id="offerDecline">이번엔 괜찮아요</button>
+      <button type="button" class="btn btn-primary" id="offerAccept">만나볼게요</button>
     </div>
   </div>
 </div>
@@ -1600,6 +1696,13 @@
 
   function initAuth(){
     try{ localStorage.removeItem('idiary_unlocked'); localStorage.removeItem('mm_role'); }catch(e){}
+    var offerParam = null;
+    try{ offerParam = new URLSearchParams(location.search).get('offer'); }catch(e){}
+    if(offerParam){
+      // 참가자 결정 화면: 로그인 없이 이 소개만 보여줘요
+      initOfferView(String(offerParam).toLowerCase().replace(/[^0-9a-f]/g, '').slice(0, 32));
+      return;
+    }
 
     $('authTabs').addEventListener('click', function(e){
       var btn = e.target.closest('.role-tab');
@@ -1809,6 +1912,256 @@
     maybeShowGuideFirstTime();
   }
 
+  /* ---------------- AI 추천 (궁합 점수 기반 자동 후보) ---------------- */
+  function oppositeGenderOk(t, c){
+    if(t.gender === 'male') return c.gender === 'female';
+    if(t.gender === 'female') return c.gender === 'male';
+    return true;
+  }
+  function pairExists(aId, bId){
+    return matches.some(function(x){ return (x.aId === aId && x.bId === bId) || (x.aId === bId && x.bId === aId); });
+  }
+  function recommendFor(t, limit){
+    return members.filter(function(c){
+      return c.id !== t.id && c.approved !== false && c.status === 'available' && oppositeGenderOk(t, c) && !pairExists(t.id, c.id);
+    }).map(function(c){ return { m:c, s:compatibilityScore(t, c) }; })
+      .filter(function(r){ return !r.s.conflicts.length; })
+      .sort(function(a, b){ return b.s.score - a.s.score; })
+      .slice(0, limit);
+  }
+  function recTargets(){
+    var me = myId();
+    return members.filter(function(m){ return m.approved !== false && (isAdmin() || m.ownerId === me); });
+  }
+  function renderRecommendTargets(){
+    var sel = $('recTarget');
+    var prev = sel.value;
+    var list = recTargets();
+    var html = '<option value="">' + (isAdmin() ? '전체 참가자 (각 3명)' : '내 담당 전체 (각 3명)') + '</option>';
+    html += list.map(function(m){ return '<option value="'+esc(m.id)+'">'+esc(displayName(m) + (m.name && m.codeName ? ' ('+m.codeName+')' : ''))+' · 후보 5명</option>'; }).join('');
+    sel.innerHTML = html;
+    if(prev && list.some(function(m){ return m.id === prev; })) sel.value = prev;
+  }
+  function memberMetaText(m){
+    var bits = [];
+    var a = ageFromBirthYear(m.birthYear); if(a != null) bits.push(a + '세');
+    if(m.regionSido) bits.push(m.regionSido);
+    if(m.job) bits.push(m.job);
+    if(m.height) bits.push(m.height + 'cm');
+    if(m.mbti) bits.push(m.mbti);
+    return bits.join(' · ');
+  }
+  function renderRecommend(){
+    if(!membersLoaded) return;
+    renderRecommendTargets();
+    var targetId = $('recTarget').value;
+    var targets = targetId ? [memberById(targetId)].filter(Boolean) : recTargets();
+    var limit = targetId ? 5 : 3;
+    if(!targets.length){
+      $('recList').innerHTML = '<p class="rec-empty">' + (isAdmin() ? '승인된 참가자가 아직 없어요.' : '내 담당 참가자가 아직 없어요. 상단의 "내 등록 링크"로 참가자를 모아 보세요.') + '</p>';
+      return;
+    }
+    $('recList').innerHTML = targets.map(function(t){
+      var head = '<div class="rec-head"><b>'+esc(displayName(t))+'</b><span>'+esc(memberMetaText(t))+'</span></div>';
+      if(t.status !== 'available') return '<div class="rec-group">'+head+'<p class="rec-empty">지금은 소개 가능 상태가 아니에요.</p></div>';
+      var recs = recommendFor(t, limit);
+      var body = recs.length ? recs.map(function(r){
+        var c = r.m, sc = r.s;
+        var cls = sc.pct >= 70 ? 'badge-success' : (sc.pct >= 40 ? 'badge-accent' : 'badge-neutral');
+        var chips = sc.reasons.slice(0, 4).map(function(x){ return '<span class="badge badge-success">'+esc(x)+'</span>'; }).join('') +
+                    sc.cautions.slice(0, 2).map(function(x){ return '<span class="badge badge-warn">'+esc(x)+'</span>'; }).join('');
+        return '<div class="rec-item">' +
+          '<div class="rec-item-top"><span class="nm">'+esc(displayName(c))+'</span><span class="meta">'+esc(memberMetaText(c))+'</span>' +
+          '<span class="badge '+cls+'">궁합 '+sc.pct+'%'+(sc.lowInfo ? ' · 정보 적음' : '')+'</span>' +
+          '<button class="btn btn-primary" type="button" data-action="rec-propose" data-a="'+esc(t.id)+'" data-b="'+esc(c.id)+'" data-pct="'+sc.pct+'">제안하기</button></div>' +
+          (chips ? '<div class="qm-reasons" style="margin:0;">'+chips+'</div>' : '') +
+        '</div>';
+      }).join('') : '<p class="rec-empty">조건에 맞는 새 후보가 없어요. 정보를 더 채우거나 새 참가자가 들어오면 다시 확인해 보세요.</p>';
+      return '<div class="rec-group">'+head+body+'</div>';
+    }).join('');
+  }
+  function recPropose(btn){
+    var aId = btn.dataset.a, bId = btn.dataset.b;
+    if(pairExists(aId, bId)){ showToast('이미 제안한 짝이에요'); return; }
+    btn.disabled = true;
+    var row = matchToRow({
+      aId: aId, bId: bId,
+      matchmaker: (currentProfile && currentProfile.display_name) || '',
+      date: todayStr(), status: 'proposed', followUpDate: null,
+      memo: 'AI 추천 · 궁합 ' + btn.dataset.pct + '%'
+    });
+    if(isAdmin()) row.approved = true;
+    supabase.from('matches').insert(row).then(function(res){
+      if(res.error) throw res.error;
+      showToast(isAdmin() ? '제안했어요. 담당 주선자가 참가자에게 링크를 보낼 수 있어요' : '제안했어요. 상대 담당 수락과 관리자 승인을 기다려요');
+      return refetchMatches();
+    }).then(function(){ renderRecommend(); }).catch(function(err){
+      console.error(err);
+      btn.disabled = false;
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '제안하지 못했어요. 다시 시도해 주세요.');
+    });
+  }
+
+  /* ---------------- 참가자 결정 링크 (주선자) ---------------- */
+  var OFFER_PHOTO_TTL = 7 * 24 * 3600;
+  var offerLinkCtx = null;
+  function openOfferLink(matchId, side){
+    var x = matches.filter(function(m){ return m.id === matchId; })[0];
+    if(!x || !canSendOffer(x, side)) return;
+    var mine = memberById(side === 'a' ? x.aId : x.bId);
+    var other = memberById(side === 'a' ? x.bId : x.aId);
+    offerLinkCtx = { x:x, side:side, mine:mine, other:other };
+    $('offerLinkWho').innerHTML = '<b>'+esc(mine ? displayName(mine) : '참가자')+'</b> 님에게 <b>'+esc(other ? displayName(other) : '상대')+'</b> 님을 소개하는 링크를 만들어요.';
+    var note = '';
+    if(mine && other){
+      var sc = compatibilityScore(mine, other);
+      if(sc.reasons.length) note = '이런 점이 잘 맞아 보여요: ' + sc.reasons.slice(0, 3).join(', ');
+    }
+    $('offerNote').value = note;
+    $('offerLinkStep1').hidden = false;
+    $('offerLinkStep2').hidden = true;
+    $('offerLinkCreate').disabled = false;
+    $('offerLinkOverlay').hidden = false;
+  }
+  function closeOfferLink(){ $('offerLinkOverlay').hidden = true; offerLinkCtx = null; }
+  function createOfferLink(){
+    var ctx = offerLinkCtx;
+    if(!ctx) return;
+    var btn = $('offerLinkCreate');
+    btn.disabled = true;
+    var paths = ctx.other ? getPhotoPaths(ctx.other) : [];
+    var signP = paths.length
+      ? supabase.storage.from(PHOTO_BUCKET).createSignedUrls(paths, OFFER_PHOTO_TTL).then(function(r){
+          if(r.error) throw r.error;
+          return (r.data || []).filter(function(d){ return d && d.signedUrl && !d.error; }).map(function(d){ return d.signedUrl; });
+        })
+      : Promise.resolve([]);
+    signP.then(function(urls){
+      var exp = new Date(Date.now() + OFFER_PHOTO_TTL * 1000).toISOString();
+      return supabase.rpc('create_offer', { p_match: ctx.x.id, p_side: ctx.side, p_photo_urls: urls, p_expires_at: exp, p_note: $('offerNote').value.trim() || null });
+    }).then(function(res){
+      if(res.error) throw res.error;
+      var url = location.origin + location.pathname + '?offer=' + res.data;
+      var who = ctx.mine && ctx.mine.name ? ctx.mine.name + ' 님, ' : '';
+      $('offerMsg').value = '안녕하세요 ' + who + '소개해 드리고 싶은 분이 있어요 :)\n아래 링크에서 프로필을 보시고 만나보실지 알려주세요.\n\n' + url + '\n\n* 본인만 열어 주세요. 두 분 모두 만나보기로 하면 연락처를 전해 드릴게요.';
+      $('offerLinkStep1').hidden = true;
+      $('offerLinkStep2').hidden = false;
+      refetchMatches();
+    }).catch(function(err){
+      console.error(err);
+      btn.disabled = false;
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '링크를 만들지 못했어요. 다시 시도해 주세요.');
+    });
+  }
+  function initOfferLink(){
+    $('offerLinkClose').addEventListener('click', closeOfferLink);
+    $('offerLinkCancel').addEventListener('click', closeOfferLink);
+    $('offerLinkDone').addEventListener('click', closeOfferLink);
+    $('offerLinkCreate').addEventListener('click', createOfferLink);
+    $('offerMsgCopy').addEventListener('click', function(){ copyText($('offerMsg').value); });
+    $('recTarget').addEventListener('change', renderRecommend);
+    $('recList').addEventListener('click', function(e){
+      var b = e.target.closest('button[data-action="rec-propose"]');
+      if(b) recPropose(b);
+    });
+  }
+
+  /* ---------------- 참가자 결정 화면 (?offer=) ---------------- */
+  var offerToken = null;
+  var offerConfirm = null;
+  function offerFactsHtml(o){
+    var rows = [];
+    function row(k, v){ if(v) rows.push('<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>'); }
+    var age = ageFromBirthYear(o.birth_year);
+    row('나이', age != null ? age + '세 (' + String(o.birth_year).slice(-2) + '년생)' : '');
+    row('성별', GENDER_LABEL[o.gender] || '');
+    row('키', o.height ? o.height + 'cm' : '');
+    row('사는 곳', [o.region_sido, o.region_detail].filter(Boolean).join(' '));
+    row('직업', o.job);
+    row('MBTI', o.mbti);
+    row('만남 목적', PURPOSE_LABEL[o.purpose] || '');
+    row('생활 습관', [SMOKING_LABEL[o.smoking], DRINKING_LABEL[o.drinking]].filter(Boolean).join(' · '));
+    row('관심사', (o.interests || []).join(', '));
+    return rows.length ? '<dl class="offer-facts">'+rows.join('')+'</dl>' : '';
+  }
+  function renderOffer(data){
+    var body = $('offerBody');
+    var actions = $('offerActions');
+    actions.hidden = true;
+    if(!data || data.status === 'invalid'){
+      body.innerHTML = '<div class="offer-result">링크가 올바르지 않아요.<br>주선자에게 다시 받아 주세요.</div>';
+      return;
+    }
+    if(data.status === 'unavailable'){
+      body.innerHTML = '<div class="offer-result">지금은 볼 수 없는 소개예요.<br>취소되었거나 준비 중이에요. 주선자에게 문의해 주세요.</div>';
+      return;
+    }
+    var o = data.other || {};
+    if(data.result === 'matched'){
+      body.innerHTML = '<div class="offer-result">두 분 모두 만나보기로 했어요!<br>주선자가 곧 연락처를 전해 드릴게요.</div>'; return;
+    }
+    if(data.result === 'closed'){
+      body.innerHTML = '<div class="offer-result">' + (data.decision === 'declined' ? '답변을 전했어요.<br>다음에 더 잘 맞는 분을 소개해 드릴게요.' : '아쉽지만 이번 소개는 이어지지 않았어요.<br>주선자가 다른 분을 찾아볼게요.') + '</div>'; return;
+    }
+    if(data.result === 'waiting'){
+      body.innerHTML = '<div class="offer-result">만나보겠다는 답변을 전했어요!<br>상대분의 답을 기다리고 있어요. 결과는 주선자가 알려드릴게요.</div>'; return;
+    }
+    var expired = data.photo_expires_at && new Date(data.photo_expires_at).getTime() < Date.now();
+    var photos = (o.photo_urls || []);
+    var photosHtml = photos.length
+      ? (expired ? '<p class="helper-text" style="margin:0;">사진 보기 기간이 지났어요. 주선자에게 새 링크를 요청해 주세요.</p>'
+                 : '<div class="offer-photos">' + photos.map(function(u){ return '<img src="'+esc(u)+'" alt="상대 사진" loading="lazy">'; }).join('') + '</div>')
+      : '';
+    body.innerHTML =
+      (data.note ? '<div class="offer-note"><b>주선자의 한마디</b>'+esc(data.note)+'</div>' : '') +
+      photosHtml +
+      offerFactsHtml(o) +
+      (o.personality ? '<div class="offer-text"><h3>성격 · 특징</h3><p>'+esc(o.personality)+'</p></div>' : '') +
+      (o.ideal_type ? '<div class="offer-text"><h3>이상형</h3><p>'+esc(o.ideal_type)+'</p></div>' : '') +
+      '<p class="helper-text" style="margin:0;">이름과 연락처는 두 분이 모두 만나보기로 한 뒤에 주선자가 전해 드려요. 한 번 답하면 바꿀 수 없어요.</p>';
+    actions.hidden = false;
+    setOfferConfirm(null);
+  }
+  function setOfferConfirm(which){
+    offerConfirm = which;
+    $('offerAccept').textContent = which === 'accept' ? '네, 만나볼게요' : '만나볼게요';
+    $('offerDecline').textContent = which === 'decline' ? '네, 괜찮아요' : '이번엔 괜찮아요';
+    $('offerAccept').classList.toggle('btn-primary', which !== 'decline');
+  }
+  function decideOffer(accept){
+    var which = accept ? 'accept' : 'decline';
+    if(offerConfirm !== which){
+      setOfferConfirm(which);
+      showToast(accept ? '한 번 더 누르면 "만나볼게요"로 답해요' : '한 번 더 누르면 "괜찮아요"로 답해요');
+      return;
+    }
+    $('offerAccept').disabled = true; $('offerDecline').disabled = true;
+    supabase.rpc('decide_offer', { p_token: offerToken, p_accept: accept }).then(function(res){
+      if(res.error) throw res.error;
+      renderOffer(res.data);
+    }).catch(function(err){
+      console.error(err);
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '전하지 못했어요. 다시 시도해 주세요.');
+    }).finally(function(){ $('offerAccept').disabled = false; $('offerDecline').disabled = false; });
+  }
+  function initOfferView(token){
+    offerToken = token;
+    $('lockOverlay').hidden = true;
+    $('offerOverlay').hidden = false;
+    $('offerAccept').addEventListener('click', function(){ decideOffer(true); });
+    $('offerDecline').addEventListener('click', function(){ decideOffer(false); });
+    supabase.rpc('get_offer', { p_token: token }).then(function(res){
+      if(res.error) throw res.error;
+      renderOffer(res.data);
+    }).catch(function(err){
+      console.error(err);
+      $('offerBody').innerHTML = '<div class="offer-result">불러오지 못했어요. 잠시 뒤 다시 열어 주세요.</div>';
+    });
+  }
+
   /* ---------------- 관리자: 임시 비밀번호 발급 ---------------- */
   var tempPwTarget = null;
   function makeTempPassword(){
@@ -1961,6 +2314,8 @@
       approvedAt: row.approved_at || null,
       aConsent: row.a_consent || 'none',
       bConsent: row.b_consent || 'none',
+      aDecision: row.a_decision || 'none',
+      bDecision: row.b_decision || 'none',
       createdAt: row.created_at,
       updatedAt: row.updated_at
     };
@@ -2078,6 +2433,8 @@
     btns.forEach(function(b){ b.setAttribute('aria-selected', b.dataset.tab === tabName ? 'true':'false'); });
     if(tabName === 'accounts' && !isAdmin()) tabName = 'members';
     var membersPanel = $('panel-members'), qmPanel = $('panel-quickmatch'), matchesP = $('panel-matches'), accountsP = $('panel-accounts');
+    $('panel-recommend').style.display = tabName === 'recommend' ? 'flex' : 'none';
+    if(tabName === 'recommend') renderRecommend();
     membersPanel.style.display = tabName === 'members' ? 'flex' : 'none';
     qmPanel.style.display = tabName === 'quickmatch' ? 'flex' : 'none';
     matchesP.style.display = tabName === 'matches' ? 'flex' : 'none';
@@ -2110,7 +2467,7 @@
     if(matchesLoaded){
       var pm = isAdmin()
         ? matches.filter(function(x){ return !x.approved; }).length
-        : matches.filter(function(x){ return mySidesPending(x).length > 0; }).length;
+        : matches.filter(function(x){ return mySidesPending(x).length > 0 || mySidesToSend(x).length > 0; }).length;
       $('pendingMatchCount').textContent = String(pm);
       $('pendingMatchCount').hidden = pm === 0;
     }
@@ -2603,8 +2960,8 @@
 
     // 내가 응답해야 하는 요청을 맨 위로
     filtered.sort(function(a, b){
-      var pa = mySidesPending(a).length ? 0 : 1;
-      var pb = mySidesPending(b).length ? 0 : 1;
+      var pa = (mySidesPending(a).length || mySidesToSend(a).length) ? 0 : 1;
+      var pb = (mySidesPending(b).length || mySidesToSend(b).length) ? 0 : 1;
       return pa - pb;
     });
 
@@ -2624,7 +2981,9 @@
       var canEdit = isAdmin() || isCreator;
       var revealed = matchRevealed(x);
       var declined = x.aConsent === 'declined' || x.bConsent === 'declined';
+      var pDeclined = x.aDecision === 'declined' || x.bDecision === 'declined';
       var pendingMine = mySidesPending(x);
+      var toSend = mySidesToSend(x);
 
       var subBits = [];
       if(x.date) subBits.push('소개일 ' + fmtDate(x.date));
@@ -2633,8 +2992,12 @@
 
       var statusBadges = '';
       if(pendingMine.length) statusBadges += '<span class="badge badge-warn" style="margin-right:6px;">받은 요청</span>';
+      if(toSend.length) statusBadges += '<span class="badge badge-warn" style="margin-right:6px;">링크 보낼 차례</span>';
       if(declined) statusBadges += '<span class="badge badge-danger" style="margin-right:6px;">상대측 거절</span>';
       else if(!x.approved) statusBadges += '<span class="badge badge-warn" style="margin-right:6px;">관리자 승인 대기</span>';
+      else if(pDeclined) statusBadges += '<span class="badge badge-danger" style="margin-right:6px;">참가자 거절</span>';
+      else if(matchRevealed(x)) statusBadges += '<span class="badge badge-success" style="margin-right:6px;">둘 다 수락</span>';
+      else if(matchReady(x)) statusBadges += '<span class="badge badge-info" style="margin-right:6px;">참가자 결정 중</span>';
 
       var chips = consentChip(aMember, x.aConsent, x.createdBy) + consentChip(bMember, x.bConsent, x.createdBy);
       var chipsHtml = chips ? '<div class="consent-chips">'+chips+'</div>' : '';
@@ -2654,7 +3017,7 @@
         requestHtml =
           '<div class="request-box">' +
             '<div><b>'+esc(ownerName(x.createdBy))+'</b> 님이 내 담당 <b>'+esc(mine ? displayName(mine) : '')+'</b> 님과 <b>'+esc(other ? displayName(other) : '')+'</b>'+(otherBits.length ? ' ('+esc(otherBits.join(' · '))+')' : '')+' 매칭을 요청했어요.</div>' +
-            '<div class="reveal-hint">'+esc(mine ? displayName(mine) : '참가자')+' 님 의사를 먼저 확인한 뒤 응답해 주세요. 수락하고 관리자가 승인하면 서로 이름·연락처가 공개돼요.</div>' +
+            '<div class="reveal-hint">수락하고 관리자가 승인하면, 각 담당 주선자가 참가자에게 결정 링크를 보내요. 두 참가자가 모두 만나보기로 하면 이름·연락처가 공개돼요.</div>' +
             '<div class="request-actions">' +
               '<button class="btn btn-primary" type="button" data-action="accept-match" data-id="'+esc(x.id)+'">수락</button>' +
               '<button class="btn btn-danger-ghost" type="button" data-action="decline-match" data-id="'+esc(x.id)+'">거절</button>' +
@@ -2675,11 +3038,29 @@
           if(x.aConsent === 'pending' && aMember) waits.push(displayName(aMember) + ' 담당 ' + ownerName(aMember.ownerId) + ' 님 수락');
           if(x.bConsent === 'pending' && bMember) waits.push(displayName(bMember) + ' 담당 ' + ownerName(bMember.ownerId) + ' 님 수락');
           if(!x.approved) waits.push('관리자 승인');
-          waits = waits.length ? ['기다리는 중: ' + waits.join(', ') + '. 모두 끝나면 두 사람의 이름과 연락처가 여기에 보여요.'] : [];
+          if(matchReady(x) && !pDeclined){
+            if(x.aDecision !== 'accepted' && aMember) waits.push(displayName(aMember) + ' 본인 결정');
+            if(x.bDecision !== 'accepted' && bMember) waits.push(displayName(bMember) + ' 본인 결정');
+          }
+          if(pDeclined) waits = ['참가자가 이번 소개는 괜찮다고 했어요. 다른 분을 찾아보세요.'];
+          else waits = waits.length ? ['기다리는 중: ' + waits.join(', ') + '. 모두 끝나면 두 사람의 이름과 연락처가 여기에 보여요.'] : [];
         }
         if(waits.length) revealHtml = '<div class="reveal-hint">'+esc(waits[0])+'</div>';
       } else if(isAdmin() && x.approved && !revealed && !declined){
-        revealHtml = '<div class="reveal-hint">승인됨 · 담당 주선자 수락이 끝나면 공개돼요.</div>';
+        revealHtml = '<div class="reveal-hint">' + (matchReady(x) ? (pDeclined ? '참가자가 거절했어요.' : '승인됨 · 두 참가자의 결정을 기다리는 중이에요.') : '승인됨 · 담당 주선자 수락이 끝나면 참가자에게 링크를 보낼 수 있어요.') + '</div>';
+      }
+      var decisionHtml = '';
+      if(matchReady(x)){
+        decisionHtml = '<div class="decision-box"><div class="decision-title">참가자 최종 결정</div>' + ['a','b'].map(function(side){
+          var mm = side === 'a' ? aMember : bMember;
+          var dec = side === 'a' ? x.aDecision : x.bDecision;
+          var cls = dec === 'accepted' ? 'badge-success' : (dec === 'declined' ? 'badge-danger' : (dec === 'pending' ? 'badge-warn' : 'badge-neutral'));
+          var btn = '';
+          if((dec === 'none' || dec === 'pending') && canSendOffer(x, side) && !pDeclined){
+            btn = '<button class="btn '+(dec === 'none' ? 'btn-primary' : '')+'" type="button" data-action="send-offer" data-id="'+esc(x.id)+'" data-side="'+side+'">'+(dec === 'none' ? '결정 링크 보내기' : '링크 다시 만들기')+'</button>';
+          }
+          return '<div class="decision-row"><span class="who">'+esc(mm ? displayName(mm) : (side === 'a' ? aName : bName))+'</span><span class="badge '+cls+'">'+esc(DECISION_LABEL[dec] || '')+'</span>'+btn+'</div>';
+        }).join('') + '</div>';
       }
 
       var approveBtns = '';
@@ -2706,6 +3087,7 @@
           (subBits.length ? '<div class="match-sub">'+subBits.map(esc).join(' · ')+'</div>' : '') +
           chipsHtml +
           requestHtml +
+          decisionHtml +
           revealHtml +
           (x.memo ? '<div class="match-memo">'+esc(x.memo)+'</div>' : '') +
           ((approveBtns || editBtns) ? '<div class="card-actions">' + approveBtns + editBtns + '</div>' : '') +
@@ -2723,6 +3105,7 @@
       memberNames = map;
       renderMembers();
       renderMatches();
+      if($('panel-recommend').style.display === 'flex') renderRecommend();
     }).catch(function(err){ console.error('member names error', err); });
   }
   function myId(){ return currentUser ? currentUser.id : null; }
@@ -2734,7 +3117,21 @@
     return (p && p.display_name) || '다른 주선자';
   }
   function consentOk(c){ return c === 'accepted' || c === 'none'; }
-  function matchRevealed(x){ return x.approved && consentOk(x.aConsent) && consentOk(x.bConsent); }
+  function matchReady(x){ return x.approved && consentOk(x.aConsent) && consentOk(x.bConsent); }
+  function matchRevealed(x){ return matchReady(x) && x.aDecision === 'accepted' && x.bDecision === 'accepted'; }
+  function canSendOffer(x, side){
+    var me = myId();
+    if(!me) return false;
+    if(isAdmin()) return true;
+    var m = memberById(side === 'a' ? x.aId : x.bId);
+    if(!m) return false;
+    return m.ownerId ? m.ownerId === me : x.createdBy === me;
+  }
+  function mySidesToSend(x){
+    if(!matchReady(x) || isAdmin()) return [];
+    return ['a','b'].filter(function(s){ return (s === 'a' ? x.aDecision : x.bDecision) === 'none' && canSendOffer(x, s); });
+  }
+  var DECISION_LABEL = { none:'링크 아직 안 보냄', pending:'답변 기다리는 중', accepted:'만나볼게요', declined:'이번엔 괜찮아요' };
   function mySidesPending(x){
     // 내가 담당이고 아직 응답하지 않은 쪽 (요청자가 나인 경우는 제외)
     var sides = [];
@@ -2756,7 +3153,7 @@
   function respondMatch(id, accept){
     supabase.rpc('respond_match', { p_match: id, p_accept: accept }).then(function(res){
       if(res.error) throw res.error;
-      showToast(accept ? '수락했어요. 관리자 승인 후 서로 정보가 공개돼요' : '거절했어요');
+      showToast(accept ? '수락했어요. 관리자 승인 후 참가자에게 결정 링크를 보낼 수 있어요' : '거절했어요');
       refetchMatches();
       refetchParticipants();
     }).catch(function(err){
@@ -2841,7 +3238,7 @@
   function setMatchApproval(id, approved){
     supabase.from('matches').update({ approved: approved }).eq('id', id).then(function(res){
       if(res.error) throw res.error;
-      showToast(approved ? '매칭을 승인했어요. 주선자에게 이름·연락처가 공개돼요' : '승인을 취소했어요');
+      showToast(approved ? '매칭을 승인했어요. 이제 담당 주선자가 참가자에게 결정 링크를 보낼 수 있어요' : '승인을 취소했어요');
       refetchMatches();
     }).catch(function(err){
       console.error(err);
@@ -3315,7 +3712,7 @@
       if(isAdmin()){
         if(!x) msgs.push('관리자가 만든 매칭은 바로 승인돼요.');
       } else {
-        msgs.push('저장하면 관리자 승인을 기다려요. 모두 끝나면 두 사람의 이름·연락처가 공개돼요.');
+        msgs.push('저장하면 관리자 승인을 기다려요. 승인되면 참가자에게 결정 링크를 보내고, 두 사람이 모두 만나보기로 하면 이름·연락처가 공개돼요.');
       }
     }
     note.textContent = msgs.join(' ');
@@ -3435,6 +3832,7 @@
       var id = btn.dataset.id;
       if(btn.dataset.action === 'edit-match') openMatchModal(id);
       if(btn.dataset.action === 'approve-match') setMatchApproval(id, true);
+      if(btn.dataset.action === 'send-offer') openOfferLink(id, btn.dataset.side);
       if(btn.dataset.action === 'accept-match') respondMatch(id, true);
       if(btn.dataset.action === 'decline-match') respondMatch(id, false);
       if(btn.dataset.action === 'unapprove-match') setMatchApproval(id, false);
@@ -3465,6 +3863,7 @@
     $('btnCopyRefLink').addEventListener('click', copyMyRefLink);
     $('btnGuide').addEventListener('click', openGuide);
     initTempPw();
+    initOfferLink();
     $('guideClose').addEventListener('click', closeGuide);
     $('guideOkBtn').addEventListener('click', closeGuide);
     $('guideOverlay').addEventListener('click', function(e){ if(e.target === this) closeGuide(); });
@@ -3594,6 +3993,7 @@
         if(!$('photoViewerOverlay').hidden) closePhotoViewer();
         if(!$('guideOverlay').hidden) closeGuide();
         if(!$('tempPwOverlay').hidden) closeTempPw();
+        if(!$('offerLinkOverlay').hidden) closeOfferLink();
       }
     });
   }
@@ -3620,6 +4020,7 @@
       renderMatches();
       renderStats();
       renderQuickMatch();
+      if($('panel-recommend').style.display === 'flex') renderRecommend();
       if(!$('matchOverlay').hidden){ populateMemberSelects(); }
     }).catch(function(err){
       console.error('participants fetch error', err);
@@ -3631,14 +4032,15 @@
   function refetchMatches(){
     return supabase.from('matches').select('*').order('created_at', { ascending:false }).then(function(res){
       if(res.error) throw res.error;
-      var prevApproved = matches.filter(function(x){ return x.approved; }).map(function(x){ return x.id; }).sort().join(',');
+      var prevApproved = matches.filter(matchRevealed).map(function(x){ return x.id; }).sort().join(',');
       matches = res.data.map(rowToMatch);
       matchesLoaded = true;
       matchesFailed = false;
       renderMatches();
       renderStats();
-      // 주선자: 승인 상태가 바뀌면 공개된 이름·연락처를 다시 불러와요
-      var nowApproved = matches.filter(function(x){ return x.approved; }).map(function(x){ return x.id; }).sort().join(',');
+      if($('panel-recommend').style.display === 'flex') renderRecommend();
+      // 주선자: 공개 상태가 바뀌면 이름·연락처를 다시 불러와요
+      var nowApproved = matches.filter(matchRevealed).map(function(x){ return x.id; }).sort().join(',');
       if(!isAdmin() && membersLoaded && prevApproved !== nowApproved) refetchParticipants();
     }).catch(function(err){
       console.error('matches fetch error', err);
