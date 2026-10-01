@@ -342,7 +342,7 @@
   <div class="dialog lock-wrap">
     <div class="lock-badge">💘</div>
     <h2>매칭메이커</h2>
-    <p id="authSubtitle">관리자·주선자 계정으로 로그인해 주세요</p>
+    <p id="authSubtitle">이름과 비밀번호로 로그인해 주세요</p>
 
     <div id="authLoading" class="helper-text" style="text-align:center; margin:8px 0 16px;">확인하는 중...</div>
 
@@ -355,7 +355,7 @@
 
     <form id="loginForm" class="auth-form" hidden>
       <div class="field">
-        <input type="email" id="loginEmail" class="field-input" placeholder="이메일" autocomplete="username" required>
+        <input type="text" id="loginName" class="field-input" placeholder="이름" maxlength="10" autocomplete="username" autocapitalize="off" spellcheck="false" required>
       </div>
       <div class="field">
         <input type="password" id="loginPassword" class="field-input" placeholder="비밀번호" autocomplete="current-password" required>
@@ -366,17 +366,17 @@
 
     <form id="signupForm" class="auth-form" hidden>
       <div class="field">
-        <input type="text" id="signupName" class="field-input" placeholder="이름 (관리자가 알아볼 수 있게)" maxlength="30" autocomplete="name" required>
-      </div>
-      <div class="field">
-        <input type="email" id="signupEmail" class="field-input" placeholder="이메일" autocomplete="username" required>
+        <input type="text" id="signupName" class="field-input" placeholder="이름 (로그인할 때 써요, 10자 이내)" maxlength="10" autocomplete="username" autocapitalize="off" spellcheck="false" required>
       </div>
       <div class="field">
         <input type="password" id="signupPassword" class="field-input" placeholder="비밀번호 (6자 이상)" minlength="6" autocomplete="new-password" required>
       </div>
+      <div class="field">
+        <input type="password" id="signupPassword2" class="field-input" placeholder="비밀번호 확인" minlength="6" autocomplete="new-password" required>
+      </div>
       <p id="signupError" class="helper-text" style="color:var(--danger); min-height:16px; margin:0 0 10px; font-size:12.5px;">&nbsp;</p>
       <button type="submit" class="btn btn-primary" id="signupSubmitBtn" style="width:100%; margin-top:2px;">가입 신청</button>
-      <p class="auth-note">가입하면 관리자가 승인한 뒤부터 이용할 수 있어요.</p>
+      <p class="auth-note">가입하면 관리자가 승인한 뒤부터 이용할 수 있어요.<br>같은 이름이 이미 있으면 "민지2"처럼 구분해서 가입해 주세요.</p>
     </form>
 
     <div id="pendingView" hidden style="text-align:center;">
@@ -917,6 +917,8 @@
   // ===================== 여기만 바꾸면 됩니다 =====================
   var SUPABASE_URL = 'https://ewaoqjswatdcdylkqzrz.supabase.co';
   var SUPABASE_ANON_KEY = 'sb_publishable_aBsZlfvB97lt5wNqnMzuSQ_AUUuo-Kt';
+  // 이름 로그인용 내부 이메일 도메인 (화면에 안 보이고, 메일도 보내지 않아요)
+  var LOGIN_DOMAIN = 'aprcloud.in';
   // ================================================================
   // 이 키는 공개용 키예요. 실제 권한은 로그인 계정 + 데이터베이스 정책(RLS)으로 막혀 있어요.
 
@@ -1044,7 +1046,7 @@
     $('registerLinkWrap').hidden = view === 'pending' || view === 'loading';
     $('authSubtitle').textContent = view === 'signup'
       ? '주선자로 가입 신청해 주세요'
-      : (view === 'pending' ? '승인 대기 중' : '관리자·주선자 계정으로 로그인해 주세요');
+      : (view === 'pending' ? '승인 대기 중' : '이름과 비밀번호로 로그인해 주세요');
     Array.prototype.forEach.call(document.querySelectorAll('#authTabs .role-tab'), function(c){
       var active = c.dataset.authTab === view;
       c.classList.toggle('active', active);
@@ -1052,13 +1054,40 @@
     });
   }
 
+  // 이름 → 내부 로그인 ID(이메일 형식). 같은 이름이면 항상 같은 ID가 나와요.
+  function normalizeLoginName(name){
+    var n = String(name || '');
+    if(n.normalize) n = n.normalize('NFC');
+    return n.replace(/\s+/g, '').toLowerCase();
+  }
+  function loginNameError(name){
+    var n = normalizeLoginName(name);
+    if(!n) return '이름을 입력해 주세요';
+    if(new TextEncoder().encode(n).length > 30) return '이름은 한글 10자(영문 30자) 이내로 해주세요';
+    return '';
+  }
+  function nameToLoginEmail(name){
+    var bytes = new TextEncoder().encode(normalizeLoginName(name));
+    var hex = Array.prototype.map.call(bytes, function(b){ return b.toString(16).padStart(2, '0'); }).join('');
+    return 'mm-' + hex + '@' + LOGIN_DOMAIN;
+  }
+  function loginEmailToName(email){
+    var m = /^mm-([0-9a-f]+)@/.exec(String(email || ''));
+    if(!m) return '';
+    try{
+      var hex = m[1], arr = new Uint8Array(hex.length / 2);
+      for(var i=0;i<arr.length;i++) arr[i] = parseInt(hex.substr(i*2, 2), 16);
+      return new TextDecoder('utf-8').decode(arr);
+    }catch(e){ return ''; }
+  }
+
   function authErrorMessage(err){
     var msg = (err && (err.message || err.error_description)) || '';
-    if(/invalid login credentials/i.test(msg)) return '이메일 또는 비밀번호가 맞지 않아요';
-    if(/email not confirmed/i.test(msg)) return '이메일 인증이 아직 안 됐어요. 관리자에게 문의해 주세요';
-    if(/already registered|already been registered|user already exists/i.test(msg)) return '이미 가입된 이메일이에요. 로그인해 주세요';
+    if(/invalid login credentials/i.test(msg)) return '이름 또는 비밀번호가 맞지 않아요';
+    if(/email not confirmed/i.test(msg)) return '아직 계정이 활성화되지 않았어요. 관리자에게 문의해 주세요';
+    if(/already registered|already been registered|user already exists/i.test(msg)) return '이미 가입된 이름이에요. 본인이면 로그인하고, 아니면 "민지2"처럼 다르게 가입해 주세요';
     if(/password should be at least|password.*(6|six)/i.test(msg)) return '비밀번호는 6자 이상으로 해주세요';
-    if(/invalid.*email|email.*invalid|unable to validate email/i.test(msg)) return '이메일 주소를 확인해 주세요';
+    if(/invalid.*email|email.*invalid|unable to validate email/i.test(msg)) return '이 이름으로는 가입할 수 없어요. 관리자에게 알려주세요';
     if(/rate limit|too many/i.test(msg)) return '잠시 후 다시 시도해 주세요';
     if(/signups not allowed|signup.*disabled/i.test(msg)) return '지금은 가입을 받지 않고 있어요';
     return '문제가 생겼어요. 잠시 후 다시 시도해 주세요';
@@ -1082,7 +1111,7 @@
     return loadMyProfile(session.user).then(function(profile){
       currentProfile = profile;
       if(!profile || !profile.approved){
-        $('pendingName').textContent = (profile && profile.display_name) || (session.user.email || '');
+        $('pendingName').textContent = (profile && profile.display_name) || loginEmailToName(session.user.email) || '';
         showAuthView('pending');
         return;
       }
@@ -1105,20 +1134,22 @@
       $('signupError').innerHTML = '&nbsp;';
       showAuthView(btn.dataset.authTab);
       setTimeout(function(){
-        var el = btn.dataset.authTab === 'signup' ? $('signupName') : $('loginEmail');
+        var el = btn.dataset.authTab === 'signup' ? $('signupName') : $('loginName');
         if(el) el.focus();
       }, 30);
     });
 
     $('loginForm').addEventListener('submit', function(e){
       e.preventDefault();
-      var email = $('loginEmail').value.trim();
+      var loginName = $('loginName').value;
       var password = $('loginPassword').value;
-      if(!email || !password){ $('loginError').textContent = '이메일과 비밀번호를 입력해 주세요'; return; }
+      var nameErr = loginNameError(loginName);
+      if(nameErr){ $('loginError').textContent = nameErr; return; }
+      if(!password){ $('loginError').textContent = '비밀번호를 입력해 주세요'; return; }
       var btn = $('loginSubmitBtn');
       btn.disabled = true;
       $('loginError').innerHTML = '&nbsp;';
-      supabase.auth.signInWithPassword({ email: email, password: password }).then(function(res){
+      supabase.auth.signInWithPassword({ email: nameToLoginEmail(loginName), password: password }).then(function(res){
         if(res.error) throw res.error;
         $('loginPassword').value = '';
         return handleSession(res.data.session);
@@ -1131,22 +1162,28 @@
 
     $('signupForm').addEventListener('submit', function(e){
       e.preventDefault();
-      var name = $('signupName').value.trim();
-      var email = $('signupEmail').value.trim();
+      var name = $('signupName').value.trim().replace(/\s+/g, '');
       var password = $('signupPassword').value;
-      if(!name){ $('signupError').textContent = '이름을 입력해 주세요'; return; }
-      if(!email){ $('signupError').textContent = '이메일을 입력해 주세요'; return; }
+      var password2 = $('signupPassword2').value;
+      var nameErr = loginNameError(name);
+      if(nameErr){ $('signupError').textContent = nameErr; return; }
       if(!password || password.length < 6){ $('signupError').textContent = '비밀번호는 6자 이상으로 해주세요'; return; }
+      if(password !== password2){ $('signupError').textContent = '비밀번호 확인이 일치하지 않아요'; return; }
       var btn = $('signupSubmitBtn');
       btn.disabled = true;
       $('signupError').innerHTML = '&nbsp;';
       supabase.auth.signUp({
-        email: email,
+        email: nameToLoginEmail(name),
         password: password,
         options: { data: { display_name: name } }
       }).then(function(res){
         if(res.error) throw res.error;
+        // 이메일 인증이 꺼져 있으면 이미 가입된 이름도 오류 없이 빈 계정이 돌아올 수 있어요
+        if(res.data && res.data.user && Array.isArray(res.data.user.identities) && res.data.user.identities.length === 0){
+          throw { message: 'User already registered' };
+        }
         $('signupPassword').value = '';
+        $('signupPassword2').value = '';
         if(res.data && res.data.session){
           return handleSession(res.data.session);
         }
@@ -1937,7 +1974,7 @@
         '<div class="account-row" data-id="'+esc(p.id)+'">' +
           '<div class="account-main">' +
             '<div class="account-name">'+esc(p.display_name || '(이름 없음)')+'</div>' +
-            '<div class="account-email">'+esc(p.email || '')+(joined ? ' · '+esc(joined) : '')+'</div>' +
+            '<div class="account-email">'+esc(loginEmailToName(p.email) ? ('로그인 이름: ' + loginEmailToName(p.email)) : (p.email || ''))+(joined ? ' · '+esc(joined) : '')+'</div>' +
           '</div>' +
           status +
           '<div class="card-actions" style="margin:0;">'+actions+'</div>' +
