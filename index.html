@@ -361,6 +361,36 @@
   }
   .lock-wrap button[type="submit"]:active{ transform:translateY(1px); }
 
+  /* ---------- 궁합 정보 입력 ---------- */
+  .pf-section{ display:flex; flex-direction:column; gap:12px; padding:14px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface); }
+  .pf-title{ font-weight:800; font-size:15px; color:var(--ink); }
+  .pf-title span{ font-weight:500; color:var(--muted); font-size:13px; }
+  .pf-range{ display:flex; align-items:center; gap:8px; }
+  .pf-range .field-input{ max-width:110px; }
+  .pf-range span{ color:var(--muted); font-size:14px; }
+  .chip-group{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{ appearance:none; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:999px; padding:7px 13px; font-size:14px; font-family:inherit; cursor:pointer; }
+  .chip[aria-pressed="true"]{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:700; }
+  .pf-religion{ padding:12px; border-radius:var(--radius-sm); background:var(--surface-2); display:flex; flex-direction:column; gap:10px; }
+  .pf-religion[data-locked="true"] select{ opacity:.5; }
+  .consent-box{ display:flex; flex-direction:column; gap:10px; padding:14px; border:1.5px solid var(--accent); border-radius:var(--radius-sm); background:var(--surface); }
+  .consent-title{ font-weight:800; font-size:15px; }
+  .consent-box details{ font-size:14px; color:var(--muted); line-height:1.6; }
+  .consent-box summary{ cursor:pointer; color:var(--ink); font-weight:600; }
+  .consent-box dl{ margin:8px 0 0; }
+  .consent-box dt{ font-weight:700; color:var(--ink); margin-top:6px; }
+  .consent-box dd{ margin:0; }
+  .consent-check{ display:flex; align-items:flex-start; gap:10px; font-size:15px; font-weight:600; color:var(--ink); cursor:pointer; }
+  .consent-check input{ width:22px; height:22px; flex:none; margin-top:1px; accent-color:var(--accent); }
+  #regOverlay .consent-check{ font-size:16px; }
+  #regOverlay .pf-section{ padding:16px; gap:18px; }
+  #regOverlay .pf-title{ font-size:17px; }
+  #regOverlay .chip{ font-size:15px; padding:9px 15px; }
+  .qm-reasons{ display:flex; flex-wrap:wrap; gap:6px; margin-top:-6px; }
+  .qm-reasons .badge{ font-size:12.5px; }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:4px; }
+  .chip-row .badge{ font-size:11.5px; }
+  .tempPw{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:24px; font-weight:800; letter-spacing:2px; text-align:center; padding:14px; border-radius:var(--radius-sm); background:var(--surface-2); user-select:all; }
   /* ---------- 주선자 가이드 ---------- */
   #guideOverlay .dialog{ max-width:720px; padding:0; display:flex; flex-direction:column; overflow:hidden; }
   #guideOverlay .dialog-head{ margin:0; padding:20px 22px 14px; border-bottom:1px solid var(--line); }
@@ -458,6 +488,18 @@
       <p id="signupError" class="helper-text" style="color:var(--danger); min-height:16px; margin:0 0 10px; font-size:12.5px;">&nbsp;</p>
       <button type="submit" class="btn btn-primary" id="signupSubmitBtn" style="width:100%; margin-top:2px;">가입 신청</button>
       <p class="auth-note">가입하면 관리자가 승인한 뒤부터 이용할 수 있어요.<br>같은 이름이 이미 있으면 "민지2"처럼 구분해서 가입해 주세요.</p>
+    </form>
+
+    <form id="changePwForm" class="auth-form" hidden>
+      <p class="auth-note" style="margin:0 0 12px; font-size:14px; color:var(--ink);">관리자가 임시 비밀번호를 발급했어요.<br>앞으로 쓸 새 비밀번호를 정해 주세요.</p>
+      <div class="field">
+        <input type="password" id="newPassword" class="field-input" placeholder="새 비밀번호 (6자 이상)" minlength="6" autocomplete="new-password" required>
+      </div>
+      <div class="field">
+        <input type="password" id="newPassword2" class="field-input" placeholder="새 비밀번호 확인" minlength="6" autocomplete="new-password" required>
+      </div>
+      <p id="changePwError" class="helper-text" style="color:var(--danger); min-height:16px; margin:0 0 10px; font-size:12.5px;">&nbsp;</p>
+      <button type="submit" class="btn btn-primary" id="changePwBtn" style="width:100%; margin-top:2px;">새 비밀번호 저장</button>
     </form>
 
     <div id="pendingView" hidden style="text-align:center;">
@@ -578,7 +620,7 @@
       <section class="guide-box">
         <h3>누가 무엇을 볼 수 있나요?</h3>
         <ul>
-          <li><b>모든 주선자:</b> 승인된 참가자의 코드명, 나이, 키, 직업, MBTI, 성격, 이상형, 사진</li>
+          <li><b>모든 주선자:</b> 승인된 참가자의 코드명, 나이, 키, 직업, MBTI, 지역, 만남 목적, 생활 습관, 관심사, 원하는 상대 조건, 성격, 이상형, 사진</li>
           <li><b>담당 주선자:</b> 내 담당 참가자의 이름과 연락처 (언제나)</li>
           <li><b>매칭 관련 주선자:</b> 수락과 승인이 끝난 매칭의 두 사람 이름과 연락처</li>
           <li><b>관리자:</b> 전체</li>
@@ -693,6 +735,7 @@
         <label for="reg-referrer">추천인 <span class="required-mark">*</span></label>
         <input class="field-input" id="reg-referrer" maxlength="40" placeholder="누구 소개로 신청하셨나요? (예: 민지)" required>
       </div>
+      <div id="reg-profile-fields"></div>
       <div class="field">
         <label for="reg-personality">성격 · 특징 (선택)</label>
         <textarea class="field-input" id="reg-personality" maxlength="300" placeholder="차분하고 유머 있음, 운동 좋아함"></textarea>
@@ -704,6 +747,26 @@
       <div class="field">
         <label for="reg-memo">하고 싶은 말 (선택)</label>
         <textarea class="field-input" id="reg-memo" maxlength="500" placeholder="그 외 전달하고 싶은 내용"></textarea>
+      </div>
+      <div class="consent-box">
+        <div class="consent-title">개인정보 수집·이용 동의</div>
+        <details>
+          <summary>내용 자세히 보기</summary>
+          <dl>
+            <dt>수집 항목</dt>
+            <dd>(필수) 이름, 연락처, 출생연도, 성별, 키, 직업, MBTI, 추천인, 사는 지역, 만남 목적, 흡연 여부<br>(선택) 사진, 음주, 원하는 상대 조건, 관심사, 성격·이상형·하고 싶은 말</dd>
+            <dt>이용 목적</dt>
+            <dd>소개팅 상대 추천과 주선, 주선 진행을 위한 연락</dd>
+            <dt>공개 범위</dt>
+            <dd>이름·연락처는 관리자, 담당 주선자, 그리고 양쪽 동의와 관리자 승인을 거친 매칭의 주선자에게만 공개돼요. 그 밖의 프로필은 승인된 주선자들이 코드명(예: 여자1)으로 볼 수 있어요.</dd>
+            <dt>보관 기간</dt>
+            <dd>참가를 그만두실 때까지 보관해요. 담당 주선자나 관리자에게 삭제를 요청하시면 지체 없이 삭제해요.</dd>
+            <dt>동의 거부</dt>
+            <dd>동의하지 않으실 수 있지만, 동의하지 않으면 신청할 수 없어요.</dd>
+          </dl>
+        </details>
+        <label class="consent-check"><input type="checkbox" id="reg-consent"> [필수] 개인정보 수집·이용에 동의해요</label>
+        <label class="consent-check"><input type="checkbox" id="reg-adult"> [필수] 만 19세 이상이에요</label>
       </div>
       <div class="dialog-actions">
         <button type="button" class="btn" id="regCancel">취소</button>
@@ -860,6 +923,10 @@
         <input type="checkbox" id="qmAvailableOnly" checked style="width:16px; height:16px;">
         소개 가능만 보기
       </label>
+      <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; color:var(--muted);">
+        <input type="checkbox" id="qmHardOnly" style="width:16px; height:16px;">
+        조건 안 맞는 사람 숨기기
+      </label>
     </div>
 
     <div class="qm-bar" id="qmSelectionBar" hidden>
@@ -868,6 +935,7 @@
       <button class="btn btn-ghost" type="button" id="qmClearSelectionBtn">선택 취소</button>
       <button class="btn btn-primary" type="button" id="qmCreateMatchBtn">매칭 만들기</button>
     </div>
+    <div class="qm-reasons" id="qmReasons" hidden></div>
 
     <div class="qm-columns">
       <div>
@@ -895,7 +963,7 @@
         <p class="helper-text" id="qmRightEmpty" hidden>조건에 맞는 참가자가 없어요.</p>
       </div>
     </div>
-    <p class="helper-text" style="margin:0;">* 궁합 점수는 나이 차이, MBTI 성향, 이상형 키워드를 참고한 간단한 추정치예요. 재미로만 참고해 주세요.</p>
+    <p class="helper-text" style="margin:0;">* 궁합 점수는 나이, 사는 곳, 만남 목적, 관심사, 생활 습관(흡연·음주), 원하는 키, 이상형 키워드, MBTI, 종교를 참고한 추정치예요. 한쪽이 원하는 조건(나이·키·흡연·종교)에 맞지 않으면 '조건 불일치'로 표시하고 아래로 보내요. 입력된 정보가 적으면 점수가 50% 근처로 나와요.</p>
   </section>
 
   <!-- ================= MATCHES PANEL ================= -->
@@ -1034,6 +1102,7 @@
         <select class="select-input" id="m-owner"></select>
         <span class="helper-text" id="m-owner-help">담당 주선자는 이 참가자의 이름·연락처를 볼 수 있고, 다른 주선자가 매칭을 요청하면 수락·거절해요.</span>
       </div>
+      <div id="m-profile-fields"></div>
       <div class="field">
         <label for="m-personality">성격 · 특징</label>
         <textarea class="field-input" id="m-personality" maxlength="300" placeholder="차분하고 유머 있음, 운동 좋아함"></textarea>
@@ -1127,6 +1196,31 @@
   </div>
 </div>
 
+<!-- ================= TEMP PASSWORD MODAL (admin) ================= -->
+<div class="overlay" id="tempPwOverlay" hidden>
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="tempPwTitle" style="max-width:420px;">
+    <div class="dialog-head">
+      <h2 id="tempPwTitle">비밀번호 초기화</h2>
+    </div>
+    <div id="tempPwAsk">
+      <p id="tempPwAskText" style="font-size:15px; margin:0 0 16px; line-height:1.6;"></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn" id="tempPwCancel">취소</button>
+        <button type="button" class="btn btn-primary" id="tempPwOk">임시 비밀번호 만들기</button>
+      </div>
+    </div>
+    <div id="tempPwDone" hidden>
+      <p id="tempPwDoneText" style="font-size:15px; margin:0 0 10px; line-height:1.6;"></p>
+      <div class="tempPw" id="tempPwValue"></div>
+      <p class="helper-text" style="margin:10px 0 14px;">이 창을 닫으면 다시 볼 수 없어요. 카톡 등으로 본인에게만 전달해 주세요. 로그인하면 새 비밀번호를 정하도록 안내돼요.</p>
+      <div class="dialog-actions">
+        <button type="button" class="btn" id="tempPwCopy">복사</button>
+        <button type="button" class="btn btn-primary" id="tempPwClose">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ================= PHOTO VIEWER MODAL ================= -->
 <div class="overlay" id="photoViewerOverlay" hidden>
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="photoViewerTitle" style="max-width:640px;">
@@ -1201,6 +1295,134 @@
     failed:      { label:'불발',    cls:'badge-danger' },
     hold:        { label:'보류',    cls:'badge-info' }
   };
+
+  /* ---------------- 궁합 정보 항목 ---------------- */
+  var SIDO_LIST = ['서울','경기','인천','부산','대구','광주','대전','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주','해외'];
+  var CAPITAL_AREA = { '서울':1, '경기':1, '인천':1 };
+  var PURPOSE_LABEL = { serious:'진지한 연애', marriage:'결혼을 생각하는 만남', casual:'천천히 알아가기' };
+  var SMOKING_LABEL = { no:'비흡연', sometimes:'가끔 흡연', yes:'흡연' };
+  var SMOKING_PREF_LABEL = { any:'상관없어요', no:'비흡연자만' };
+  var DRINKING_LABEL = { no:'술 안 마심', sometimes:'술 가끔', often:'술 자주' };
+  var RELIGION_LABEL = { none:'종교 없음', christian:'기독교', catholic:'천주교', buddhist:'불교', other:'기타 종교' };
+  var RELIGION_PREF_LABEL = { any:'상관없어요', same:'같은 종교였으면 해요', none:'종교 없는 분이면 좋겠어요' };
+  var INTEREST_OPTIONS = ['운동·헬스','러닝','등산','골프','여행','캠핑','맛집','카페','요리','와인·술','영화','드라마','음악','공연·전시','독서','게임','사진','반려동물','자기계발','쇼핑'];
+  var MAX_INTERESTS = 8;
+
+  function optionsHtml(map, placeholder){
+    var html = '<option value="">'+esc(placeholder)+'</option>';
+    Object.keys(map).forEach(function(k){ html += '<option value="'+esc(k)+'">'+esc(map[k])+'</option>'; });
+    return html;
+  }
+  function profileFieldsHtml(p, forReg){
+    var req = forReg ? ' <span class="required-mark">*</span>' : '';
+    var sido = '<option value="">선택</option>' + SIDO_LIST.map(function(x){ return '<option value="'+esc(x)+'">'+esc(x)+'</option>'; }).join('');
+    var chips = INTEREST_OPTIONS.map(function(x){ return '<button type="button" class="chip" aria-pressed="false" data-interest="'+esc(x)+'">'+esc(x)+'</button>'; }).join('');
+    return (
+      '<div class="pf-section">' +
+        '<div class="pf-title">궁합 정보 <span>잘 맞는 분을 찾는 데 써요</span></div>' +
+        '<div class="field-row reg-pair">' +
+          '<div class="field"><label for="'+p+'-sido">사는 곳 (시·도)'+req+'</label><select class="select-input" id="'+p+'-sido">'+sido+'</select></div>' +
+          '<div class="field"><label for="'+p+'-region-detail">구·시·군 (선택)</label><input class="field-input" id="'+p+'-region-detail" maxlength="30" placeholder="예: 강남구, 수원시"></div>' +
+        '</div>' +
+        '<div class="field"><label for="'+p+'-purpose">만남 목적'+req+'</label><select class="select-input" id="'+p+'-purpose">'+optionsHtml(PURPOSE_LABEL, '선택')+'</select></div>' +
+        '<div class="field-row reg-pair">' +
+          '<div class="field"><label for="'+p+'-smoking">흡연'+req+'</label><select class="select-input" id="'+p+'-smoking">'+optionsHtml(SMOKING_LABEL, '선택')+'</select></div>' +
+          '<div class="field"><label for="'+p+'-drinking">음주 (선택)</label><select class="select-input" id="'+p+'-drinking">'+optionsHtml(DRINKING_LABEL, '선택')+'</select></div>' +
+        '</div>' +
+        '<div class="field"><label for="'+p+'-smoking-pref">상대의 흡연 (선택)</label><select class="select-input" id="'+p+'-smoking-pref">'+optionsHtml(SMOKING_PREF_LABEL, '선택')+'</select></div>' +
+        '<div class="field"><label>원하는 상대 나이 (선택)</label><div class="pf-range"><input class="field-input" id="'+p+'-pref-age-min" type="number" inputmode="numeric" min="19" max="80" placeholder="최소"><span>~</span><input class="field-input" id="'+p+'-pref-age-max" type="number" inputmode="numeric" min="19" max="80" placeholder="최대"><span>세</span></div></div>' +
+        '<div class="field"><label>원하는 상대 키 (선택)</label><div class="pf-range"><input class="field-input" id="'+p+'-pref-height-min" type="number" inputmode="numeric" min="120" max="230" placeholder="최소"><span>~</span><input class="field-input" id="'+p+'-pref-height-max" type="number" inputmode="numeric" min="120" max="230" placeholder="최대"><span>cm</span></div></div>' +
+        '<div class="field"><label>관심사 (최대 '+MAX_INTERESTS+'개, 선택)</label><div class="chip-group" id="'+p+'-interests">'+chips+'</div></div>' +
+        '<div class="pf-religion" id="'+p+'-religion-box" data-locked="false">' +
+          (forReg
+            ? '<label class="consent-check"><input type="checkbox" id="reg-sensitive-consent"> [선택] 종교 정보 제공에 동의해요</label><span class="helper-text" style="margin:0;">종교는 민감정보라 따로 동의를 받아요. 동의하지 않아도 신청할 수 있고, 동의하면 주선자들이 상대를 고를 때 참고해요.</span>'
+            : '<span class="helper-text" style="margin:0;" id="'+p+'-religion-note"></span>') +
+          '<div class="field-row reg-pair">' +
+            '<div class="field"><label for="'+p+'-religion">종교</label><select class="select-input" id="'+p+'-religion">'+optionsHtml(RELIGION_LABEL, '선택')+'</select></div>' +
+            '<div class="field"><label for="'+p+'-religion-pref">상대 종교</label><select class="select-input" id="'+p+'-religion-pref">'+optionsHtml(RELIGION_PREF_LABEL, '선택')+'</select></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+  function setReligionLocked(p, locked){
+    $(p+'-religion').disabled = locked;
+    $(p+'-religion-pref').disabled = locked;
+    $(p+'-religion-box').setAttribute('data-locked', locked ? 'true' : 'false');
+    if(locked){ $(p+'-religion').value = ''; $(p+'-religion-pref').value = ''; }
+  }
+  function initProfileFields(p, forReg){
+    $(p+'-profile-fields').innerHTML = profileFieldsHtml(p, forReg);
+    $(p+'-interests').addEventListener('click', function(e){
+      var chip = e.target.closest('.chip');
+      if(!chip) return;
+      var on = chip.getAttribute('aria-pressed') === 'true';
+      if(!on && this.querySelectorAll('.chip[aria-pressed="true"]').length >= MAX_INTERESTS){
+        showToast('관심사는 최대 '+MAX_INTERESTS+'개까지 고를 수 있어요'); return;
+      }
+      chip.setAttribute('aria-pressed', on ? 'false' : 'true');
+    });
+    if(forReg){
+      $('reg-sensitive-consent').addEventListener('change', function(){ setReligionLocked('reg', !this.checked); });
+    }
+  }
+  function numOrNull(v){ v = String(v == null ? '' : v).trim(); if(v === '') return null; var n = Number(v); return isFinite(n) ? Math.round(n) : null; }
+  function orderedRange(a, b){ if(a != null && b != null && a > b){ var t = a; a = b; b = t; } return [a, b]; }
+  function readProfileFields(p){
+    function within(v, lo, hi){ return v != null && v >= lo && v <= hi ? v : null; }
+    var age = orderedRange(within(numOrNull($(p+'-pref-age-min').value), 19, 80), within(numOrNull($(p+'-pref-age-max').value), 19, 80));
+    var ht = orderedRange(within(numOrNull($(p+'-pref-height-min').value), 120, 230), within(numOrNull($(p+'-pref-height-max').value), 120, 230));
+    var interests = Array.prototype.map.call($(p+'-interests').querySelectorAll('.chip[aria-pressed="true"]'), function(c){ return c.getAttribute('data-interest'); });
+    return {
+      regionSido: $(p+'-sido').value || '',
+      regionDetail: $(p+'-region-detail').value.trim(),
+      purpose: $(p+'-purpose').value || '',
+      smoking: $(p+'-smoking').value || '',
+      smokingPref: $(p+'-smoking-pref').value || '',
+      drinking: $(p+'-drinking').value || '',
+      prefAgeMin: age[0], prefAgeMax: age[1],
+      prefHeightMin: ht[0], prefHeightMax: ht[1],
+      interests: interests,
+      religion: $(p+'-religion').disabled ? '' : ($(p+'-religion').value || ''),
+      religionPref: $(p+'-religion-pref').disabled ? '' : ($(p+'-religion-pref').value || '')
+    };
+  }
+  function fillProfileFields(p, m){
+    m = m || {};
+    $(p+'-sido').value = m.regionSido || '';
+    $(p+'-region-detail').value = m.regionDetail || '';
+    $(p+'-purpose').value = m.purpose || '';
+    $(p+'-smoking').value = m.smoking || '';
+    $(p+'-smoking-pref').value = m.smokingPref || '';
+    $(p+'-drinking').value = m.drinking || '';
+    $(p+'-pref-age-min').value = m.prefAgeMin != null ? m.prefAgeMin : '';
+    $(p+'-pref-age-max').value = m.prefAgeMax != null ? m.prefAgeMax : '';
+    $(p+'-pref-height-min').value = m.prefHeightMin != null ? m.prefHeightMin : '';
+    $(p+'-pref-height-max').value = m.prefHeightMax != null ? m.prefHeightMax : '';
+    var set = {}; (m.interests || []).forEach(function(x){ set[x] = true; });
+    Array.prototype.forEach.call($(p+'-interests').querySelectorAll('.chip'), function(c){
+      c.setAttribute('aria-pressed', set[c.getAttribute('data-interest')] ? 'true' : 'false');
+    });
+    $(p+'-religion').value = m.religion || '';
+    $(p+'-religion-pref').value = m.religionPref || '';
+  }
+  function rangeText(lo, hi, unit){
+    if(lo != null && hi != null) return lo + '~' + hi + unit;
+    if(lo != null) return lo + unit + ' 이상';
+    if(hi != null) return hi + unit + ' 이하';
+    return '';
+  }
+  function wantedText(m){
+    var bits = [];
+    var a = rangeText(m.prefAgeMin, m.prefAgeMax, '세'); if(a) bits.push('나이 ' + a);
+    var h = rangeText(m.prefHeightMin, m.prefHeightMax, 'cm'); if(h) bits.push('키 ' + h);
+    if(m.smokingPref === 'no') bits.push('비흡연자');
+    if(m.religionPref === 'same') bits.push('같은 종교');
+    if(m.religionPref === 'none') bits.push('종교 없는 분');
+    return bits.join(' · ');
+  }
+  function regionText(m){ return [m.regionSido, m.regionDetail].filter(Boolean).join(' '); }
+  function lifestyleText(m){ return [SMOKING_LABEL[m.smoking], DRINKING_LABEL[m.drinking]].filter(Boolean).join(' · '); }
 
   function $(id){ return document.getElementById(id); }
   function ageFromBirthYear(y){
@@ -1289,10 +1511,11 @@
     $('loginForm').hidden = view !== 'login';
     $('signupForm').hidden = view !== 'signup';
     $('pendingView').hidden = view !== 'pending';
-    $('registerLinkWrap').hidden = view === 'pending' || view === 'loading';
+    $('changePwForm').hidden = view !== 'changepw';
+    $('registerLinkWrap').hidden = view === 'pending' || view === 'loading' || view === 'changepw';
     $('authSubtitle').textContent = view === 'signup'
       ? '주선자로 가입 신청해 주세요'
-      : (view === 'pending' ? '승인 대기 중' : '이름과 비밀번호로 로그인해 주세요');
+      : (view === 'pending' ? '승인 대기 중' : (view === 'changepw' ? '새 비밀번호 설정' : '이름과 비밀번호로 로그인해 주세요'));
     Array.prototype.forEach.call(document.querySelectorAll('#authTabs .role-tab'), function(c){
       var active = c.dataset.authTab === view;
       c.classList.toggle('active', active);
@@ -1362,6 +1585,11 @@
         return;
       }
       currentRole = profile.role === 'admin' ? 'admin' : 'matchmaker';
+      if(profile.must_change_password){
+        showAuthView('changepw');
+        setTimeout(function(){ $('newPassword').focus(); }, 30);
+        return;
+      }
       unlock();
     }).catch(function(err){
       console.error(err);
@@ -1452,12 +1680,38 @@
     });
     $('pendingLogoutBtn').addEventListener('click', logout);
 
+    $('changePwForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      var pw = $('newPassword').value, pw2 = $('newPassword2').value;
+      if(!pw || pw.length < 6){ $('changePwError').textContent = '비밀번호는 6자 이상으로 해주세요'; return; }
+      if(pw !== pw2){ $('changePwError').textContent = '비밀번호 확인이 일치하지 않아요'; return; }
+      var btn = $('changePwBtn');
+      btn.disabled = true;
+      $('changePwError').innerHTML = '&nbsp;';
+      supabase.auth.updateUser({ password: pw }).then(function(res){
+        if(res.error) throw res.error;
+        return supabase.rpc('clear_must_change_password');
+      }).then(function(r2){
+        if(r2 && r2.error) throw r2.error;
+        $('newPassword').value = ''; $('newPassword2').value = '';
+        if(currentProfile) currentProfile.must_change_password = false;
+        showToast('새 비밀번호로 바꿨어요');
+        unlock();
+      }).catch(function(err){
+        console.error(err);
+        var msg = (err && err.message) || '';
+        $('changePwError').textContent = /different from the old/i.test(msg) ? '임시 비밀번호와 다른 비밀번호를 정해 주세요' : '저장하지 못했어요. 다시 시도해 주세요';
+      }).finally(function(){ btn.disabled = false; });
+    });
+
     supabase.auth.onAuthStateChange(function(event){
       if(event === 'SIGNED_OUT' && appStarted){
         setTimeout(function(){ location.reload(); }, 0);
       }
     });
 
+    initProfileFields('reg', true);
+    initProfileFields('m', false);
     initRegForm();
     showAuthView('loading');
     var refParam = null;
@@ -1555,6 +1809,54 @@
     maybeShowGuideFirstTime();
   }
 
+  /* ---------------- 관리자: 임시 비밀번호 발급 ---------------- */
+  var tempPwTarget = null;
+  function makeTempPassword(){
+    var chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+    var buf = new Uint32Array(10);
+    window.crypto.getRandomValues(buf);
+    var out = '';
+    for(var i = 0; i < buf.length; i++) out += chars.charAt(buf[i] % chars.length);
+    return out;
+  }
+  function openTempPw(p){
+    if(!isAdmin() || !p) return;
+    tempPwTarget = p;
+    $('tempPwAskText').textContent = (p.display_name || '이 주선자') + ' 님의 비밀번호를 임시 비밀번호로 바꿀까요? 지금 쓰던 비밀번호로는 더 이상 로그인할 수 없어요.';
+    $('tempPwAsk').hidden = false;
+    $('tempPwDone').hidden = true;
+    $('tempPwValue').textContent = '';
+    $('tempPwOverlay').hidden = false;
+  }
+  function closeTempPw(){
+    $('tempPwOverlay').hidden = true;
+    $('tempPwValue').textContent = '';
+    tempPwTarget = null;
+  }
+  function confirmTempPw(){
+    if(!tempPwTarget) return;
+    var temp = makeTempPassword();
+    var btn = $('tempPwOk');
+    btn.disabled = true;
+    supabase.rpc('admin_reset_password', { p_user: tempPwTarget.id, p_temp: temp }).then(function(res){
+      if(res.error) throw res.error;
+      $('tempPwDoneText').textContent = (tempPwTarget.display_name || '') + ' 님의 임시 비밀번호예요.';
+      $('tempPwValue').textContent = temp;
+      $('tempPwAsk').hidden = true;
+      $('tempPwDone').hidden = false;
+    }).catch(function(err){
+      console.error(err);
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '초기화하지 못했어요. 다시 시도해 주세요.');
+    }).finally(function(){ btn.disabled = false; });
+  }
+  function initTempPw(){
+    $('tempPwCancel').addEventListener('click', closeTempPw);
+    $('tempPwClose').addEventListener('click', closeTempPw);
+    $('tempPwOk').addEventListener('click', confirmTempPw);
+    $('tempPwCopy').addEventListener('click', function(){ copyText($('tempPwValue').textContent); });
+  }
+
   /* ---------------- 주선자 가이드 ---------------- */
   function guideSeenKey(){ return 'mm_guide_seen_' + (currentUser ? currentUser.id : ''); }
   function openGuide(){
@@ -1593,6 +1895,21 @@
       idealType: row.ideal_type,
       memo: row.memo,
       photoPaths: row.photo_paths || [],
+      regionSido: row.region_sido || '',
+      regionDetail: row.region_detail || '',
+      purpose: row.purpose || '',
+      smoking: row.smoking || '',
+      smokingPref: row.smoking_pref || '',
+      drinking: row.drinking || '',
+      prefAgeMin: row.pref_age_min == null ? null : row.pref_age_min,
+      prefAgeMax: row.pref_age_max == null ? null : row.pref_age_max,
+      prefHeightMin: row.pref_height_min == null ? null : row.pref_height_min,
+      prefHeightMax: row.pref_height_max == null ? null : row.pref_height_max,
+      interests: row.interests || [],
+      religion: row.religion || '',
+      religionPref: row.religion_pref || '',
+      consentAt: row.consent_at || null,
+      sensitiveConsent: !!row.sensitive_consent_at,
       approved: row.approved !== false,
       createdAt: row.created_at,
       updatedAt: row.updated_at
@@ -1611,7 +1928,20 @@
       ideal_type: data.idealType,
       memo: data.memo,
       photo_paths: data.photoPaths,
-      owner_id: data.ownerId || null
+      owner_id: data.ownerId || null,
+      region_sido: data.regionSido || null,
+      region_detail: data.regionDetail || null,
+      purpose: data.purpose || null,
+      smoking: data.smoking || null,
+      smoking_pref: data.smokingPref || null,
+      drinking: data.drinking || null,
+      pref_age_min: data.prefAgeMin,
+      pref_age_max: data.prefAgeMax,
+      pref_height_min: data.prefHeightMin,
+      pref_height_max: data.prefHeightMax,
+      interests: data.interests || [],
+      religion: data.religion || null,
+      religion_pref: data.religionPref || null
     };
   }
   function rowToMatch(row){
@@ -1823,61 +2153,154 @@
     if(!text || !token) return false;
     return String(text).toLowerCase().indexOf(String(token).toLowerCase()) !== -1;
   }
+  function inRange(v, lo, hi){
+    if(v == null) return null;
+    if(lo != null && v < lo) return false;
+    if(hi != null && v > hi) return false;
+    return true;
+  }
+  function isSmoker(m){ return m.smoking === 'yes' || m.smoking === 'sometimes'; }
+  // a가 원하는 조건에 b가 맞지 않는 것들
+  function hardConflicts(a, b){
+    var out = [];
+    var who = displayName(a);
+    var ageB = ageFromBirthYear(b.birthYear);
+    if((a.prefAgeMin != null || a.prefAgeMax != null) && inRange(ageB, a.prefAgeMin, a.prefAgeMax) === false){
+      out.push(who + ' 희망 나이(' + rangeText(a.prefAgeMin, a.prefAgeMax, '세') + ')와 안 맞아요');
+    }
+    if((a.prefHeightMin != null || a.prefHeightMax != null) && inRange(b.height, a.prefHeightMin, a.prefHeightMax) === false){
+      out.push(who + ' 희망 키(' + rangeText(a.prefHeightMin, a.prefHeightMax, 'cm') + ')와 안 맞아요');
+    }
+    if(a.smokingPref === 'no' && isSmoker(b)) out.push(who + ' 희망: 비흡연자');
+    if(a.religionPref === 'same' && a.religion && b.religion && a.religion !== b.religion) out.push(who + ' 희망: 같은 종교');
+    if(a.religionPref === 'none' && b.religion && b.religion !== 'none') out.push(who + ' 희망: 종교 없는 분');
+    return out;
+  }
+  // 반환: pct(0~100), score(정렬용), reasons(좋은 점), cautions(아쉬운 점), conflicts(필수 조건 불일치), lowInfo
   function compatibilityScore(a, b){
-    var reasons = [];
-    var score = 0;
+    var parts = [];   // {w, v}
+    var reasons = [], cautions = [];
+    function add(w, v){ if(v != null) parts.push({ w:w, v:Math.max(0, Math.min(1, v)) }); }
+
+    // 1) 나이 (20)
     var ageA = ageFromBirthYear(a.birthYear), ageB = ageFromBirthYear(b.birthYear);
     if(ageA != null && ageB != null){
       var diff = Math.abs(ageA - ageB);
-      var ageScore = Math.max(0, 20 - diff * 4);
-      score += ageScore;
-      if(diff <= 2) reasons.push('나이 차이가 적어요');
+      var v = 1 - Math.max(0, diff - 1) / 7;
+      var aOk = inRange(ageB, a.prefAgeMin, a.prefAgeMax), bOk = inRange(ageA, b.prefAgeMin, b.prefAgeMax);
+      var hasPref = (a.prefAgeMin != null || a.prefAgeMax != null) || (b.prefAgeMin != null || b.prefAgeMax != null);
+      if(hasPref && aOk !== false && bOk !== false){ v = Math.max(v, 0.9); reasons.push('서로 원하는 나이대예요'); }
+      else if(diff <= 2) reasons.push(diff === 0 ? '동갑이에요' : '나이 차이 ' + diff + '살');
+      else if(diff >= 7) cautions.push('나이 차이 ' + diff + '살');
+      add(20, v);
     }
+    // 2) 사는 곳 (18)
+    if(a.regionSido && b.regionSido){
+      var rv;
+      if(a.regionSido === b.regionSido){
+        if(a.regionDetail && b.regionDetail && a.regionDetail.replace(/\s/g,'') === b.regionDetail.replace(/\s/g,'')){ rv = 1; reasons.push('같은 동네(' + a.regionDetail + ')'); }
+        else { rv = 0.75; reasons.push('같은 지역(' + a.regionSido + ')'); }
+      } else if(CAPITAL_AREA[a.regionSido] && CAPITAL_AREA[b.regionSido]){ rv = 0.5; reasons.push('둘 다 수도권'); }
+      else { rv = 0.1; cautions.push('지역이 달라요(' + a.regionSido + ' · ' + b.regionSido + ')'); }
+      add(18, rv);
+    }
+    // 3) 만남 목적 (15)
+    if(a.purpose && b.purpose){
+      var pv;
+      if(a.purpose === b.purpose){ pv = 1; reasons.push('만남 목적이 같아요'); }
+      else {
+        var pair = [a.purpose, b.purpose].sort().join('|');
+        pv = pair === 'marriage|serious' ? 0.7 : (pair === 'casual|serious' ? 0.5 : 0.15);
+        if(pv < 0.5) cautions.push('만남 목적 차이가 커요');
+      }
+      add(15, pv);
+    }
+    // 4) 관심사 (15)
+    var ia = a.interests || [], ib = b.interests || [];
+    if(ia.length && ib.length){
+      var shared = ia.filter(function(x){ return ib.indexOf(x) !== -1; });
+      var iv = shared.length === 0 ? 0 : (shared.length === 1 ? 0.45 : (shared.length === 2 ? 0.75 : 1));
+      if(shared.length) reasons.push('관심사 ' + shared.length + '개 겹쳐요(' + shared.slice(0,3).join('·') + ')');
+      add(15, iv);
+    }
+    // 5) 생활 습관: 흡연·음주 (10)
+    var life = [];
+    if(a.smoking && b.smoking) life.push(isSmoker(a) === isSmoker(b) ? 1 : 0.3);
+    var DR = { no:0, sometimes:1, often:2 };
+    if(a.drinking && b.drinking){ var dd = Math.abs(DR[a.drinking] - DR[b.drinking]); life.push(dd === 0 ? 1 : (dd === 1 ? 0.6 : 0.2)); }
+    if(life.length){
+      var lv = life.reduce(function(x, y){ return x + y; }, 0) / life.length;
+      if(lv >= 0.8) reasons.push('생활 습관이 비슷해요');
+      else if(lv < 0.5) cautions.push('흡연·음주 습관이 달라요');
+      add(10, lv);
+    }
+    // 6) 원하는 키 (8) — 조건을 적은 쪽만 확인
+    var hChecks = [];
+    if(a.prefHeightMin != null || a.prefHeightMax != null){ var r1 = inRange(b.height, a.prefHeightMin, a.prefHeightMax); if(r1 != null) hChecks.push(r1); }
+    if(b.prefHeightMin != null || b.prefHeightMax != null){ var r2 = inRange(a.height, b.prefHeightMin, b.prefHeightMax); if(r2 != null) hChecks.push(r2); }
+    if(hChecks.length){
+      var hv = hChecks.filter(Boolean).length / hChecks.length;
+      if(hv === 1) reasons.push('원하는 키 조건에 맞아요');
+      add(8, hv);
+    }
+    // 7) 이상형 키워드 (7)
+    var hits = 0;
+    var bText = [b.personality, b.job, b.memo, (b.interests || []).join(' ')].filter(Boolean).join(' ');
+    var aText = [a.personality, a.job, a.memo, (a.interests || []).join(' ')].filter(Boolean).join(' ');
+    var aTok = tokenizeKeywords(a.idealType), bTok = tokenizeKeywords(b.idealType);
+    aTok.forEach(function(t){ if(textIncludesToken(bText, t)) hits++; });
+    bTok.forEach(function(t){ if(textIncludesToken(aText, t)) hits++; });
+    if(aTok.length || bTok.length){
+      if(hits) reasons.push('이상형 키워드가 겹쳐요');
+      add(7, Math.min(1, hits / 3));
+    }
+    // 8) MBTI (4)
     if(a.mbti && b.mbti){
       var ma = String(a.mbti).toUpperCase().trim(), mb = String(b.mbti).toUpperCase().trim();
-      if(ma === mb){
-        score += 6;
-        reasons.push('MBTI가 같아요('+ma+')');
-      } else {
-        var ta = mbtiTemperament(ma), tb = mbtiTemperament(mb);
-        if(ta && ta === tb){
-          score += 8;
-          reasons.push('MBTI 성향이 비슷해요('+ta+')');
-        }
+      var ta = mbtiTemperament(ma), tb = mbtiTemperament(mb);
+      var mv;
+      if(ta && ta === tb){ mv = 1; reasons.push(ma === mb ? 'MBTI가 같아요(' + ma + ')' : 'MBTI 성향이 비슷해요(' + ta + ')'); }
+      else {
+        var same = 0; for(var i = 0; i < 4; i++){ if(ma.charAt(i) === mb.charAt(i)) same++; }
+        mv = same >= 2 ? 0.6 : 0.35;
       }
+      add(4, mv);
     }
-    var aIdealTokens = tokenizeKeywords(a.idealType);
-    var bText = [b.personality, b.job, b.memo].filter(Boolean).join(' ');
-    var matchedA = 0;
-    aIdealTokens.forEach(function(tok){ if(textIncludesToken(bText, tok)) matchedA++; });
-    var bIdealTokens = tokenizeKeywords(b.idealType);
-    var aText = [a.personality, a.job, a.memo].filter(Boolean).join(' ');
-    var matchedB = 0;
-    bIdealTokens.forEach(function(tok){ if(textIncludesToken(aText, tok)) matchedB++; });
-    var keywordScore = Math.min(20, (matchedA + matchedB) * 5);
-    score += keywordScore;
-    if(keywordScore > 0) reasons.push('이상형 키워드가 겹쳐요');
-    if(a.status === 'available' && b.status === 'available'){
-      score += 10;
-    } else {
-      score -= 5;
+    // 9) 종교 (3)
+    if(a.religion && b.religion){
+      if(a.religion === b.religion){ add(3, 1); if(a.religion !== 'none') reasons.push('종교가 같아요'); }
+      else add(3, 0.5);
     }
-    var pct = Math.round(score / 58 * 100);
-    if(pct < 0) pct = 0;
-    if(pct > 100) pct = 100;
-    return { score: score, pct: pct, reasons: reasons };
+
+    var wSum = parts.reduce(function(x, p){ return x + p.w; }, 0);
+    var raw = wSum ? parts.reduce(function(x, p){ return x + p.w * p.v; }, 0) / wSum * 100 : 50;
+    // 정보가 적으면 50% 쪽으로 당겨서 과장되지 않게
+    var pct = Math.round(50 + (raw - 50) * Math.min(1, wSum / 60));
+    var conflicts = hardConflicts(a, b).concat(hardConflicts(b, a));
+    if(conflicts.length) pct = Math.min(pct, 25);
+    pct = Math.max(0, Math.min(100, pct));
+    return {
+      pct: pct,
+      score: conflicts.length ? pct - 1000 : pct,
+      reasons: reasons,
+      cautions: cautions,
+      conflicts: conflicts,
+      lowInfo: wSum < 40
+    };
   }
 
   /* ---------------- quick match: list + render ---------------- */
-  function qmFilteredList(genderFilter){
+  function qmFilteredList(genderFilter, otherSelected){
     var ageMinRaw = $('qmAgeMin').value.trim();
     var ageMaxRaw = $('qmAgeMax').value.trim();
     var ageMin = ageMinRaw === '' ? null : Number(ageMinRaw);
     var ageMax = ageMaxRaw === '' ? null : Number(ageMaxRaw);
     var mbtiFilter = $('qmMbtiFilter').value;
     var availableOnly = $('qmAvailableOnly').checked;
+    var hardOnly = $('qmHardOnly').checked;
     return members.filter(function(m){
       if(m.approved === false) return false;
+      if(hardOnly && otherSelected && otherSelected.id !== m.id && compatibilityScore(otherSelected, m).conflicts.length) return false;
       if(genderFilter && m.gender !== genderFilter) return false;
       if(mbtiFilter && String(m.mbti || '').toUpperCase() !== mbtiFilter) return false;
       if(availableOnly && m.status !== 'available') return false;
@@ -1904,8 +2327,12 @@
     var compatHtml = '';
     if(otherSelected && otherSelected.id !== m.id){
       var c = compatibilityScore(otherSelected, m);
-      var cls = c.pct >= 70 ? 'badge-success' : (c.pct >= 40 ? 'badge-accent' : 'badge-neutral');
-      compatHtml = '<span class="badge '+cls+'">궁합 '+c.pct+'%</span>';
+      if(c.conflicts.length){
+        compatHtml = '<span class="badge badge-danger" title="'+esc(c.conflicts.join(', '))+'">조건 불일치</span>';
+      } else {
+        var cls = c.pct >= 70 ? 'badge-success' : (c.pct >= 40 ? 'badge-accent' : 'badge-neutral');
+        compatHtml = '<span class="badge '+cls+'" title="'+esc(c.reasons.join(', ') || '참고할 정보가 적어요')+'">궁합 '+c.pct+'%'+(c.lowInfo ? ' · 정보 적음' : '')+'</span>';
+      }
     }
     return (
       '<div class="qm-card'+(isSelected ? ' selected' : '')+'" data-id="'+esc(m.id)+'" data-side="'+side+'">' +
@@ -1921,11 +2348,10 @@
     if(!membersLoaded) return;
     var leftGender = $('qmLeftGender').value;
     var rightGender = $('qmRightGender').value;
-    var leftList = qmFilteredList(leftGender);
-    var rightList = qmFilteredList(rightGender);
-
     var leftSelectedMember = qmLeftSelectedId ? memberById(qmLeftSelectedId) : null;
     var rightSelectedMember = qmRightSelectedId ? memberById(qmRightSelectedId) : null;
+    var leftList = qmFilteredList(leftGender, rightSelectedMember);
+    var rightList = qmFilteredList(rightGender, leftSelectedMember);
 
     if(rightSelectedMember){
       leftList = leftList.slice().sort(function(a,b){
@@ -1955,12 +2381,18 @@
         createBtn.disabled = true;
       } else {
         var c = compatibilityScore(leftSelectedMember, rightSelectedMember);
-        $('qmSelectionText').textContent = displayName(leftSelectedMember) + ' + ' + displayName(rightSelectedMember) + ' · 궁합 ' + c.pct + '%';
+        $('qmSelectionText').textContent = displayName(leftSelectedMember) + ' + ' + displayName(rightSelectedMember) + ' · ' + (c.conflicts.length ? '조건 불일치' : '궁합 ' + c.pct + '%' + (c.lowInfo ? ' (정보 적음)' : ''));
         createBtn.disabled = false;
+        var chipsHtml = c.conflicts.map(function(t){ return '<span class="badge badge-danger">'+esc(t)+'</span>'; }).join('') +
+          c.reasons.map(function(t){ return '<span class="badge badge-success">'+esc(t)+'</span>'; }).join('') +
+          c.cautions.map(function(t){ return '<span class="badge badge-warn">'+esc(t)+'</span>'; }).join('');
+        $('qmReasons').innerHTML = chipsHtml;
+        $('qmReasons').hidden = !chipsHtml;
       }
     } else {
       bar.hidden = true;
     }
+    if(!(leftSelectedMember && rightSelectedMember && leftSelectedMember.id !== rightSelectedMember.id)) $('qmReasons').hidden = true;
   }
   function presetQuickMatchMember(m){
     if(!m) return;
@@ -2075,12 +2507,19 @@
       if(m.job) rows += '<div class="row"><span class="k">직업</span><span class="v">'+esc(m.job)+'</span></div>';
       if(m.height) rows += '<div class="row"><span class="k">키</span><span class="v">'+esc(String(m.height))+'cm</span></div>';
       if(m.mbti) rows += '<div class="row"><span class="k">MBTI</span><span class="v">'+esc(m.mbti)+'</span></div>';
+      if(regionText(m)) rows += '<div class="row"><span class="k">지역</span><span class="v">'+esc(regionText(m))+'</span></div>';
+      if(m.purpose) rows += '<div class="row"><span class="k">목적</span><span class="v">'+esc(PURPOSE_LABEL[m.purpose] || '')+'</span></div>';
+      if(lifestyleText(m)) rows += '<div class="row"><span class="k">습관</span><span class="v">'+esc(lifestyleText(m))+'</span></div>';
+      if(m.religion) rows += '<div class="row"><span class="k">종교</span><span class="v">'+esc(RELIGION_LABEL[m.religion] || '')+'</span></div>';
+      if(wantedText(m)) rows += '<div class="row"><span class="k">원하는 분</span><span class="v">'+esc(wantedText(m))+'</span></div>';
+      if(m.interests && m.interests.length) rows += '<div class="row"><span class="k">관심사</span><span class="v chip-row">'+m.interests.map(function(x){ return '<span class="badge badge-neutral">'+esc(x)+'</span>'; }).join('')+'</span></div>';
       if(m.ownerId) rows += '<div class="row"><span class="k">담당</span><span class="v">'+esc(ownerName(m.ownerId))+'</span></div>';
       if(m.referrer) rows += '<div class="row"><span class="k">추천인</span><span class="v">'+esc(m.referrer)+'</span></div>';
       if(m.contact) rows += '<div class="row row-contact"><span class="k">연락처</span><span class="v">'+esc(m.contact)+'</span></div>';
       if(m.personality) rows += '<div class="row"><span class="k">특징</span><span class="v">'+esc(m.personality)+'</span></div>';
       if(m.idealType) rows += '<div class="row"><span class="k">이상형</span><span class="v">'+esc(m.idealType)+'</span></div>';
       if(m.memo) rows += '<div class="row"><span class="k">메모</span><span class="v">'+esc(m.memo)+'</span></div>';
+      if(isAdmin()) rows += '<div class="row"><span class="k">동의</span><span class="v">'+(m.consentAt ? esc(fmtDate(String(m.consentAt).slice(0,10))) + ' 개인정보 동의' + (m.sensitiveConsent ? ' · 종교 동의' : '') : '<span style="color:var(--muted)">신청서 동의 기록 없음</span>')+'</span></div>';
       var photoPaths = getPhotoPaths(m);
       var avatarInner = photoPaths.length
         ? '<img class="avatar" '+photoImgAttrs(photoPaths[0])+' alt="">'
@@ -2374,6 +2813,7 @@
       var actions = p.approved
         ? '<button class="btn" type="button" data-action="unapprove-account" data-id="'+esc(p.id)+'">승인 취소</button>'
         : '<button class="btn btn-primary" type="button" data-action="approve-account" data-id="'+esc(p.id)+'">승인</button>';
+      if(p.role !== 'admin') actions += '<button class="btn" type="button" data-action="reset-password" data-id="'+esc(p.id)+'">비밀번호 초기화</button>';
       actions += '<button class="btn btn-danger-ghost" type="button" data-action="remove-account" data-id="'+esc(p.id)+'">삭제</button>';
       return (
         '<div class="account-row" data-id="'+esc(p.id)+'">' +
@@ -2457,6 +2897,8 @@
     renderRegPhotoStrip();
     $('reg-photo-status').innerHTML = '&nbsp;';
     $('regForm').reset();
+    fillProfileFields('reg', null);
+    setReligionLocked('reg', true);
     if(regRefId && regRefName){
       $('regRefNote').textContent = regRefName + ' 님 소개로 신청해요. ' + regRefName + ' 님이 담당해요.';
       $('regRefNote').hidden = false;
@@ -2496,6 +2938,14 @@
     if(!job){ showToast('직업 / 소개를 입력해 주세요'); return; }
     if(!mbti){ showToast('MBTI를 선택해 주세요'); return; }
     if(!referrer){ showToast('추천인을 입력해 주세요'); return; }
+    var prof = readProfileFields('reg');
+    if(!prof.regionSido){ showToast('사는 곳(시·도)을 선택해 주세요'); return; }
+    if(!prof.purpose){ showToast('만남 목적을 선택해 주세요'); return; }
+    if(!prof.smoking){ showToast('흡연 여부를 선택해 주세요'); return; }
+    if(new Date().getFullYear() - birthYearVal < 19){ showToast('만 19세 이상만 신청할 수 있어요'); return; }
+    if(!$('reg-consent').checked){ showToast('개인정보 수집·이용에 동의해 주세요'); return; }
+    if(!$('reg-adult').checked){ showToast('만 19세 이상인지 확인해 주세요'); return; }
+    var sensitive = $('reg-sensitive-consent').checked;
     // 이름·연락처는 비공개 테이블로 바로 들어가요 (로그인 없이 쓰기만 가능, 읽기는 불가)
     var params = {
       p_name: name,
@@ -2510,7 +2960,20 @@
       p_ideal_type: $('reg-ideal').value.trim(),
       p_memo: $('reg-memo').value.trim(),
       p_photo_paths: regPhoto.working.slice(),
-      p_owner: regRefId
+      p_owner: regRefId,
+      p_profile: {
+        region_sido: prof.regionSido, region_detail: prof.regionDetail, purpose: prof.purpose,
+        smoking: prof.smoking, smoking_pref: prof.smokingPref, drinking: prof.drinking,
+        pref_age_min: prof.prefAgeMin == null ? null : String(prof.prefAgeMin),
+        pref_age_max: prof.prefAgeMax == null ? null : String(prof.prefAgeMax),
+        pref_height_min: prof.prefHeightMin == null ? null : String(prof.prefHeightMin),
+        pref_height_max: prof.prefHeightMax == null ? null : String(prof.prefHeightMax),
+        interests: prof.interests,
+        religion: sensitive ? prof.religion : null,
+        religion_pref: sensitive ? prof.religionPref : null
+      },
+      p_consent: true,
+      p_sensitive_consent: sensitive
     };
     var btn = $('regSubmitBtn');
     btn.disabled = true;
@@ -2522,7 +2985,8 @@
       var sc = document.querySelector('#regOverlay .reg-scroll'); if(sc) sc.scrollTop = 0;
     }).catch(function(err){
       console.error(err);
-      showToast('신청하지 못했어요. 다시 시도해 주세요.');
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '신청하지 못했어요. 다시 시도해 주세요.');
     }).finally(function(){ btn.disabled = false; });
   }
 
@@ -2642,6 +3106,11 @@
     if(m.job) lines.push('직업: ' + m.job);
     if(m.height) lines.push('키: ' + m.height + 'cm');
     if(m.mbti) lines.push('MBTI: ' + m.mbti);
+    if(regionText(m)) lines.push('지역: ' + regionText(m));
+    if(m.purpose) lines.push('만남 목적: ' + (PURPOSE_LABEL[m.purpose] || ''));
+    if(lifestyleText(m)) lines.push('생활 습관: ' + lifestyleText(m));
+    if(m.interests && m.interests.length) lines.push('관심사: ' + m.interests.join(', '));
+    if(wantedText(m)) lines.push('원하는 분: ' + wantedText(m));
     if(m.personality) lines.push('성격: ' + m.personality);
     if(m.idealType) lines.push('이상형: ' + m.idealType);
     if(m.memo) lines.push('메모: ' + m.memo);
@@ -2715,6 +3184,13 @@
     $('m-personality').value = m ? (m.personality || '') : '';
     $('m-ideal').value = m ? (m.idealType || '') : '';
     $('m-memo').value = m ? (m.memo || '') : '';
+    fillProfileFields('m', m);
+    var canReligion = !!(m && m.sensitiveConsent);
+    setReligionLocked('m', !canReligion);
+    if(canReligion){ $('m-religion').value = m.religion || ''; $('m-religion-pref').value = m.religionPref || ''; }
+    $('m-religion-note').textContent = canReligion
+      ? '참가자가 종교 정보 제공에 동의했어요.'
+      : '종교는 참가자가 신청서에서 따로 동의한 경우에만 입력할 수 있어요.';
     $('memberOverlay').hidden = false;
     setTimeout(function(){ $('m-name').focus(); }, 30);
   }
@@ -2752,6 +3228,8 @@
       photoPaths: memberPhoto.working.slice(),
       ownerId: $('m-owner').value || null
     };
+    var mprof = readProfileFields('m');
+    Object.keys(mprof).forEach(function(k){ data[k] = mprof[k]; });
     var row = memberToRow(data);
     if(!isAdmin()) delete row.owner_id;   // 담당 변경은 관리자만 (서버에서도 막혀 있음)
     var btn = $('memberSubmitBtn');
@@ -2974,6 +3452,7 @@
       if(btn.dataset.action === 'approve-account') setAccountApproval(id, true);
       if(btn.dataset.action === 'unapprove-account') setAccountApproval(id, false);
       if(btn.dataset.action === 'remove-account') askDelete('account', id, p ? (p.display_name || p.email || '') : '');
+      if(btn.dataset.action === 'reset-password') openTempPw(p);
     });
     $('btnRefreshAccounts').addEventListener('click', refetchProfiles);
   }
@@ -2985,6 +3464,7 @@
     $('btnLogout').addEventListener('click', logout);
     $('btnCopyRefLink').addEventListener('click', copyMyRefLink);
     $('btnGuide').addEventListener('click', openGuide);
+    initTempPw();
     $('guideClose').addEventListener('click', closeGuide);
     $('guideOkBtn').addEventListener('click', closeGuide);
     $('guideOverlay').addEventListener('click', function(e){ if(e.target === this) closeGuide(); });
@@ -3022,6 +3502,7 @@
     $('qmAgeMax').addEventListener('input', renderQuickMatch);
     $('qmMbtiFilter').addEventListener('change', renderQuickMatch);
     $('qmAvailableOnly').addEventListener('change', renderQuickMatch);
+    $('qmHardOnly').addEventListener('change', renderQuickMatch);
     $('qmLeftGender').addEventListener('change', renderQuickMatch);
     $('qmRightGender').addEventListener('change', renderQuickMatch);
 
@@ -3112,6 +3593,7 @@
         if(!$('confirmOverlay').hidden) closeConfirm();
         if(!$('photoViewerOverlay').hidden) closePhotoViewer();
         if(!$('guideOverlay').hidden) closeGuide();
+        if(!$('tempPwOverlay').hidden) closeTempPw();
       }
     });
   }
