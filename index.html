@@ -96,17 +96,25 @@
   @media (max-width:480px){ .role-indicator{ position:static; justify-content:flex-end; margin-bottom:10px; } }
 
   /* ---- Read-only participant role ---- */
-  body.role-readonly #btnAddMember,
-  body.role-readonly #btnAddMatch,
-  body.role-readonly #memberSearch,
-  body.role-readonly [data-action="edit-member"],
-  body.role-readonly [data-action="delete-member"],
-  body.role-readonly [data-action="edit-match"],
-  body.role-readonly [data-action="delete-match"],
-  body.role-readonly [data-action="copy-member"],
-  body.role-readonly [data-action="quick-match"],
-  body.role-readonly #tabBtn-quickmatch,
-  body.role-readonly .row-contact{ display:none !important; }
+  /* 화면 숨김은 편의용일 뿐, 실제 권한은 데이터베이스 정책이 막아요 */
+  body:not(.role-admin) .admin-only,
+  body:not(.role-admin) #btnAddMember,
+  body:not(.role-admin) [data-action="edit-member"],
+  body:not(.role-admin) [data-action="delete-member"],
+  body:not(.role-admin) [data-action="approve-member"],
+  body:not(.role-admin) [data-action="reject-member"]{ display:none !important; }
+  .auth-form[hidden]{ display:none !important; }
+  .auth-form .field-input{ text-align:left; }
+  .auth-form .field{ margin-bottom:10px; }
+  .auth-note{ font-size:12.5px; color:var(--muted); margin:8px 0 0; line-height:1.5; }
+  .reveal-box{ display:flex; flex-direction:column; gap:4px; font-size:13px; background:var(--success-soft); color:var(--ink); border-radius:10px; padding:8px 10px; }
+  .reveal-box b{ font-weight:700; }
+  .reveal-hint{ font-size:12.5px; color:var(--muted); }
+  .account-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:var(--surface); }
+  .account-row .account-main{ flex:1; min-width:160px; }
+  .account-row .account-name{ font-weight:700; font-size:14.5px; }
+  .account-row .account-email{ font-size:12.5px; color:var(--muted); word-break:break-all; }
+  .tab-count{ display:inline-block; min-width:18px; padding:0 6px; margin-left:4px; border-radius:999px; background:var(--warn-soft); color:var(--warn); font-size:11px; font-weight:700; line-height:18px; text-align:center; }
   .stat-strip{ display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:14px; }
   .stat-chip{ display:flex; align-items:baseline; gap:6px; font-size:13px; color:var(--muted); }
   .stat-chip b{ font-family:var(--font-display); font-size:18px; color:var(--ink); font-variant-numeric:tabular-nums; }
@@ -296,11 +304,13 @@
   .role-tab{ flex:1; appearance:none; border:none; background:transparent; cursor:pointer; padding:8px 6px; border-radius:999px; font-size:13px; font-weight:700; color:var(--muted); font-family:inherit; }
   .role-tab.active{ background:linear-gradient(135deg,#FF7AA2,#C86DD7); color:#fff; box-shadow:0 6px 14px -6px rgba(200,60,120,.6); }
   .role-tab:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
-  .lock-wrap #lockPassword{
+  .lock-wrap .auth-form .field-input{
     border-radius:999px; padding:12px 18px; border:1.5px solid var(--accent-soft);
-    background:#fff; color:#2B2130;
+    background:#fff; color:#2B2130; width:100%;
   }
-  .lock-wrap #lockPassword:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(195,49,73,.15); }
+  .lock-wrap .auth-form .field-input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(195,49,73,.15); }
+  .lock-wrap .auth-note{ margin:8px 0 0; font-size:12.5px; }
+  .lock-wrap #pendingView .btn-ghost{ border-radius:999px; }
   .lock-wrap button[type="submit"]{
     border-radius:999px; padding:12px 16px; font-size:15.5px; border:none;
     background:linear-gradient(135deg,#FF6F91,#C33149);
@@ -332,19 +342,51 @@
   <div class="dialog lock-wrap">
     <div class="lock-badge">💘</div>
     <h2>매칭메이커</h2>
-    <p>역할을 선택하고 비밀번호를 입력해 주세요</p>
-    <div class="role-tabs" id="roleTabs" role="tablist">
-      <button type="button" class="role-tab" data-role="admin" role="tab" aria-selected="false">관리자</button>
-      <button type="button" class="role-tab active" data-role="matchmaker" role="tab" aria-selected="true">주선자</button>
-    </div>
-    <form id="lockForm">
-      <div class="field">
-        <input type="password" id="lockPassword" class="field-input" placeholder="비밀번호" autocomplete="off" style="text-align:center; letter-spacing:.25em; font-size:18px;">
+    <p id="authSubtitle">관리자·주선자 계정으로 로그인해 주세요</p>
+
+    <div id="authLoading" class="helper-text" style="text-align:center; margin:8px 0 16px;">확인하는 중...</div>
+
+    <div id="authTabsWrap" hidden>
+      <div class="role-tabs" id="authTabs" role="tablist">
+        <button type="button" class="role-tab active" data-auth-tab="login" role="tab" aria-selected="true">로그인</button>
+        <button type="button" class="role-tab" data-auth-tab="signup" role="tab" aria-selected="false">주선자 가입</button>
       </div>
-      <p id="lockError" class="helper-text" style="color:var(--danger); min-height:16px; margin-top:8px;">&nbsp;</p>
-      <button type="submit" class="btn btn-primary" style="width:100%; margin-top:2px;">입장하기</button>
+    </div>
+
+    <form id="loginForm" class="auth-form" hidden>
+      <div class="field">
+        <input type="email" id="loginEmail" class="field-input" placeholder="이메일" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <input type="password" id="loginPassword" class="field-input" placeholder="비밀번호" autocomplete="current-password" required>
+      </div>
+      <p id="loginError" class="helper-text" style="color:var(--danger); min-height:16px; margin:0 0 10px; font-size:12.5px;">&nbsp;</p>
+      <button type="submit" class="btn btn-primary" id="loginSubmitBtn" style="width:100%; margin-top:2px;">로그인</button>
     </form>
-    <p style="text-align:center; font-size:13px; color:var(--muted); margin:16px 0 0;">
+
+    <form id="signupForm" class="auth-form" hidden>
+      <div class="field">
+        <input type="text" id="signupName" class="field-input" placeholder="이름 (관리자가 알아볼 수 있게)" maxlength="30" autocomplete="name" required>
+      </div>
+      <div class="field">
+        <input type="email" id="signupEmail" class="field-input" placeholder="이메일" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <input type="password" id="signupPassword" class="field-input" placeholder="비밀번호 (6자 이상)" minlength="6" autocomplete="new-password" required>
+      </div>
+      <p id="signupError" class="helper-text" style="color:var(--danger); min-height:16px; margin:0 0 10px; font-size:12.5px;">&nbsp;</p>
+      <button type="submit" class="btn btn-primary" id="signupSubmitBtn" style="width:100%; margin-top:2px;">가입 신청</button>
+      <p class="auth-note">가입하면 관리자가 승인한 뒤부터 이용할 수 있어요.</p>
+    </form>
+
+    <div id="pendingView" hidden style="text-align:center;">
+      <p style="font-size:14.5px; color:var(--ink); margin:4px 0 6px;"><b id="pendingName"></b>님, 가입 신청이 접수됐어요.</p>
+      <p class="auth-note" style="margin:0 0 16px;">관리자가 승인하면 바로 이용할 수 있어요.<br>승인 후 아래 버튼을 눌러주세요.</p>
+      <button type="button" class="btn btn-primary" id="pendingRecheckBtn" style="width:100%;">승인 확인하기</button>
+      <button type="button" class="btn btn-ghost" id="pendingLogoutBtn" style="width:100%; margin-top:8px;">로그아웃</button>
+    </div>
+
+    <p id="registerLinkWrap" style="text-align:center; font-size:13px; color:var(--muted); margin:16px 0 0;">
       참가자이신가요? <button type="button" id="btnGoToRegister" class="btn-link">등록 신청하기</button>
     </p>
   </div>
@@ -360,7 +402,7 @@
       </button>
     </div>
     <form id="regForm">
-      <p class="helper-text" style="margin:0 0 4px;">신청 내용은 주선자가 확인 후 승인해요. 승인 전까지는 다른 사람에게 보이지 않아요.</p>
+      <p class="helper-text" style="margin:0 0 4px;">신청 내용은 관리자가 확인 후 승인해요. 이름과 연락처는 관리자와, 관리자가 승인한 매칭을 맡은 주선자에게만 공개돼요.</p>
       <div class="field">
         <label>사진 (최대 6장, 선택)</label>
         <div class="photo-strip" id="reg-photo-strip"></div>
@@ -485,14 +527,15 @@
   <nav class="tabs" role="tablist">
     <button class="tab-btn" role="tab" id="tabBtn-members" aria-selected="true" aria-controls="panel-members" data-tab="members">참가자 관리</button>
     <button class="tab-btn" role="tab" id="tabBtn-quickmatch" aria-selected="false" aria-controls="panel-quickmatch" data-tab="quickmatch">빠른 매칭</button>
-    <button class="tab-btn" role="tab" id="tabBtn-matches" aria-selected="false" aria-controls="panel-matches" data-tab="matches">매칭 기록</button>
+    <button class="tab-btn" role="tab" id="tabBtn-matches" aria-selected="false" aria-controls="panel-matches" data-tab="matches">매칭 기록<span class="tab-count" id="pendingMatchCount" hidden></span></button>
+    <button class="tab-btn admin-only" role="tab" id="tabBtn-accounts" aria-selected="false" aria-controls="panel-accounts" data-tab="accounts">주선자 관리<span class="tab-count" id="pendingAccountCount" hidden></span></button>
   </nav>
 
   <!-- ================= MEMBERS PANEL ================= -->
   <section id="panel-members" role="tabpanel" aria-labelledby="tabBtn-members" style="display:flex; flex-direction:column; gap:14px;">
     <div class="toolbar">
       <div class="search">
-        <input id="memberSearch" class="field-input" type="search" placeholder="이름으로 검색">
+        <input id="memberSearch" class="field-input" type="search" placeholder="이름·코드로 검색">
       </div>
       <select id="memberStatusFilter" class="select-input">
         <option value="">모든 상태</option>
@@ -654,6 +697,16 @@
 
     <div id="matchesList" style="display:flex; flex-direction:column; gap:12px;" hidden></div>
   </section>
+
+  <!-- ================= ACCOUNTS PANEL (admin) ================= -->
+  <section id="panel-accounts" class="admin-only" role="tabpanel" aria-labelledby="tabBtn-accounts" style="display:none; flex-direction:column; gap:14px;">
+    <div class="toolbar">
+      <p class="helper-text" style="margin:0; flex:1;">주선자가 가입하면 여기서 승인해 주세요. 승인된 주선자는 참가자를 코드네임으로만 보고, 관리자가 승인한 본인 매칭의 두 사람만 이름·연락처를 볼 수 있어요.</p>
+      <button class="btn" id="btnRefreshAccounts" type="button">새로고침</button>
+    </div>
+    <div id="accountsList" style="display:flex; flex-direction:column; gap:10px;"></div>
+    <p class="helper-text" id="accountsEmpty" hidden>아직 가입한 주선자가 없어요.</p>
+  </section>
 </div>
 
 <!-- ================= MEMBER MODAL ================= -->
@@ -711,6 +764,7 @@
       <div class="field">
         <label for="m-contact">연락처</label>
         <input class="field-input" id="m-contact" placeholder="전화번호나 메신저 아이디">
+        <span class="helper-text">이름·연락처는 관리자와, 관리자가 승인한 매칭을 맡은 주선자에게만 보여요.</span>
       </div>
       <div class="field-row">
         <div class="field">
@@ -790,6 +844,7 @@
         <input class="field-input" id="x-matchmaker" maxlength="40" placeholder="이 매칭을 주선한 사람 (예: 나, 민지)">
         <span class="helper-text">참가자 명단과는 별도로, 이 매칭을 이어준 사람을 적어두는 칸이에요.</span>
       </div>
+      <p class="helper-text" id="matchApprovalNote" hidden style="margin:0;"></p>
       <div class="field-row">
         <div class="field">
           <label for="x-date">소개 날짜</label>
@@ -862,18 +917,19 @@
   // ===================== 여기만 바꾸면 됩니다 =====================
   var SUPABASE_URL = 'https://ewaoqjswatdcdylkqzrz.supabase.co';
   var SUPABASE_ANON_KEY = 'sb_publishable_aBsZlfvB97lt5wNqnMzuSQ_AUUuo-Kt';
-  var ROLE_PASSWORDS = {
-    admin: '8000',
-    matchmaker: '1004'
-  };
   // ================================================================
+  // 이 키는 공개용 키예요. 실제 권한은 로그인 계정 + 데이터베이스 정책(RLS)으로 막혀 있어요.
 
   var ROLE_LABEL = { admin:'관리자', matchmaker:'주선자' };
-  var selectedRole = 'matchmaker';
   var currentRole = null;
+  var currentUser = null;
+  var currentProfile = null;
+  var appStarted = false;
 
   var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   var PHOTO_BUCKET = 'photos';
+  var profiles = [];
+  var profilesLoaded = false;
 
   var photoViewerMemberName = '';
   var photoViewerIds = [];
@@ -926,8 +982,7 @@
     var maxNum = 0;
     members.forEach(function(mem){
       if(excludeId && mem.id === excludeId) return;
-      if(codePrefixForGender(mem.gender) !== prefix) return;
-      var m = /^(.+?)(\d+)$/.exec(mem.name || '');
+      var m = /^(.+?)(\d+)$/.exec(mem.codeName || '');
       if(m && m[1] === prefix){
         var n = parseInt(m[2], 10);
         if(!isNaN(n) && n > maxNum) maxNum = n;
@@ -938,20 +993,23 @@
   function updateNameHint(){
     var hint = $('m-name-hint');
     if(!hint) return;
-    if($('m-name').value.trim()){ hint.innerHTML = '&nbsp;'; return; }
+    var editing = editingMemberId ? memberById(editingMemberId) : null;
+    if(editing && editing.codeName){
+      hint.textContent = '코드네임: ' + editing.codeName + ' (주선자에게는 이 이름으로 보여요)';
+      return;
+    }
     var preview = nextCodeName($('m-gender').value || '', editingMemberId);
-    hint.textContent = '비워두면 "' + preview + '"로 자동 저장돼요';
+    hint.textContent = '저장하면 "' + preview + '" 같은 코드네임이 자동으로 붙어요. 주선자에게는 코드네임으로만 보여요.';
   }
   function esc(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
       return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
     });
   }
+  // 실명은 데이터베이스가 허락한 경우에만 내려와요(관리자, 또는 승인된 본인 매칭의 주선자).
   function displayName(m){
     if(!m) return '';
-    if(!isReadOnly()) return m.name;
-    var idx = members.indexOf(m);
-    return '참가자 ' + (idx >= 0 ? (idx + 1) : '');
+    return m.name || m.codeName || '참가자';
   }
   function todayStr(){
     var d = new Date();
@@ -973,42 +1031,158 @@
     showToast._tm = setTimeout(function(){ t.classList.remove('show'); }, 1800);
   }
 
-  /* ---------------- lock screen ---------------- */
-  function isReadOnly(){ return currentRole === 'participant'; }
+  /* ---------------- login (Supabase Auth) ---------------- */
+  function isAdmin(){ return currentRole === 'admin'; }
 
-  function initLock(){
-    var savedRole = localStorage.getItem('mm_role');
-    if(localStorage.getItem('idiary_unlocked') === '1' && savedRole && ROLE_PASSWORDS[savedRole]){
-      currentRole = savedRole;
-      unlock();
-      return;
+  function showAuthView(view){
+    // view: 'loading' | 'login' | 'signup' | 'pending'
+    $('authLoading').hidden = view !== 'loading';
+    $('authTabsWrap').hidden = !(view === 'login' || view === 'signup');
+    $('loginForm').hidden = view !== 'login';
+    $('signupForm').hidden = view !== 'signup';
+    $('pendingView').hidden = view !== 'pending';
+    $('registerLinkWrap').hidden = view === 'pending' || view === 'loading';
+    $('authSubtitle').textContent = view === 'signup'
+      ? '주선자로 가입 신청해 주세요'
+      : (view === 'pending' ? '승인 대기 중' : '관리자·주선자 계정으로 로그인해 주세요');
+    Array.prototype.forEach.call(document.querySelectorAll('#authTabs .role-tab'), function(c){
+      var active = c.dataset.authTab === view;
+      c.classList.toggle('active', active);
+      c.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+  }
+
+  function authErrorMessage(err){
+    var msg = (err && (err.message || err.error_description)) || '';
+    if(/invalid login credentials/i.test(msg)) return '이메일 또는 비밀번호가 맞지 않아요';
+    if(/email not confirmed/i.test(msg)) return '이메일 인증이 아직 안 됐어요. 관리자에게 문의해 주세요';
+    if(/already registered|already been registered|user already exists/i.test(msg)) return '이미 가입된 이메일이에요. 로그인해 주세요';
+    if(/password should be at least|password.*(6|six)/i.test(msg)) return '비밀번호는 6자 이상으로 해주세요';
+    if(/invalid.*email|email.*invalid|unable to validate email/i.test(msg)) return '이메일 주소를 확인해 주세요';
+    if(/rate limit|too many/i.test(msg)) return '잠시 후 다시 시도해 주세요';
+    if(/signups not allowed|signup.*disabled/i.test(msg)) return '지금은 가입을 받지 않고 있어요';
+    return '문제가 생겼어요. 잠시 후 다시 시도해 주세요';
+  }
+
+  function loadMyProfile(user){
+    return supabase.from('profiles').select('*').eq('id', user.id).maybeSingle().then(function(res){
+      if(res.error) throw res.error;
+      return res.data || null;
+    });
+  }
+
+  function handleSession(session){
+    if(!session || !session.user){
+      currentUser = null; currentProfile = null; currentRole = null;
+      showAuthView('login');
+      return Promise.resolve();
     }
-    $('roleTabs').addEventListener('click', function(e){
+    currentUser = session.user;
+    showAuthView('loading');
+    return loadMyProfile(session.user).then(function(profile){
+      currentProfile = profile;
+      if(!profile || !profile.approved){
+        $('pendingName').textContent = (profile && profile.display_name) || (session.user.email || '');
+        showAuthView('pending');
+        return;
+      }
+      currentRole = profile.role === 'admin' ? 'admin' : 'matchmaker';
+      unlock();
+    }).catch(function(err){
+      console.error(err);
+      showAuthView('login');
+      $('loginError').textContent = '계정 정보를 불러오지 못했어요. 새로고침 해주세요';
+    });
+  }
+
+  function initAuth(){
+    try{ localStorage.removeItem('idiary_unlocked'); localStorage.removeItem('mm_role'); }catch(e){}
+
+    $('authTabs').addEventListener('click', function(e){
       var btn = e.target.closest('.role-tab');
       if(!btn) return;
-      selectedRole = btn.dataset.role;
-      Array.prototype.forEach.call($('roleTabs').children, function(c){
-        var active = c === btn;
-        c.classList.toggle('active', active);
-        c.setAttribute('aria-selected', active ? 'true' : 'false');
-      });
-      $('lockError').innerHTML = '&nbsp;';
+      $('loginError').innerHTML = '&nbsp;';
+      $('signupError').innerHTML = '&nbsp;';
+      showAuthView(btn.dataset.authTab);
+      setTimeout(function(){
+        var el = btn.dataset.authTab === 'signup' ? $('signupName') : $('loginEmail');
+        if(el) el.focus();
+      }, 30);
     });
-    $('lockForm').addEventListener('submit', function(e){
+
+    $('loginForm').addEventListener('submit', function(e){
       e.preventDefault();
-      var v = $('lockPassword').value;
-      if(v && v === ROLE_PASSWORDS[selectedRole]){
-        currentRole = selectedRole;
-        localStorage.setItem('idiary_unlocked', '1');
-        localStorage.setItem('mm_role', selectedRole);
-        unlock();
-      } else {
-        $('lockError').textContent = '비밀번호가 맞지 않아요';
-        $('lockPassword').value = '';
-        $('lockPassword').focus();
+      var email = $('loginEmail').value.trim();
+      var password = $('loginPassword').value;
+      if(!email || !password){ $('loginError').textContent = '이메일과 비밀번호를 입력해 주세요'; return; }
+      var btn = $('loginSubmitBtn');
+      btn.disabled = true;
+      $('loginError').innerHTML = '&nbsp;';
+      supabase.auth.signInWithPassword({ email: email, password: password }).then(function(res){
+        if(res.error) throw res.error;
+        $('loginPassword').value = '';
+        return handleSession(res.data.session);
+      }).catch(function(err){
+        console.error(err);
+        $('loginError').textContent = authErrorMessage(err);
+        $('loginPassword').value = '';
+      }).finally(function(){ btn.disabled = false; });
+    });
+
+    $('signupForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      var name = $('signupName').value.trim();
+      var email = $('signupEmail').value.trim();
+      var password = $('signupPassword').value;
+      if(!name){ $('signupError').textContent = '이름을 입력해 주세요'; return; }
+      if(!email){ $('signupError').textContent = '이메일을 입력해 주세요'; return; }
+      if(!password || password.length < 6){ $('signupError').textContent = '비밀번호는 6자 이상으로 해주세요'; return; }
+      var btn = $('signupSubmitBtn');
+      btn.disabled = true;
+      $('signupError').innerHTML = '&nbsp;';
+      supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: { data: { display_name: name } }
+      }).then(function(res){
+        if(res.error) throw res.error;
+        $('signupPassword').value = '';
+        if(res.data && res.data.session){
+          return handleSession(res.data.session);
+        }
+        // 이메일 인증이 켜져 있는 경우
+        $('pendingName').textContent = name;
+        showAuthView('pending');
+        $('pendingRecheckBtn').hidden = true;
+      }).catch(function(err){
+        console.error(err);
+        $('signupError').textContent = authErrorMessage(err);
+      }).finally(function(){ btn.disabled = false; });
+    });
+
+    $('pendingRecheckBtn').addEventListener('click', function(){
+      supabase.auth.getSession().then(function(res){
+        return handleSession(res.data && res.data.session);
+      }).then(function(){
+        if(!appStarted && currentUser) showToast('아직 승인 전이에요');
+      });
+    });
+    $('pendingLogoutBtn').addEventListener('click', logout);
+
+    supabase.auth.onAuthStateChange(function(event){
+      if(event === 'SIGNED_OUT' && appStarted){
+        setTimeout(function(){ location.reload(); }, 0);
       }
     });
+
     initRegForm();
+    showAuthView('loading');
+    supabase.auth.getSession().then(function(res){
+      return handleSession(res.data && res.data.session);
+    }).catch(function(err){
+      console.error(err);
+      showAuthView('login');
+    });
   }
 
   function initRegForm(){
@@ -1066,15 +1240,18 @@
     });
   }
   function applyRolePermissions(){
-    document.body.classList.toggle('role-readonly', isReadOnly());
-    $('roleBadge').textContent = ROLE_LABEL[currentRole] || '';
+    document.body.classList.toggle('role-admin', isAdmin());
+    document.body.classList.toggle('role-matchmaker', currentRole === 'matchmaker');
+    var who = currentProfile && currentProfile.display_name ? (' · ' + currentProfile.display_name) : '';
+    $('roleBadge').textContent = (ROLE_LABEL[currentRole] || '') + who;
   }
   function logout(){
-    localStorage.removeItem('idiary_unlocked');
-    localStorage.removeItem('mm_role');
-    location.reload();
+    try{ localStorage.removeItem('idiary_unlocked'); localStorage.removeItem('mm_role'); }catch(e){}
+    supabase.auth.signOut().catch(function(){}).then(function(){ location.reload(); });
   }
   function unlock(){
+    if(appStarted) return;
+    appStarted = true;
     $('lockOverlay').hidden = true;
     $('mainApp').hidden = false;
     applyRolePermissions();
@@ -1082,15 +1259,17 @@
   }
 
   /* ---------------- data mapping (Postgres <-> JS) ---------------- */
-  function rowToMember(row){
+  function rowToMember(row, priv){
     return {
       id: row.id,
-      name: row.name,
+      codeName: row.code_name,
+      name: priv && priv.name ? priv.name : null,
       birthYear: row.birth_year,
       height: row.height,
       gender: row.gender,
       status: row.status,
-      contact: row.contact,
+      contact: priv && priv.contact ? priv.contact : null,
+      revealed: !!priv,
       job: row.job,
       mbti: row.mbti,
       referrer: row.referrer,
@@ -1105,12 +1284,10 @@
   }
   function memberToRow(data){
     return {
-      name: data.name,
       birth_year: data.birthYear,
       height: data.height,
       gender: data.gender,
       status: data.status,
-      contact: data.contact,
       job: data.job,
       mbti: data.mbti,
       referrer: data.referrer,
@@ -1132,16 +1309,18 @@
       status: row.status,
       followUpDate: row.follow_up_date,
       memo: row.memo,
+      createdBy: row.created_by || null,
+      approved: row.approved === true,
+      approvedAt: row.approved_at || null,
       createdAt: row.created_at,
       updatedAt: row.updated_at
     };
   }
+  // a_name / b_name 은 데이터베이스가 코드네임으로 채워요
   function matchToRow(data){
     return {
       a_id: data.aId,
       b_id: data.bId,
-      a_name: data.aName,
-      b_name: data.bName,
       matchmaker: data.matchmaker,
       match_date: data.date,
       status: data.status,
@@ -1151,8 +1330,63 @@
   }
 
   /* ---------------- photo storage helpers ---------------- */
+  // 사진 저장소는 비공개예요. 로그인한 승인 회원만 잠깐(1시간) 유효한 서명 링크로 볼 수 있어요.
+  var BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  var SIGNED_URL_TTL = 3600;
+  var signedUrlCache = {};   // path -> { url, exp }
+  var localPhotoUrls = {};   // path -> 이번 세션에 올린 파일의 미리보기 URL
+  var pendingSignPaths = {};
+  var signTimer = null;
+
+  function cachedPhotoUrl(path){
+    if(localPhotoUrls[path]) return localPhotoUrls[path];
+    var c = signedUrlCache[path];
+    if(c && c.exp > Date.now()) return c.url;
+    return null;
+  }
   function photoUrl(path){
-    return SUPABASE_URL + '/storage/v1/object/public/' + PHOTO_BUCKET + '/' + encodeURIComponent(path);
+    return cachedPhotoUrl(path) || BLANK_IMG;
+  }
+  function photoImgAttrs(path){
+    return 'data-photo-path="'+esc(path)+'" src="'+esc(photoUrl(path))+'"';
+  }
+  function hydratePhotos(){
+    var imgs = document.querySelectorAll('img[data-photo-path]');
+    var missing = [];
+    Array.prototype.forEach.call(imgs, function(img){
+      var p = img.getAttribute('data-photo-path');
+      var u = cachedPhotoUrl(p);
+      if(u){
+        if(img.getAttribute('src') !== u) img.setAttribute('src', u);
+      } else {
+        var c = signedUrlCache[p];
+        if(!(c && c.exp > Date.now())) missing.push(p);
+      }
+    });
+    if(missing.length) requestSignedUrls(missing);
+  }
+  function requestSignedUrls(paths){
+    if(!currentUser) return;
+    paths.forEach(function(p){ pendingSignPaths[p] = true; });
+    if(signTimer) return;
+    signTimer = setTimeout(function(){
+      signTimer = null;
+      var list = Object.keys(pendingSignPaths);
+      pendingSignPaths = {};
+      if(!list.length) return;
+      // 실패한 경로를 계속 다시 요청하지 않도록 잠깐 표시해 둬요
+      list.forEach(function(p){ signedUrlCache[p] = { url:null, exp: Date.now() + 60000 }; });
+      supabase.storage.from(PHOTO_BUCKET).createSignedUrls(list, SIGNED_URL_TTL).then(function(res){
+        if(res.error) throw res.error;
+        var exp = Date.now() + (SIGNED_URL_TTL - 120) * 1000;
+        (res.data || []).forEach(function(item){
+          if(item && item.path && item.signedUrl && !item.error){
+            signedUrlCache[item.path] = { url: item.signedUrl, exp: exp };
+          }
+        });
+        hydratePhotos();
+      }).catch(function(err){ console.error('photo sign error', err); });
+    }, 0);
   }
   function extFromType(type){
     if(type === 'image/png') return 'png';
@@ -1166,16 +1400,19 @@
     var path = rand + '.' + ext;
     return supabase.storage.from(PHOTO_BUCKET).upload(path, file, { upsert:false, contentType:file.type }).then(function(res){
       if(res.error) throw res.error;
+      try{ localPhotoUrls[path] = URL.createObjectURL(file); }catch(e){}
       return path;
     });
   }
   function deletePhoto(path){
+    // 삭제는 관리자만 가능해요 (등록 신청 중 지운 사진은 서버에 남을 수 있어요)
+    if(!isAdmin()) return Promise.resolve();
     return supabase.storage.from(PHOTO_BUCKET).remove([path]).catch(function(){});
   }
   function fetchPhotoBlob(path){
-    return fetch(photoUrl(path)).then(function(res){
-      if(!res.ok) throw new Error('photo fetch failed');
-      return res.blob();
+    return supabase.storage.from(PHOTO_BUCKET).download(path).then(function(res){
+      if(res.error || !res.data) throw (res.error || new Error('photo fetch failed'));
+      return res.data;
     });
   }
   function triggerDownload(blob, filename){
@@ -1190,11 +1427,14 @@
   function switchToTab(tabName){
     var btns = document.querySelectorAll('.tab-btn');
     btns.forEach(function(b){ b.setAttribute('aria-selected', b.dataset.tab === tabName ? 'true':'false'); });
-    var membersPanel = $('panel-members'), qmPanel = $('panel-quickmatch'), matchesP = $('panel-matches');
+    if(tabName === 'accounts' && !isAdmin()) tabName = 'members';
+    var membersPanel = $('panel-members'), qmPanel = $('panel-quickmatch'), matchesP = $('panel-matches'), accountsP = $('panel-accounts');
     membersPanel.style.display = tabName === 'members' ? 'flex' : 'none';
     qmPanel.style.display = tabName === 'quickmatch' ? 'flex' : 'none';
     matchesP.style.display = tabName === 'matches' ? 'flex' : 'none';
+    accountsP.style.display = tabName === 'accounts' ? 'flex' : 'none';
     if(tabName === 'quickmatch') renderQuickMatch();
+    if(tabName === 'accounts') refetchProfiles();
   }
   function initTabs(){
     var btns = document.querySelectorAll('.tab-btn');
@@ -1207,12 +1447,21 @@
   function renderStats(){
     if(membersLoaded){
       var approvedCount = members.filter(function(m){ return m.approved !== false; }).length;
-      var pendingCount = members.filter(function(m){ return m.approved === false; }).length;
       $('statMembers').textContent = String(approvedCount);
-      $('statPending').textContent = String(pendingCount);
     } else {
       $('statMembers').textContent = '–';
+    }
+    if(membersLoaded && matchesLoaded){
+      var pendingMembers = members.filter(function(m){ return m.approved === false; }).length;
+      var pendingMatches = matches.filter(function(x){ return !x.approved; }).length;
+      $('statPending').textContent = String(pendingMembers + pendingMatches);
+    } else {
       $('statPending').textContent = '–';
+    }
+    if(matchesLoaded){
+      var pm = matches.filter(function(x){ return !x.approved; }).length;
+      $('pendingMatchCount').textContent = String(pm);
+      $('pendingMatchCount').hidden = pm === 0;
     }
     if(matchesLoaded){
       var ongoing = matches.filter(function(m){ return m.status === 'proposed' || m.status === 'in_progress'; }).length;
@@ -1451,7 +1700,7 @@
         if(ageMinRaw !== '' && age < Number(ageMinRaw)) return false;
         if(ageMaxRaw !== '' && age > Number(ageMaxRaw)) return false;
       }
-      if(q && !isReadOnly() && (m.name || '').toLowerCase().indexOf(q) === -1) return false;
+      if(q && ((m.name || '') + ' ' + (m.codeName || '')).toLowerCase().indexOf(q) === -1) return false;
       return true;
     });
     filtered.sort(function(a, b){
@@ -1466,7 +1715,7 @@
         return sortMode === 'age_asc' ? (ageA - ageB) : (ageB - ageA);
       }
       if(sortMode === 'name'){
-        return (a.name || '').localeCompare(b.name || '', 'ko');
+        return displayName(a).localeCompare(displayName(b), 'ko', { numeric:true });
       }
       if(sortMode === 'recent'){
         return (b.createdAt || '').localeCompare(a.createdAt || '');
@@ -1492,6 +1741,7 @@
       var st = MEMBER_STATUS[m.status] || MEMBER_STATUS.available;
       var pending = m.approved === false;
       var metaBits = [];
+      if(m.name && m.codeName) metaBits.push(m.codeName);
       if(m.gender && GENDER_LABEL[m.gender]) metaBits.push(GENDER_LABEL[m.gender]);
       if(m.birthYear){
         var computedAge = ageFromBirthYear(m.birthYear);
@@ -1502,13 +1752,13 @@
       if(m.height) rows += '<div class="row"><span class="k">키</span><span class="v">'+esc(String(m.height))+'cm</span></div>';
       if(m.mbti) rows += '<div class="row"><span class="k">MBTI</span><span class="v">'+esc(m.mbti)+'</span></div>';
       if(m.referrer) rows += '<div class="row"><span class="k">주선자</span><span class="v">'+esc(m.referrer)+'</span></div>';
-      if(m.contact && !isReadOnly()) rows += '<div class="row row-contact"><span class="k">연락처</span><span class="v">'+esc(m.contact)+'</span></div>';
+      if(m.contact) rows += '<div class="row row-contact"><span class="k">연락처</span><span class="v">'+esc(m.contact)+'</span></div>';
       if(m.personality) rows += '<div class="row"><span class="k">특징</span><span class="v">'+esc(m.personality)+'</span></div>';
       if(m.idealType) rows += '<div class="row"><span class="k">이상형</span><span class="v">'+esc(m.idealType)+'</span></div>';
       if(m.memo) rows += '<div class="row"><span class="k">메모</span><span class="v">'+esc(m.memo)+'</span></div>';
       var photoPaths = getPhotoPaths(m);
       var avatarInner = photoPaths.length
-        ? '<img class="avatar" src="'+esc(photoUrl(photoPaths[0]))+'" alt="">'
+        ? '<img class="avatar" '+photoImgAttrs(photoPaths[0])+' alt="">'
         : '<div class="avatar-placeholder">'+esc((displayName(m)||'?').trim().charAt(0) || '?')+'</div>';
       var countBadge = photoPaths.length > 1 ? '<span class="avatar-count">+'+(photoPaths.length-1)+'</span>' : '';
       var avatarHtml = '<button type="button" class="avatar-btn" data-action="'+(photoPaths.length ? 'view-photos' : 'noop')+'" data-id="'+esc(m.id)+'" aria-label="사진 보기">' + avatarInner + countBadge + '</button>';
@@ -1520,6 +1770,7 @@
               '<div style="min-width:0;">' +
                 '<div class="card-name">'+esc(displayName(m))+'</div>' +
                 '<div class="card-meta">'+metaBits.map(esc).join(' · ')+'</div>' +
+                (!isAdmin() && m.revealed ? '<span class="badge badge-success" style="margin-top:4px; display:inline-block;">매칭 승인 · 정보 공개</span>' : '') +
               '</div>' +
             '</div>' +
             (pending ? '<span class="badge badge-warn" style="margin-right:6px;">승인 대기</span>' : '') +
@@ -1549,6 +1800,7 @@
         '</div>'
       );
     }).join('');
+    hydratePhotos();
   }
 
   /* ---------------- matches render ---------------- */
@@ -1589,11 +1841,31 @@
       var bMember = memberById(x.bId);
       var aExists = !!aMember;
       var bExists = !!bMember;
-      var aName = aMember ? displayName(aMember) : (isReadOnly() ? '(참가자)' : (x.aName || '(삭제된 참가자)'));
-      var bName = bMember ? displayName(bMember) : (isReadOnly() ? '(참가자)' : (x.bName || '(삭제된 참가자)'));
+      var aName = aMember ? displayName(aMember) : (x.aName || '(삭제된 참가자)');
+      var bName = bMember ? displayName(bMember) : (x.bName || '(삭제된 참가자)');
       var subBits = [];
       if(x.date) subBits.push('소개일 ' + fmtDate(x.date));
       if(x.followUpDate) subBits.push('다음 일정 ' + fmtDate(x.followUpDate));
+      var creator = x.createdBy ? profileById(x.createdBy) : null;
+      if(isAdmin() && creator) subBits.push('요청 ' + (creator.display_name || creator.email || ''));
+      var approvalBadge = x.approved
+        ? ''
+        : '<span class="badge badge-warn" style="margin-right:6px;">승인 대기</span>';
+      var revealHtml = '';
+      if(x.approved && !isAdmin()){
+        var lines = [aMember, bMember].filter(function(m){ return m && (m.name || m.contact); }).map(function(m){
+          return '<div><b>'+esc(m.name || m.codeName)+'</b>'+(m.codeName && m.name ? ' ('+esc(m.codeName)+')' : '')+(m.contact ? ' · '+esc(m.contact) : '')+'</div>';
+        });
+        if(lines.length) revealHtml = '<div class="reveal-box">'+lines.join('')+'</div>';
+      } else if(!x.approved && !isAdmin()){
+        revealHtml = '<div class="reveal-hint">관리자가 승인하면 두 사람의 이름과 연락처가 여기에 보여요.</div>';
+      }
+      var approveBtns = '';
+      if(isAdmin()){
+        approveBtns = !x.approved
+          ? '<button class="btn btn-primary" type="button" data-action="approve-match" data-id="'+esc(x.id)+'">매칭 승인</button>'
+          : (x.createdBy ? '<button class="btn" type="button" data-action="unapprove-match" data-id="'+esc(x.id)+'">승인 취소</button>' : '');
+      }
       return (
         '<div class="match-row" data-id="'+esc(x.id)+'">' +
           '<div class="match-footer">' +
@@ -1602,12 +1874,14 @@
               '<svg class="thread-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M14 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
               '<span>'+esc(bName)+'</span>' + (bExists ? '' : ' <span class="deleted-tag">삭제됨</span>') +
             '</div>' +
-            '<span class="badge '+st.cls+'">'+st.label+'</span>' +
+            '<span>' + approvalBadge + '<span class="badge '+st.cls+'">'+st.label+'</span></span>' +
           '</div>' +
           (x.matchmaker ? '<div class="match-matchmaker"><span class="match-matchmaker-label">주선</span>'+esc(x.matchmaker)+'</div>' : '') +
           (subBits.length ? '<div class="match-sub">'+subBits.map(esc).join(' · ')+'</div>' : '') +
+          revealHtml +
           (x.memo ? '<div class="match-memo">'+esc(x.memo)+'</div>' : '') +
           '<div class="card-actions">' +
+            approveBtns +
             '<button class="btn btn-ghost" type="button" data-action="edit-match" data-id="'+esc(x.id)+'" aria-label="수정">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
             '</button>' +
@@ -1620,12 +1894,84 @@
     }).join('');
   }
 
+  /* ---------------- accounts (admin) ---------------- */
+  function profileById(id){
+    for(var i=0;i<profiles.length;i++){ if(profiles[i].id === id) return profiles[i]; }
+    return null;
+  }
+  function refetchProfiles(){
+    if(!isAdmin()) return Promise.resolve();
+    return supabase.from('profiles').select('*').order('created_at', { ascending:false }).then(function(res){
+      if(res.error) throw res.error;
+      profiles = res.data || [];
+      profilesLoaded = true;
+      renderAccounts();
+      renderMatches();
+    }).catch(function(err){
+      console.error('profiles fetch error', err);
+    });
+  }
+  function renderAccounts(){
+    if(!isAdmin()) return;
+    var pendingCount = profiles.filter(function(p){ return !p.approved; }).length;
+    $('pendingAccountCount').textContent = String(pendingCount);
+    $('pendingAccountCount').hidden = pendingCount === 0;
+    var listEl = $('accountsList');
+    var others = profiles.filter(function(p){ return !currentUser || p.id !== currentUser.id; });
+    $('accountsEmpty').hidden = !profilesLoaded || others.length > 0;
+    others.sort(function(a, b){
+      if(a.approved !== b.approved) return a.approved ? 1 : -1;
+      return (b.created_at || '').localeCompare(a.created_at || '');
+    });
+    listEl.innerHTML = others.map(function(p){
+      var roleLabel = ROLE_LABEL[p.role] || p.role;
+      var status = p.approved
+        ? '<span class="badge badge-success">'+esc(roleLabel)+' · 승인됨</span>'
+        : '<span class="badge badge-warn">승인 대기</span>';
+      var joined = p.created_at ? fmtDate(String(p.created_at).slice(0,10)) + ' 가입' : '';
+      var actions = p.approved
+        ? '<button class="btn" type="button" data-action="unapprove-account" data-id="'+esc(p.id)+'">승인 취소</button>'
+        : '<button class="btn btn-primary" type="button" data-action="approve-account" data-id="'+esc(p.id)+'">승인</button>';
+      actions += '<button class="btn btn-danger-ghost" type="button" data-action="remove-account" data-id="'+esc(p.id)+'">삭제</button>';
+      return (
+        '<div class="account-row" data-id="'+esc(p.id)+'">' +
+          '<div class="account-main">' +
+            '<div class="account-name">'+esc(p.display_name || '(이름 없음)')+'</div>' +
+            '<div class="account-email">'+esc(p.email || '')+(joined ? ' · '+esc(joined) : '')+'</div>' +
+          '</div>' +
+          status +
+          '<div class="card-actions" style="margin:0;">'+actions+'</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+  function setAccountApproval(id, approved){
+    supabase.from('profiles').update({ approved: approved }).eq('id', id).then(function(res){
+      if(res.error) throw res.error;
+      showToast(approved ? '승인했어요' : '승인을 취소했어요');
+      refetchProfiles();
+    }).catch(function(err){
+      console.error(err);
+      showToast('처리하지 못했어요. 다시 시도해 주세요.');
+    });
+  }
+  function setMatchApproval(id, approved){
+    supabase.from('matches').update({ approved: approved }).eq('id', id).then(function(res){
+      if(res.error) throw res.error;
+      showToast(approved ? '매칭을 승인했어요. 주선자에게 이름·연락처가 공개돼요' : '승인을 취소했어요');
+      refetchMatches();
+    }).catch(function(err){
+      console.error(err);
+      showToast('처리하지 못했어요. 다시 시도해 주세요.');
+    });
+  }
+
   /* ---------------- photo strip (multi-photo editor) ---------------- */
   function renderPhotoStrip(){
     var strip = $('m-photo-strip');
     var html = memberPhoto.working.map(function(path, idx){
       return '<div class="photo-thumb" data-path="'+esc(path)+'">' +
-        '<img src="'+esc(photoUrl(path))+'" alt="">' +
+        '<img '+photoImgAttrs(path)+' alt="">' +
         (idx === 0
           ? '<span class="cover-badge">대표</span>'
           : '<button type="button" class="thumb-btn thumb-cover" data-path="'+esc(path)+'" title="대표 사진으로 설정">★</button>') +
@@ -1639,12 +1985,13 @@
       '</button>';
     }
     strip.innerHTML = html;
+    hydratePhotos();
   }
   function renderRegPhotoStrip(){
     var strip = $('reg-photo-strip');
     var html = regPhoto.working.map(function(path, idx){
       return '<div class="photo-thumb" data-path="'+esc(path)+'">' +
-        '<img src="'+esc(photoUrl(path))+'" alt="">' +
+        '<img '+photoImgAttrs(path)+' alt="">' +
         (idx === 0
           ? '<span class="cover-badge">대표</span>'
           : '<button type="button" class="thumb-btn thumb-cover" data-path="'+esc(path)+'" title="대표 사진으로 설정">★</button>') +
@@ -1658,6 +2005,7 @@
       '</button>';
     }
     strip.innerHTML = html;
+    hydratePhotos();
   }
 
   /* ---------------- participant registration (public) ---------------- */
@@ -1697,25 +2045,24 @@
     if(!job){ showToast('직업 / 소개를 입력해 주세요'); return; }
     if(!mbti){ showToast('MBTI를 선택해 주세요'); return; }
     if(!referrer){ showToast('추천인을 입력해 주세요'); return; }
-    var row = {
-      name: name,
-      birth_year: birthYearVal,
-      height: heightVal,
-      gender: gender,
-      status: 'available',
-      contact: contact,
-      job: job,
-      mbti: mbti,
-      referrer: referrer,
-      personality: $('reg-personality').value.trim(),
-      ideal_type: $('reg-ideal').value.trim(),
-      memo: $('reg-memo').value.trim(),
-      photo_paths: regPhoto.working.slice(),
-      approved: false
+    // 이름·연락처는 비공개 테이블로 바로 들어가요 (로그인 없이 쓰기만 가능, 읽기는 불가)
+    var params = {
+      p_name: name,
+      p_birth_year: birthYearVal,
+      p_height: heightVal,
+      p_gender: gender,
+      p_contact: contact,
+      p_job: job,
+      p_mbti: mbti,
+      p_referrer: referrer,
+      p_personality: $('reg-personality').value.trim(),
+      p_ideal_type: $('reg-ideal').value.trim(),
+      p_memo: $('reg-memo').value.trim(),
+      p_photo_paths: regPhoto.working.slice()
     };
     var btn = $('regSubmitBtn');
     btn.disabled = true;
-    supabase.from('participants').insert(row).then(function(res){
+    supabase.rpc('register_participant', params).then(function(res){
       if(res.error) throw res.error;
       regPhoto.working = [];
       $('regForm').hidden = true;
@@ -1742,7 +2089,7 @@
     $('photoViewerStrip').innerHTML = paths.map(function(p){
       return (
         '<div class="viewer-item">' +
-          '<img src="'+esc(photoUrl(p))+'" alt="'+esc(shownName)+'">' +
+          '<img '+photoImgAttrs(p)+' alt="'+esc(shownName)+'">' +
           '<div class="viewer-actions">' +
             '<button type="button" class="viewer-btn" data-action="copy-photo" data-path="'+esc(p)+'" title="사진 복사 (카톡에 붙여넣기)">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
@@ -1755,6 +2102,7 @@
       );
     }).join('');
     $('photoViewerOverlay').hidden = false;
+    hydratePhotos();
   }
   function closePhotoViewer(){ $('photoViewerOverlay').hidden = true; }
 
@@ -1830,7 +2178,7 @@
   /* ---------------- share / copy to clipboard ---------------- */
   function buildMemberShareText(m){
     var lines = [];
-    lines.push('[' + m.name + ' 프로필]');
+    lines.push('[' + displayName(m) + ' 프로필]');
     var ageBit = null;
     if(m.birthYear){
       var a = ageFromBirthYear(m.birthYear);
@@ -1870,7 +2218,6 @@
     }
   }
   function copyMemberInfo(id){
-    if(isReadOnly()){ showToast('읽기 전용 모드예요'); return; }
     var m = memberById(id);
     if(!m) return;
     copyText(buildMemberShareText(m));
@@ -1878,10 +2225,10 @@
 
   /* ---------------- member modal ---------------- */
   function openMemberModal(id){
-    if(isReadOnly()) return;
+    if(!isAdmin()) return;
     editingMemberId = id || null;
     var m = id ? memberById(id) : null;
-    $('memberModalTitle').textContent = m ? '참가자 수정' : '새 참가자';
+    $('memberModalTitle').textContent = m ? ('참가자 수정' + (m.codeName ? ' · ' + m.codeName : '')) : '새 참가자';
     memberPhoto.original = getPhotoPaths(m);
     memberPhoto.working = memberPhoto.original.slice();
     renderPhotoStrip();
@@ -1916,9 +2263,8 @@
 
   function onMemberSubmit(e){
     e.preventDefault();
-    if(isReadOnly()){ showToast('읽기 전용 모드예요'); return; }
+    if(!isAdmin()){ showToast('참가자 정보는 관리자만 수정할 수 있어요'); return; }
     var name = $('m-name').value.trim();
-    if(!name){ name = nextCodeName($('m-gender').value || '', editingMemberId); }
     var birthYearVal = $('m-birthyear').value ? Number($('m-birthyear').value) : null;
     var heightVal = $('m-height').value ? Number($('m-height').value) : null;
     var data = {
@@ -1939,13 +2285,25 @@
     var row = memberToRow(data);
     var btn = $('memberSubmitBtn');
     btn.disabled = true;
+    var wasEditing = !!editingMemberId;
     var req = editingMemberId
-      ? supabase.from('participants').update(row).eq('id', editingMemberId)
-      : supabase.from('participants').insert(row);
+      ? supabase.from('participants').update(row).eq('id', editingMemberId).select('id').single()
+      : supabase.from('participants').insert(row).select('id').single();
     Promise.resolve(req).then(function(res){
       if(res.error) throw res.error;
+      var pid = res.data.id;
+      // 실명·연락처는 비공개 테이블에 따로 저장
+      return supabase.from('participant_private').upsert({
+        participant_id: pid,
+        name: data.name || null,
+        contact: data.contact || null
+      }, { onConflict: 'participant_id' }).then(function(r2){
+        if(r2.error) throw r2.error;
+        return res;
+      });
+    }).then(function(){
       var removed = memberPhoto.original.filter(function(p){ return memberPhoto.working.indexOf(p) === -1; });
-      showToast(editingMemberId ? '수정했어요' : '등록했어요');
+      showToast(wasEditing ? '수정했어요' : '등록했어요');
       closeMemberModal(true);
       removed.forEach(function(p){ deletePhoto(p); });
       refetchParticipants();
@@ -1960,23 +2318,40 @@
     var aSel = $('x-a'), bSel = $('x-b');
     var prevA = preferA !== undefined ? preferA : aSel.value;
     var prevB = preferB !== undefined ? preferB : bSel.value;
-    var opts = '<option value="">선택</option>' + members.map(function(m){
-      return '<option value="'+esc(m.id)+'">'+esc(m.name)+'</option>';
+    var selectable = members.filter(function(m){
+      return m.approved !== false || m.id === prevA || m.id === prevB;
+    });
+    var opts = '<option value="">선택</option>' + selectable.map(function(m){
+      var label = displayName(m) + (m.name && m.codeName ? ' ('+m.codeName+')' : '');
+      return '<option value="'+esc(m.id)+'">'+esc(label)+'</option>';
     }).join('');
     aSel.innerHTML = opts;
     bSel.innerHTML = opts;
     aSel.value = prevA || '';
     bSel.value = prevB || '';
-    $('matchMembersHint').hidden = members.length >= 2;
+    $('matchMembersHint').hidden = selectable.length >= 2;
   }
 
   function openMatchModal(id, presetA, presetB){
-    if(isReadOnly()) return;
     editingMatchId = id || null;
     var x = id ? matches.filter(function(m){ return m.id === id; })[0] : null;
     $('matchModalTitle').textContent = x ? '매칭 수정' : '새 매칭 등록';
     populateMemberSelects(x ? x.aId : (presetA || ''), x ? x.bId : (presetB || ''));
-    $('x-matchmaker').value = x ? (x.matchmaker || '') : '';
+    var lockPair = !!(x && x.approved && !isAdmin());
+    $('x-a').disabled = lockPair;
+    $('x-b').disabled = lockPair;
+    var note = $('matchApprovalNote');
+    if(isAdmin()){
+      note.hidden = !!x;
+      note.textContent = '관리자가 만든 매칭은 바로 승인돼요.';
+    } else if(x && x.approved){
+      note.hidden = false;
+      note.textContent = '승인된 매칭이라 참가자는 바꿀 수 없어요. 상태·날짜·메모는 수정할 수 있어요.';
+    } else {
+      note.hidden = false;
+      note.textContent = '저장하면 관리자 승인을 기다려요. 승인되면 두 사람의 이름·연락처가 공개돼요.';
+    }
+    $('x-matchmaker').value = x ? (x.matchmaker || '') : ((currentProfile && currentProfile.display_name) || '');
     $('x-date').value = x ? (x.date || '') : todayStr();
     $('x-status').value = x ? (x.status || 'proposed') : 'proposed';
     $('x-followup').value = x ? (x.followUpDate || '') : '';
@@ -1987,14 +2362,11 @@
 
   function onMatchSubmit(e){
     e.preventDefault();
-    if(isReadOnly()){ showToast('읽기 전용 모드예요'); return; }
     var aId = $('x-a').value, bId = $('x-b').value;
     if(!aId || !bId){ showToast('참가자 두 명을 모두 선택해 주세요'); return; }
     if(aId === bId){ showToast('서로 다른 두 참가자를 선택해 주세요'); return; }
-    var a = memberById(aId), b = memberById(bId);
     var data = {
       aId: aId, bId: bId,
-      aName: a ? a.name : '', bName: b ? b.name : '',
       matchmaker: $('x-matchmaker').value.trim(),
       date: $('x-date').value || null,
       status: $('x-status').value || 'proposed',
@@ -2002,6 +2374,13 @@
       memo: $('x-memo').value.trim()
     };
     var row = matchToRow(data);
+    var existing = editingMatchId ? matches.filter(function(m){ return m.id === editingMatchId; })[0] : null;
+    if(existing && existing.approved && !isAdmin()){
+      // 승인된 매칭은 짝을 바꿀 수 없어요 (서버에서도 막혀 있음)
+      delete row.a_id; delete row.b_id;
+    }
+    if(!editingMatchId && isAdmin()) row.approved = true;
+    var wasEditing = !!editingMatchId;
     var btn = $('matchSubmitBtn');
     btn.disabled = true;
     var req = editingMatchId
@@ -2009,12 +2388,14 @@
       : supabase.from('matches').insert(row);
     Promise.resolve(req).then(function(res){
       if(res.error) throw res.error;
-      showToast(editingMatchId ? '수정했어요' : '등록했어요');
+      showToast(wasEditing ? '수정했어요' : (isAdmin() ? '등록했어요' : '등록했어요. 관리자 승인을 기다려요'));
       closeMatchModal();
       refetchMatches();
     }).catch(function(err){
       console.error(err);
-      showToast('저장하지 못했어요. 다시 시도해 주세요.');
+      var msg = (err && err.message) || '';
+      if(/승인/.test(msg) || /참가자/.test(msg)) showToast(msg);
+      else showToast('저장하지 못했어요. 다시 시도해 주세요.');
     }).finally(function(){ btn.disabled = false; });
   }
 
@@ -2025,22 +2406,24 @@
       ? ('"'+label+'" 참가자 정보를 삭제할까요? 관련된 매칭 기록의 이름은 그대로 남아요.')
       : kind === 'reject'
       ? ('"'+label+'" 신청을 거절할까요? 거절하면 바로 삭제되고 되돌릴 수 없어요.')
+      : kind === 'account'
+      ? ('"'+label+'" 주선자 계정을 삭제할까요? 더 이상 앱을 쓸 수 없게 되고, 이 사람이 만든 매칭 기록은 관리자만 보게 돼요.')
       : ('"'+label+'" 매칭 기록을 삭제할까요? 이 작업은 되돌릴 수 없어요.');
     $('confirmOverlay').hidden = false;
   }
   function closeConfirm(){ $('confirmOverlay').hidden = true; pendingDelete = null; }
 
   function onConfirmOk(){
-    if(isReadOnly()){ closeConfirm(); showToast('읽기 전용 모드예요'); return; }
     if(!pendingDelete) { closeConfirm(); return; }
     var kind = pendingDelete.kind;
-    var table = (kind === 'member' || kind === 'reject') ? 'participants' : 'matches';
+    var table = (kind === 'member' || kind === 'reject') ? 'participants' : (kind === 'account' ? 'profiles' : 'matches');
     var id = pendingDelete.id;
     var photoPaths = pendingDelete.photoPaths || [];
     supabase.from(table).delete().eq('id', id).then(function(res){
       if(res.error) throw res.error;
       showToast(kind === 'reject' ? '거절했어요' : '삭제했어요');
       photoPaths.forEach(function(p){ deletePhoto(p); });
+      if(kind === 'account'){ refetchProfiles(); return; }
       refetchParticipants();
       refetchMatches();
     }).catch(function(err){
@@ -2089,12 +2472,24 @@
       if(!btn) return;
       var id = btn.dataset.id;
       if(btn.dataset.action === 'edit-match') openMatchModal(id);
+      if(btn.dataset.action === 'approve-match') setMatchApproval(id, true);
+      if(btn.dataset.action === 'unapprove-match') setMatchApproval(id, false);
       if(btn.dataset.action === 'delete-match'){
         var x = matches.filter(function(mm){ return mm.id === id; })[0];
         var label = x ? ((x.aName||'')+' · '+(x.bName||'')) : '';
         askDelete('match', id, label);
       }
     });
+    $('accountsList').addEventListener('click', function(e){
+      var btn = e.target.closest('button[data-action]');
+      if(!btn) return;
+      var id = btn.dataset.id;
+      var p = profileById(id);
+      if(btn.dataset.action === 'approve-account') setAccountApproval(id, true);
+      if(btn.dataset.action === 'unapprove-account') setAccountApproval(id, false);
+      if(btn.dataset.action === 'remove-account') askDelete('account', id, p ? (p.display_name || p.email || '') : '');
+    });
+    $('btnRefreshAccounts').addEventListener('click', refetchProfiles);
   }
 
   function initStaticUI(){
@@ -2228,9 +2623,20 @@
 
   /* ---------------- data fetch + realtime ---------------- */
   function refetchParticipants(){
-    return supabase.from('participants').select('*').order('name', { ascending:true }).then(function(res){
+    // 실명·연락처(participant_private)는 데이터베이스가 허락한 행만 돌려줘요
+    return Promise.all([
+      supabase.from('participants').select('*').order('created_at', { ascending:true }),
+      supabase.from('participant_private').select('participant_id,name,contact')
+    ]).then(function(results){
+      var res = results[0], priv = results[1];
       if(res.error) throw res.error;
-      members = res.data.map(rowToMember);
+      var privMap = {};
+      if(priv && !priv.error && priv.data){
+        priv.data.forEach(function(p){ privMap[p.participant_id] = p; });
+      } else if(priv && priv.error){
+        console.error('private fetch error', priv.error);
+      }
+      members = res.data.map(function(r){ return rowToMember(r, privMap[r.id]); });
       membersLoaded = true;
       membersFailed = false;
       renderMembers();
@@ -2248,11 +2654,15 @@
   function refetchMatches(){
     return supabase.from('matches').select('*').order('created_at', { ascending:false }).then(function(res){
       if(res.error) throw res.error;
+      var prevApproved = matches.filter(function(x){ return x.approved; }).map(function(x){ return x.id; }).sort().join(',');
       matches = res.data.map(rowToMatch);
       matchesLoaded = true;
       matchesFailed = false;
       renderMatches();
       renderStats();
+      // 주선자: 승인 상태가 바뀌면 공개된 이름·연락처를 다시 불러와요
+      var nowApproved = matches.filter(function(x){ return x.approved; }).map(function(x){ return x.id; }).sort().join(',');
+      if(!isAdmin() && membersLoaded && prevApproved !== nowApproved) refetchParticipants();
     }).catch(function(err){
       console.error('matches fetch error', err);
       matchesFailed = true;
@@ -2274,13 +2684,14 @@
     renderStats();
     refetchParticipants();
     refetchMatches();
+    refetchProfiles();
     subscribeRealtime();
   }
 
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', initLock);
+    document.addEventListener('DOMContentLoaded', initAuth);
   } else {
-    initLock();
+    initAuth();
   }
 })();
 </script>
