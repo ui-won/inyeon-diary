@@ -110,6 +110,9 @@
   .reveal-box{ display:flex; flex-direction:column; gap:4px; font-size:13px; background:var(--success-soft); color:var(--ink); border-radius:10px; padding:8px 10px; }
   .reveal-box b{ font-weight:700; }
   .reveal-hint{ font-size:12.5px; color:var(--muted); }
+  .request-box{ display:flex; flex-direction:column; gap:6px; font-size:13px; background:var(--warn-soft); color:var(--ink); border-radius:10px; padding:10px 12px; }
+  .request-box .request-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+  .consent-chips{ display:flex; gap:6px; flex-wrap:wrap; }
   .account-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 14px; border:1px solid var(--line); border-radius:14px; background:var(--surface); }
   .account-row .account-main{ flex:1; min-width:160px; }
   .account-row .account-name{ font-weight:700; font-size:14.5px; }
@@ -402,6 +405,7 @@
       </button>
     </div>
     <form id="regForm">
+      <p class="helper-text" id="regRefNote" hidden style="margin:0 0 4px; color:var(--accent); font-weight:700;"></p>
       <p class="helper-text" style="margin:0 0 4px;">신청 내용은 관리자가 확인 후 승인해요. 이름과 연락처는 관리자와, 관리자가 승인한 매칭을 맡은 주선자에게만 공개돼요.</p>
       <div class="field">
         <label>사진 (최대 6장, 선택)</label>
@@ -504,6 +508,7 @@
     </svg>
     <div class="role-indicator">
       <span class="role-badge" id="roleBadge">주선자</span>
+      <button type="button" class="btn btn-ghost" id="btnCopyRefLink" title="이 링크로 신청한 참가자는 내 담당으로 들어와요">내 등록 링크</button>
       <button type="button" class="btn btn-ghost" id="btnLogout">로그아웃</button>
     </div>
     <div class="header-inner">
@@ -548,6 +553,11 @@
         <option value="">모든 성별</option>
         <option value="male">남성</option>
         <option value="female">여성</option>
+      </select>
+      <select id="memberOwnerFilter" class="select-input">
+        <option value="">모든 담당</option>
+        <option value="mine">내 담당만</option>
+        <option value="none">담당 없음</option>
       </select>
       <input id="memberAgeMin" class="field-input" type="number" placeholder="나이(최소)" style="max-width:104px;">
       <input id="memberAgeMax" class="field-input" type="number" placeholder="나이(최대)" style="max-width:104px;">
@@ -799,6 +809,11 @@
         <input class="field-input" id="m-referrer" maxlength="40" placeholder="이 사람을 소개해준 사람 (예: 나, 민지)">
       </div>
       <div class="field">
+        <label for="m-owner">담당 주선자 (계정)</label>
+        <select class="select-input" id="m-owner"></select>
+        <span class="helper-text">담당 주선자는 이 참가자의 이름·연락처를 볼 수 있고, 다른 주선자가 매칭을 요청하면 수락·거절해요.</span>
+      </div>
+      <div class="field">
         <label for="m-personality">성격 · 특징</label>
         <textarea class="field-input" id="m-personality" maxlength="300" placeholder="차분하고 유머 있음, 운동 좋아함"></textarea>
       </div>
@@ -932,6 +947,9 @@
   var PHOTO_BUCKET = 'photos';
   var profiles = [];
   var profilesLoaded = false;
+  var memberNames = {};      // 승인된 회원 id -> 이름 (담당 주선자 표시용)
+  var regRefId = null;       // ?ref= 로 들어온 담당 주선자 id
+  var regRefName = '';
 
   var photoViewerMemberName = '';
   var photoViewerIds = [];
@@ -1214,8 +1232,21 @@
 
     initRegForm();
     showAuthView('loading');
+    var refParam = null;
+    try{ refParam = new URLSearchParams(location.search).get('ref'); }catch(e){}
+    var refReady = Promise.resolve();
+    if(refParam && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(refParam)){
+      refReady = supabase.rpc('get_member_name', { p_id: refParam }).then(function(r){
+        if(!r.error && r.data){ regRefId = refParam; regRefName = r.data; }
+      }).catch(function(){});
+    }
     supabase.auth.getSession().then(function(res){
-      return handleSession(res.data && res.data.session);
+      var session = res.data && res.data.session;
+      return handleSession(session).then(function(){
+        return refReady.then(function(){
+          if(!session && regRefId) openRegForm();
+        });
+      });
     }).catch(function(err){
       console.error(err);
       showAuthView('login');
@@ -1307,6 +1338,7 @@
       status: row.status,
       contact: priv && priv.contact ? priv.contact : null,
       revealed: !!priv,
+      ownerId: row.owner_id || null,
       job: row.job,
       mbti: row.mbti,
       referrer: row.referrer,
@@ -1331,7 +1363,8 @@
       personality: data.personality,
       ideal_type: data.idealType,
       memo: data.memo,
-      photo_paths: data.photoPaths
+      photo_paths: data.photoPaths,
+      owner_id: data.ownerId || null
     };
   }
   function rowToMatch(row){
@@ -1349,6 +1382,8 @@
       createdBy: row.created_by || null,
       approved: row.approved === true,
       approvedAt: row.approved_at || null,
+      aConsent: row.a_consent || 'none',
+      bConsent: row.b_consent || 'none',
       createdAt: row.created_at,
       updatedAt: row.updated_at
     };
@@ -1496,7 +1531,9 @@
       $('statPending').textContent = '–';
     }
     if(matchesLoaded){
-      var pm = matches.filter(function(x){ return !x.approved; }).length;
+      var pm = isAdmin()
+        ? matches.filter(function(x){ return !x.approved; }).length
+        : matches.filter(function(x){ return mySidesPending(x).length > 0; }).length;
       $('pendingMatchCount').textContent = String(pm);
       $('pendingMatchCount').hidden = pm === 0;
     }
@@ -1727,7 +1764,10 @@
     var ageMaxRaw = $('memberAgeMax').value.trim();
     var mbtiFilter = $('memberMbtiFilter').value;
     var sortMode = $('memberSort').value;
+    var ownerFilter = $('memberOwnerFilter').value;
     var filtered = members.filter(function(m){
+      if(ownerFilter === 'mine' && m.ownerId !== myId()) return false;
+      if(ownerFilter === 'none' && m.ownerId) return false;
       if(statusFilter && m.status !== statusFilter) return false;
       if(genderFilter && m.gender !== genderFilter) return false;
       if(mbtiFilter && String(m.mbti || '').toUpperCase() !== mbtiFilter) return false;
@@ -1788,7 +1828,8 @@
       if(m.job) rows += '<div class="row"><span class="k">직업</span><span class="v">'+esc(m.job)+'</span></div>';
       if(m.height) rows += '<div class="row"><span class="k">키</span><span class="v">'+esc(String(m.height))+'cm</span></div>';
       if(m.mbti) rows += '<div class="row"><span class="k">MBTI</span><span class="v">'+esc(m.mbti)+'</span></div>';
-      if(m.referrer) rows += '<div class="row"><span class="k">주선자</span><span class="v">'+esc(m.referrer)+'</span></div>';
+      if(m.ownerId) rows += '<div class="row"><span class="k">담당</span><span class="v">'+esc(ownerName(m.ownerId))+'</span></div>';
+      if(m.referrer) rows += '<div class="row"><span class="k">추천인</span><span class="v">'+esc(m.referrer)+'</span></div>';
       if(m.contact) rows += '<div class="row row-contact"><span class="k">연락처</span><span class="v">'+esc(m.contact)+'</span></div>';
       if(m.personality) rows += '<div class="row"><span class="k">특징</span><span class="v">'+esc(m.personality)+'</span></div>';
       if(m.idealType) rows += '<div class="row"><span class="k">이상형</span><span class="v">'+esc(m.idealType)+'</span></div>';
@@ -1807,7 +1848,8 @@
               '<div style="min-width:0;">' +
                 '<div class="card-name">'+esc(displayName(m))+'</div>' +
                 '<div class="card-meta">'+metaBits.map(esc).join(' · ')+'</div>' +
-                (!isAdmin() && m.revealed ? '<span class="badge badge-success" style="margin-top:4px; display:inline-block;">매칭 승인 · 정보 공개</span>' : '') +
+                (!isAdmin() && m.ownerId && m.ownerId === myId() ? '<span class="badge badge-accent" style="margin-top:4px; display:inline-block;">내 담당</span>' :
+                  (!isAdmin() && m.revealed ? '<span class="badge badge-success" style="margin-top:4px; display:inline-block;">매칭 승인 · 정보 공개</span>' : '')) +
               '</div>' +
             '</div>' +
             (pending ? '<span class="badge badge-warn" style="margin-right:6px;">승인 대기</span>' : '') +
@@ -1872,6 +1914,16 @@
     }
     emptyEl.hidden = true; listEl.hidden = false;
 
+    // 내가 응답해야 하는 요청을 맨 위로
+    filtered.sort(function(a, b){
+      var pa = mySidesPending(a).length ? 0 : 1;
+      var pb = mySidesPending(b).length ? 0 : 1;
+      return pa - pb;
+    });
+
+    var EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    var DELETE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0-.8 13.2a2 2 0 0 1-2 1.8H8.8a2 2 0 0 1-2-1.8L6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
     listEl.innerHTML = filtered.map(function(x){
       var st = MATCH_STATUS[x.status] || MATCH_STATUS.proposed;
       var aMember = memberById(x.aId);
@@ -1880,29 +1932,79 @@
       var bExists = !!bMember;
       var aName = aMember ? displayName(aMember) : (x.aName || '(삭제된 참가자)');
       var bName = bMember ? displayName(bMember) : (x.bName || '(삭제된 참가자)');
+      var me = myId();
+      var isCreator = !!(x.createdBy && x.createdBy === me);
+      var canEdit = isAdmin() || isCreator;
+      var revealed = matchRevealed(x);
+      var declined = x.aConsent === 'declined' || x.bConsent === 'declined';
+      var pendingMine = mySidesPending(x);
+
       var subBits = [];
       if(x.date) subBits.push('소개일 ' + fmtDate(x.date));
       if(x.followUpDate) subBits.push('다음 일정 ' + fmtDate(x.followUpDate));
-      var creator = x.createdBy ? profileById(x.createdBy) : null;
-      if(isAdmin() && creator) subBits.push('요청 ' + (creator.display_name || creator.email || ''));
-      var approvalBadge = x.approved
-        ? ''
-        : '<span class="badge badge-warn" style="margin-right:6px;">승인 대기</span>';
+      if(x.createdBy) subBits.push('요청 ' + ownerName(x.createdBy));
+
+      var statusBadges = '';
+      if(pendingMine.length) statusBadges += '<span class="badge badge-warn" style="margin-right:6px;">받은 요청</span>';
+      if(declined) statusBadges += '<span class="badge badge-danger" style="margin-right:6px;">상대측 거절</span>';
+      else if(!x.approved) statusBadges += '<span class="badge badge-warn" style="margin-right:6px;">관리자 승인 대기</span>';
+
+      var chips = consentChip(aMember, x.aConsent, x.createdBy) + consentChip(bMember, x.bConsent, x.createdBy);
+      var chipsHtml = chips ? '<div class="consent-chips">'+chips+'</div>' : '';
+
+      var requestHtml = '';
+      if(pendingMine.length){
+        var mine = pendingMine[0] === 'a' ? aMember : bMember;
+        var other = pendingMine[0] === 'a' ? bMember : aMember;
+        var otherBits = [];
+        if(other){
+          var oa = ageFromBirthYear(other.birthYear);
+          if(oa != null) otherBits.push(oa + '세');
+          if(other.job) otherBits.push(other.job);
+          if(other.mbti) otherBits.push(other.mbti);
+          if(other.height) otherBits.push(other.height + 'cm');
+        }
+        requestHtml =
+          '<div class="request-box">' +
+            '<div><b>'+esc(ownerName(x.createdBy))+'</b> 님이 내 담당 <b>'+esc(mine ? displayName(mine) : '')+'</b> 님과 <b>'+esc(other ? displayName(other) : '')+'</b>'+(otherBits.length ? ' ('+esc(otherBits.join(' · '))+')' : '')+' 매칭을 요청했어요.</div>' +
+            '<div class="reveal-hint">'+esc(mine ? displayName(mine) : '참가자')+' 님 의사를 먼저 확인한 뒤 응답해 주세요. 수락하고 관리자가 승인하면 서로 이름·연락처가 공개돼요.</div>' +
+            '<div class="request-actions">' +
+              '<button class="btn btn-primary" type="button" data-action="accept-match" data-id="'+esc(x.id)+'">수락</button>' +
+              '<button class="btn btn-danger-ghost" type="button" data-action="decline-match" data-id="'+esc(x.id)+'">거절</button>' +
+            '</div>' +
+          '</div>';
+      }
+
       var revealHtml = '';
-      if(x.approved && !isAdmin()){
+      if(revealed && !isAdmin()){
         var lines = [aMember, bMember].filter(function(m){ return m && (m.name || m.contact); }).map(function(m){
           return '<div><b>'+esc(m.name || m.codeName)+'</b>'+(m.codeName && m.name ? ' ('+esc(m.codeName)+')' : '')+(m.contact ? ' · '+esc(m.contact) : '')+'</div>';
         });
         if(lines.length) revealHtml = '<div class="reveal-box">'+lines.join('')+'</div>';
-      } else if(!x.approved && !isAdmin()){
-        revealHtml = '<div class="reveal-hint">관리자가 승인하면 두 사람의 이름과 연락처가 여기에 보여요.</div>';
+      } else if(!isAdmin() && !pendingMine.length){
+        var waits = [];
+        if(declined) waits = ['상대 측에서 정중히 거절했어요. 다른 분을 찾아보세요.'];
+        else {
+          if(x.aConsent === 'pending' && aMember) waits.push(displayName(aMember) + ' 담당 ' + ownerName(aMember.ownerId) + ' 님 수락');
+          if(x.bConsent === 'pending' && bMember) waits.push(displayName(bMember) + ' 담당 ' + ownerName(bMember.ownerId) + ' 님 수락');
+          if(!x.approved) waits.push('관리자 승인');
+          waits = waits.length ? ['기다리는 중: ' + waits.join(', ') + '. 모두 끝나면 두 사람의 이름과 연락처가 여기에 보여요.'] : [];
+        }
+        if(waits.length) revealHtml = '<div class="reveal-hint">'+esc(waits[0])+'</div>';
+      } else if(isAdmin() && x.approved && !revealed && !declined){
+        revealHtml = '<div class="reveal-hint">승인됨 · 담당 주선자 수락이 끝나면 공개돼요.</div>';
       }
+
       var approveBtns = '';
       if(isAdmin()){
         approveBtns = !x.approved
           ? '<button class="btn btn-primary" type="button" data-action="approve-match" data-id="'+esc(x.id)+'">매칭 승인</button>'
           : (x.createdBy ? '<button class="btn" type="button" data-action="unapprove-match" data-id="'+esc(x.id)+'">승인 취소</button>' : '');
       }
+      var editBtns = canEdit
+        ? ('<button class="btn btn-ghost" type="button" data-action="edit-match" data-id="'+esc(x.id)+'" aria-label="수정">' + EDIT_ICON + '</button>' +
+           '<button class="btn btn-danger-ghost" type="button" data-action="delete-match" data-id="'+esc(x.id)+'" aria-label="삭제">' + DELETE_ICON + '</button>')
+        : '';
       return (
         '<div class="match-row" data-id="'+esc(x.id)+'">' +
           '<div class="match-footer">' +
@@ -1911,24 +2013,79 @@
               '<svg class="thread-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M14 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
               '<span>'+esc(bName)+'</span>' + (bExists ? '' : ' <span class="deleted-tag">삭제됨</span>') +
             '</div>' +
-            '<span>' + approvalBadge + '<span class="badge '+st.cls+'">'+st.label+'</span></span>' +
+            '<span>' + statusBadges + '<span class="badge '+st.cls+'">'+st.label+'</span></span>' +
           '</div>' +
           (x.matchmaker ? '<div class="match-matchmaker"><span class="match-matchmaker-label">주선</span>'+esc(x.matchmaker)+'</div>' : '') +
           (subBits.length ? '<div class="match-sub">'+subBits.map(esc).join(' · ')+'</div>' : '') +
+          chipsHtml +
+          requestHtml +
           revealHtml +
           (x.memo ? '<div class="match-memo">'+esc(x.memo)+'</div>' : '') +
-          '<div class="card-actions">' +
-            approveBtns +
-            '<button class="btn btn-ghost" type="button" data-action="edit-match" data-id="'+esc(x.id)+'" aria-label="수정">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-            '</button>' +
-            '<button class="btn btn-danger-ghost" type="button" data-action="delete-match" data-id="'+esc(x.id)+'" aria-label="삭제">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0-.8 13.2a2 2 0 0 1-2 1.8H8.8a2 2 0 0 1-2-1.8L6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-            '</button>' +
-          '</div>' +
+          ((approveBtns || editBtns) ? '<div class="card-actions">' + approveBtns + editBtns + '</div>' : '') +
         '</div>'
       );
     }).join('');
+  }
+
+  /* ---------------- 담당 주선자 / 수락 상태 ---------------- */
+  function refetchMemberNames(){
+    return supabase.rpc('list_members').then(function(res){
+      if(res.error) throw res.error;
+      var map = {};
+      (res.data || []).forEach(function(r){ map[r.id] = r.display_name || ''; });
+      memberNames = map;
+      renderMembers();
+      renderMatches();
+    }).catch(function(err){ console.error('member names error', err); });
+  }
+  function myId(){ return currentUser ? currentUser.id : null; }
+  function ownerName(id){
+    if(!id) return '';
+    if(id === myId()) return '나';
+    if(memberNames[id]) return memberNames[id];
+    var p = profileById(id);
+    return (p && p.display_name) || '다른 주선자';
+  }
+  function consentOk(c){ return c === 'accepted' || c === 'none'; }
+  function matchRevealed(x){ return x.approved && consentOk(x.aConsent) && consentOk(x.bConsent); }
+  function mySidesPending(x){
+    // 내가 담당이고 아직 응답하지 않은 쪽 (요청자가 나인 경우는 제외)
+    var sides = [];
+    var me = myId();
+    if(!me || x.createdBy === me) return sides;
+    var a = memberById(x.aId), b = memberById(x.bId);
+    if(x.aConsent === 'pending' && a && a.ownerId === me) sides.push('a');
+    if(x.bConsent === 'pending' && b && b.ownerId === me) sides.push('b');
+    return sides;
+  }
+  function consentLabel(c){
+    return c === 'pending' ? '수락 대기' : (c === 'accepted' ? '수락' : (c === 'declined' ? '거절' : ''));
+  }
+  function consentChip(member, consent, createdBy){
+    if(consent === 'none' || !member || !member.ownerId || member.ownerId === createdBy) return '';
+    var cls = consent === 'accepted' ? 'badge-success' : (consent === 'declined' ? 'badge-danger' : 'badge-warn');
+    return '<span class="badge '+cls+'">'+esc(displayName(member))+' 담당 '+esc(ownerName(member.ownerId))+' · '+consentLabel(consent)+'</span>';
+  }
+  function respondMatch(id, accept){
+    supabase.rpc('respond_match', { p_match: id, p_accept: accept }).then(function(res){
+      if(res.error) throw res.error;
+      showToast(accept ? '수락했어요. 관리자 승인 후 서로 정보가 공개돼요' : '거절했어요');
+      refetchMatches();
+      refetchParticipants();
+    }).catch(function(err){
+      console.error(err);
+      showToast((err && err.message && /요청|권한|매칭/.test(err.message)) ? err.message : '처리하지 못했어요. 다시 시도해 주세요.');
+    });
+  }
+  function copyMyRefLink(){
+    if(!currentUser) return;
+    var url = location.origin + location.pathname + '?ref=' + currentUser.id;
+    function done(ok){ showToast(ok ? '등록 링크를 복사했어요. 이 링크로 신청하면 내 담당으로 들어와요' : '복사에 실패했어요: ' + url); }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){ done(true); }).catch(function(){ fallbackCopy(url, done); });
+    } else {
+      fallbackCopy(url, done);
+    }
   }
 
   /* ---------------- accounts (admin) ---------------- */
@@ -1987,6 +2144,7 @@
       if(res.error) throw res.error;
       showToast(approved ? '승인했어요' : '승인을 취소했어요');
       refetchProfiles();
+      refetchMemberNames();
     }).catch(function(err){
       console.error(err);
       showToast('처리하지 못했어요. 다시 시도해 주세요.');
@@ -2051,6 +2209,13 @@
     renderRegPhotoStrip();
     $('reg-photo-status').innerHTML = '&nbsp;';
     $('regForm').reset();
+    if(regRefId && regRefName){
+      $('regRefNote').textContent = regRefName + ' 님 소개로 신청해요. ' + regRefName + ' 님이 담당해요.';
+      $('regRefNote').hidden = false;
+      $('reg-referrer').value = regRefName;
+    } else {
+      $('regRefNote').hidden = true;
+    }
     $('regForm').hidden = false;
     $('regSuccess').hidden = true;
     $('lockOverlay').hidden = true;
@@ -2095,7 +2260,8 @@
       p_personality: $('reg-personality').value.trim(),
       p_ideal_type: $('reg-ideal').value.trim(),
       p_memo: $('reg-memo').value.trim(),
-      p_photo_paths: regPhoto.working.slice()
+      p_photo_paths: regPhoto.working.slice(),
+      p_owner: regRefId
     };
     var btn = $('regSubmitBtn');
     btn.disabled = true;
@@ -2281,6 +2447,13 @@
     $('m-job').value = m ? (m.job || '') : '';
     $('m-mbti').value = m ? (m.mbti || '') : '';
     $('m-referrer').value = m ? (m.referrer || '') : '';
+    var ownerSel = $('m-owner');
+    var ownerIds = Object.keys(memberNames);
+    ownerIds.sort(function(a, b){ return (memberNames[a] || '').localeCompare(memberNames[b] || '', 'ko'); });
+    ownerSel.innerHTML = '<option value="">담당 없음</option>' + ownerIds.map(function(id){
+      return '<option value="'+esc(id)+'">'+esc(memberNames[id] || '')+(id === myId() ? ' (나)' : '')+'</option>';
+    }).join('');
+    ownerSel.value = m && m.ownerId ? m.ownerId : '';
     $('m-personality').value = m ? (m.personality || '') : '';
     $('m-ideal').value = m ? (m.idealType || '') : '';
     $('m-memo').value = m ? (m.memo || '') : '';
@@ -2317,7 +2490,8 @@
       personality: $('m-personality').value.trim(),
       idealType: $('m-ideal').value.trim(),
       memo: $('m-memo').value.trim(),
-      photoPaths: memberPhoto.working.slice()
+      photoPaths: memberPhoto.working.slice(),
+      ownerId: $('m-owner').value || null
     };
     var row = memberToRow(data);
     var btn = $('memberSubmitBtn');
@@ -2377,17 +2551,7 @@
     var lockPair = !!(x && x.approved && !isAdmin());
     $('x-a').disabled = lockPair;
     $('x-b').disabled = lockPair;
-    var note = $('matchApprovalNote');
-    if(isAdmin()){
-      note.hidden = !!x;
-      note.textContent = '관리자가 만든 매칭은 바로 승인돼요.';
-    } else if(x && x.approved){
-      note.hidden = false;
-      note.textContent = '승인된 매칭이라 참가자는 바꿀 수 없어요. 상태·날짜·메모는 수정할 수 있어요.';
-    } else {
-      note.hidden = false;
-      note.textContent = '저장하면 관리자 승인을 기다려요. 승인되면 두 사람의 이름·연락처가 공개돼요.';
-    }
+    updateMatchModalNote();
     $('x-matchmaker').value = x ? (x.matchmaker || '') : ((currentProfile && currentProfile.display_name) || '');
     $('x-date').value = x ? (x.date || '') : todayStr();
     $('x-status').value = x ? (x.status || 'proposed') : 'proposed';
@@ -2396,6 +2560,29 @@
     $('matchOverlay').hidden = false;
   }
   function closeMatchModal(){ $('matchOverlay').hidden = true; editingMatchId = null; }
+  function updateMatchModalNote(){
+    var note = $('matchApprovalNote');
+    var x = editingMatchId ? matches.filter(function(m){ return m.id === editingMatchId; })[0] : null;
+    var msgs = [];
+    if(x && x.approved && !isAdmin()){
+      msgs.push('승인된 매칭이라 참가자는 바꿀 수 없어요. 상태·날짜·메모는 수정할 수 있어요.');
+    } else {
+      var me = myId();
+      [$('x-a').value, $('x-b').value].forEach(function(id){
+        var m = id ? memberById(id) : null;
+        if(m && m.ownerId && m.ownerId !== me){
+          msgs.push(displayName(m) + '의 담당 ' + ownerName(m.ownerId) + ' 님이 수락해야 공개돼요.');
+        }
+      });
+      if(isAdmin()){
+        if(!x) msgs.push('관리자가 만든 매칭은 바로 승인돼요.');
+      } else {
+        msgs.push('저장하면 관리자 승인을 기다려요. 모두 끝나면 두 사람의 이름·연락처가 공개돼요.');
+      }
+    }
+    note.textContent = msgs.join(' ');
+    note.hidden = msgs.length === 0;
+  }
 
   function onMatchSubmit(e){
     e.preventDefault();
@@ -2510,6 +2697,8 @@
       var id = btn.dataset.id;
       if(btn.dataset.action === 'edit-match') openMatchModal(id);
       if(btn.dataset.action === 'approve-match') setMatchApproval(id, true);
+      if(btn.dataset.action === 'accept-match') respondMatch(id, true);
+      if(btn.dataset.action === 'decline-match') respondMatch(id, false);
       if(btn.dataset.action === 'unapprove-match') setMatchApproval(id, false);
       if(btn.dataset.action === 'delete-match'){
         var x = matches.filter(function(mm){ return mm.id === id; })[0];
@@ -2534,6 +2723,10 @@
     initDelegation();
 
     $('btnLogout').addEventListener('click', logout);
+    $('btnCopyRefLink').addEventListener('click', copyMyRefLink);
+    $('memberOwnerFilter').addEventListener('change', renderMembers);
+    $('x-a').addEventListener('change', updateMatchModalNote);
+    $('x-b').addEventListener('change', updateMatchModalNote);
     $('btnAddMember').addEventListener('click', function(){ openMemberModal(null); });
     $('memberClose').addEventListener('click', function(){ closeMemberModal(); });
     $('memberCancel').addEventListener('click', function(){ closeMemberModal(); });
@@ -2722,6 +2915,7 @@
     refetchParticipants();
     refetchMatches();
     refetchProfiles();
+    refetchMemberNames();
     subscribeRealtime();
   }
 
