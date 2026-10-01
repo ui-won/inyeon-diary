@@ -99,7 +99,6 @@
   /* 화면 숨김은 편의용일 뿐, 실제 권한은 데이터베이스 정책이 막아요 */
   body:not(.role-admin) .admin-only,
   body:not(.role-admin) #btnAddMember,
-  body:not(.role-admin) [data-action="edit-member"],
   body:not(.role-admin) [data-action="delete-member"],
   body:not(.role-admin) [data-action="approve-member"],
   body:not(.role-admin) [data-action="reject-member"]{ display:none !important; }
@@ -811,7 +810,7 @@
       <div class="field">
         <label for="m-owner">담당 주선자 (계정)</label>
         <select class="select-input" id="m-owner"></select>
-        <span class="helper-text">담당 주선자는 이 참가자의 이름·연락처를 볼 수 있고, 다른 주선자가 매칭을 요청하면 수락·거절해요.</span>
+        <span class="helper-text" id="m-owner-help">담당 주선자는 이 참가자의 이름·연락처를 볼 수 있고, 다른 주선자가 매칭을 요청하면 수락·거절해요.</span>
       </div>
       <div class="field">
         <label for="m-personality">성격 · 특징</label>
@@ -1053,6 +1052,13 @@
 
   /* ---------------- login (Supabase Auth) ---------------- */
   function isAdmin(){ return currentRole === 'admin'; }
+  // 관리자 또는 본인이 담당하는 참가자만 수정 가능 (서버에서도 같은 규칙으로 막혀 있음)
+  function canEditMember(m){
+    if(!m) return false;
+    if(isAdmin()) return true;
+    var me = currentUser ? currentUser.id : null;
+    return !!(me && m.ownerId && m.ownerId === me);
+  }
 
   function showAuthView(view){
     // view: 'loading' | 'login' | 'signup' | 'pending'
@@ -1869,9 +1875,10 @@
             '<button class="btn btn-ghost" type="button" data-action="copy-member" data-id="'+esc(m.id)+'" aria-label="카톡 공유용 정보 복사">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" stroke-linecap="round"/></svg>' +
             '</button>' +
+            (canEditMember(m) ?
             '<button class="btn btn-ghost" type="button" data-action="edit-member" data-id="'+esc(m.id)+'" aria-label="수정">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-            '</button>' +
+            '</button>' : '') +
             '<button class="btn btn-danger-ghost" type="button" data-action="delete-member" data-id="'+esc(m.id)+'" aria-label="삭제">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0-.8 13.2a2 2 0 0 1-2 1.8H8.8a2 2 0 0 1-2-1.8L6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
             '</button>' +
@@ -2428,9 +2435,9 @@
 
   /* ---------------- member modal ---------------- */
   function openMemberModal(id){
-    if(!isAdmin()) return;
-    editingMemberId = id || null;
     var m = id ? memberById(id) : null;
+    if(id ? !canEditMember(m) : !isAdmin()) return;
+    editingMemberId = id || null;
     $('memberModalTitle').textContent = m ? ('참가자 수정' + (m.codeName ? ' · ' + m.codeName : '')) : '새 참가자';
     memberPhoto.original = getPhotoPaths(m);
     memberPhoto.working = memberPhoto.original.slice();
@@ -2454,6 +2461,14 @@
       return '<option value="'+esc(id)+'">'+esc(memberNames[id] || '')+(id === myId() ? ' (나)' : '')+'</option>';
     }).join('');
     ownerSel.value = m && m.ownerId ? m.ownerId : '';
+    if(m && m.ownerId && !memberNames[m.ownerId] && ownerSel.value !== m.ownerId){
+      ownerSel.insertAdjacentHTML('beforeend', '<option value="'+esc(m.ownerId)+'">'+esc(ownerName(m.ownerId))+'</option>');
+      ownerSel.value = m.ownerId;
+    }
+    ownerSel.disabled = !isAdmin();
+    $('m-owner-help').textContent = isAdmin()
+      ? '담당 주선자는 이 참가자의 이름·연락처를 볼 수 있고, 다른 주선자가 매칭을 요청하면 수락·거절해요.'
+      : '담당 주선자 변경은 관리자만 할 수 있어요.';
     $('m-personality').value = m ? (m.personality || '') : '';
     $('m-ideal').value = m ? (m.idealType || '') : '';
     $('m-memo').value = m ? (m.memo || '') : '';
@@ -2473,7 +2488,8 @@
 
   function onMemberSubmit(e){
     e.preventDefault();
-    if(!isAdmin()){ showToast('참가자 정보는 관리자만 수정할 수 있어요'); return; }
+    var editingM = editingMemberId ? memberById(editingMemberId) : null;
+    if(editingMemberId ? !canEditMember(editingM) : !isAdmin()){ showToast('본인이 담당하는 참가자만 수정할 수 있어요'); return; }
     var name = $('m-name').value.trim();
     var birthYearVal = $('m-birthyear').value ? Number($('m-birthyear').value) : null;
     var heightVal = $('m-height').value ? Number($('m-height').value) : null;
@@ -2494,6 +2510,7 @@
       ownerId: $('m-owner').value || null
     };
     var row = memberToRow(data);
+    if(!isAdmin()) delete row.owner_id;   // 담당 변경은 관리자만 (서버에서도 막혀 있음)
     var btn = $('memberSubmitBtn');
     btn.disabled = true;
     var wasEditing = !!editingMemberId;
