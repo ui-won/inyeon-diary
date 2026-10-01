@@ -448,7 +448,8 @@
   .guide-num{ flex:none; width:32px; height:32px; border-radius:50%; background:var(--accent); color:var(--accent-ink); font-weight:800; display:flex; align-items:center; justify-content:center; font-size:15px; }
   .guide-steps h4{ margin:3px 0 6px; font-size:16px; }
   .guide-steps .who{ display:inline-block; font-size:12px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:1px 8px; margin-left:6px; vertical-align:2px; }
-  .guide-steps ul, .guide-box ul{ margin:0; padding-left:18px; }
+  .guide-steps ul, .guide-box ul, .guide-plain{ margin:0; padding-left:18px; }
+  .guide-plain li{ margin:3px 0; }
   .guide-steps li li, .guide-box li{ margin:3px 0; }
   .guide-box{ padding:14px 16px; border-radius:var(--radius-sm); background:var(--surface-2); }
   .guide-box.warn{ background:var(--accent-soft); }
@@ -653,6 +654,16 @@
         </ol>
       </section>
 
+      <section>
+        <h3>궁합 점수는 이렇게 계산해요</h3>
+        <ul class="guide-plain">
+          <li>나이, 사는 곳, 만남 목적, 관심사, 흡연·음주, 원하는 키, 이상형 키워드, MBTI, 종교를 보고 점수를 매겨요. 나이·지역·목적·관심사의 비중이 커요.</li>
+          <li><b>조건 불일치</b>: 한쪽이 원하는 나이·키·비흡연·종교 조건에 맞지 않는 경우예요. AI 추천에서는 빠지고, 빠른 매칭에서는 맨 아래에 보여요.</li>
+          <li><b>정보 적음</b>: 비교할 정보가 부족하면 점수가 50% 근처로 나와요. 참가자 정보를 채우면 정확해져요.</li>
+          <li>점수는 참고용이에요. 두 사람을 아는 주선자의 판단이 가장 중요해요.</li>
+        </ul>
+      </section>
+
       <section class="guide-box">
         <h3>누가 무엇을 볼 수 있나요?</h3>
         <ul>
@@ -674,16 +685,36 @@
           <dt>승인된 매칭의 사람을 바꿀 수 있나요?</dt>
           <dd>참가자는 바꿀 수 없어요. 상태·날짜·메모는 계속 수정할 수 있어요. 사람을 바꾸려면 새 매칭을 만들어 주세요.</dd>
           <dt>담당이 없는 참가자와 매칭하면요?</dt>
-          <dd>상대 수락 단계 없이 관리자 승인만 받으면 공개돼요.</dd>
+          <dd>상대 담당 수락 단계는 건너뛰고, 관리자 승인 뒤 매칭을 요청한 주선자가 그 참가자에게도 결정 링크를 보내요. 두 사람이 모두 만나보기로 해야 연락처가 공개돼요.</dd>
+          <dt>참가자가 링크에 답을 안 해요.</dt>
+          <dd>카드에 '답변 기다리는 중'으로 보여요. 참가자에게 한 번 더 연락해 주세요. 사진이 안 보인다고 하면 <span class="guide-ui">링크 다시 만들기</span>를 누르세요. 주소는 그대로이고 사진만 새로 열려요.</dd>
+          <dt>참가자가 자기 정보를 지워 달라고 해요.</dt>
+          <dd>신청서 동의 내용에 따라 요청을 받으면 바로 지워야 해요. 관리자에게 알려 주시면 관리자가 삭제해요. 정보 수정만 원하면 담당 주선자가 연필 버튼으로 직접 고칠 수 있어요.</dd>
+          <dt>종교 칸이 잠겨 있어요.</dt>
+          <dd>종교는 민감정보라, 참가자가 신청서에서 따로 동의한 경우에만 입력할 수 있어요.</dd>
+          <dt>비밀번호를 잊어버렸어요.</dt>
+          <dd>관리자에게 말하면 임시 비밀번호를 받을 수 있어요. 임시 비밀번호로 로그인하면 새 비밀번호를 정하는 화면이 나와요.</dd>
           <dt>참가자 삭제나 담당 변경은요?</dt>
           <dd>관리자만 할 수 있어요. 필요하면 관리자에게 말해 주세요.</dd>
         </dl>
+      </section>
+
+      <section class="guide-box admin-only">
+        <h3>관리자가 할 일</h3>
+        <ul>
+          <li><b>주선자 가입 승인</b>: <span class="guide-ui">주선자 관리</span> 탭에서 승인해요. 비밀번호를 잊은 주선자에게는 <span class="guide-ui">비밀번호 초기화</span>로 임시 비밀번호를 만들어 전해 주세요.</li>
+          <li><b>참가자 신청 승인</b>: 참가자 카드의 <span class="guide-ui">승인</span>·<span class="guide-ui">거절</span>을 눌러요. 담당이 없으면 연필 버튼에서 담당 주선자를 지정해 주세요.</li>
+          <li><b>매칭 승인</b>: 매칭 기록 카드의 <span class="guide-ui">매칭 승인</span>을 누르면 담당 주선자가 참가자에게 결정 링크를 보낼 수 있어요.</li>
+          <li><b>삭제 요청 처리</b>: 참가자가 정보 삭제를 요청하면 참가자 카드에서 삭제해 주세요.</li>
+          <li>참가자 카드의 <b>동의</b> 줄에서 개인정보 동의 날짜를 확인할 수 있어요. '동의 기록 없음'은 신청서를 거치지 않고 직접 등록한 참가자예요.</li>
+        </ul>
       </section>
 
       <section class="guide-box warn">
         <h3>개인정보는 꼭 지켜 주세요</h3>
         <ul>
           <li>공개된 이름과 연락처는 소개 목적으로만 쓰고, 다른 사람에게 전달하지 마세요.</li>
+          <li>결정 링크는 그 참가자 본인에게만 보내 주세요. 링크를 가진 사람은 누구나 상대 프로필과 사진을 볼 수 있어요.</li>
           <li>공용 기기에서는 사용이 끝나면 꼭 <span class="guide-ui">로그아웃</span>해 주세요.</li>
         </ul>
       </section>
