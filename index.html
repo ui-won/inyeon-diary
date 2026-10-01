@@ -93,7 +93,8 @@
   .role-indicator{ position:absolute; top:16px; right:16px; z-index:2; display:flex; align-items:center; gap:8px; }
   .role-badge{ font-size:12px; font-weight:700; padding:5px 12px; border-radius:999px; background:linear-gradient(135deg,#FF7AA2,#C86DD7); color:#fff; white-space:nowrap; }
   .role-indicator .btn{ padding:6px 12px; font-size:12.5px; }
-  @media (max-width:480px){ .role-indicator{ position:static; justify-content:flex-end; margin-bottom:10px; } }
+  @media (max-width:480px){ .role-indicator{ position:static; justify-content:flex-end; flex-wrap:wrap; gap:6px; margin-bottom:10px; } }
+  #btnGuide{ color:var(--accent); font-weight:700; }
 
   /* ---- Read-only participant role ---- */
   /* 화면 숨김은 편의용일 뿐, 실제 권한은 데이터베이스 정책이 막아요 */
@@ -360,6 +361,33 @@
   }
   .lock-wrap button[type="submit"]:active{ transform:translateY(1px); }
 
+  /* ---------- 주선자 가이드 ---------- */
+  #guideOverlay .dialog{ max-width:720px; padding:0; display:flex; flex-direction:column; overflow:hidden; }
+  #guideOverlay .dialog-head{ margin:0; padding:20px 22px 14px; border-bottom:1px solid var(--line); }
+  #guideOverlay .dialog-head h2{ font-size:22px; }
+  .guide-body{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:18px 22px 6px; display:flex; flex-direction:column; gap:22px; font-size:15px; line-height:1.6; color:var(--ink); }
+  .guide-body h3{ font-size:17px; margin:0 0 10px; }
+  .guide-lead{ margin:0; color:var(--muted); font-size:15px; }
+  .guide-flow{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+  .guide-flow .gf-step{ display:flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px; background:var(--accent-soft); color:var(--ink); font-weight:700; font-size:14px; white-space:nowrap; }
+  .guide-flow .gf-step b{ display:inline-flex; width:20px; height:20px; border-radius:50%; background:var(--accent); color:var(--accent-ink); font-size:12px; align-items:center; justify-content:center; }
+  .guide-flow .gf-arrow{ color:var(--muted); font-weight:700; }
+  .guide-steps{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
+  .guide-steps > li{ display:flex; gap:14px; padding:14px 16px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface); }
+  .guide-num{ flex:none; width:32px; height:32px; border-radius:50%; background:var(--accent); color:var(--accent-ink); font-weight:800; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .guide-steps h4{ margin:3px 0 6px; font-size:16px; }
+  .guide-steps .who{ display:inline-block; font-size:12px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:1px 8px; margin-left:6px; vertical-align:2px; }
+  .guide-steps ul, .guide-box ul{ margin:0; padding-left:18px; }
+  .guide-steps li li, .guide-box li{ margin:3px 0; }
+  .guide-box{ padding:14px 16px; border-radius:var(--radius-sm); background:var(--surface-2); }
+  .guide-box.warn{ background:var(--accent-soft); }
+  .guide-ui{ display:inline-block; padding:0 7px; border-radius:6px; border:1px solid var(--line); background:var(--surface); font-weight:700; font-size:13.5px; white-space:nowrap; }
+  .guide-faq dt{ font-weight:700; margin-top:10px; }
+  .guide-faq dt:first-child{ margin-top:0; }
+  .guide-faq dd{ margin:2px 0 0; color:var(--muted); }
+  #guideOverlay .dialog-actions{ margin:0; padding:14px 22px calc(14px + env(safe-area-inset-bottom, 0px)); border-top:1px solid var(--line); }
+  #guideOverlay .dialog-actions .btn{ font-size:16px; padding:12px 28px; }
+  @media (max-width:639px){ #guideOverlay .dialog{ max-height:94vh; } }
   /* 로그인 화면의 참가자 등록 신청 버튼 */
   .reg-cta{ margin:22px 0 0; text-align:center; }
   .reg-cta[hidden]{ display:none; }
@@ -446,6 +474,141 @@
         참가자 등록 신청하기
       </button>
       <p class="reg-cta-sub">로그인 없이 바로 신청할 수 있어요</p>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MATCHMAKER GUIDE ================= -->
+<div class="overlay" id="guideOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
+    <div class="dialog-head">
+      <h2 id="guideTitle">주선자 사용 가이드</h2>
+      <button class="btn btn-ghost" type="button" id="guideClose" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="guide-body">
+      <section>
+        <p class="guide-lead">참가자를 모으고, 다른 주선자의 참가자와 매칭을 요청하고, 양쪽 동의와 관리자 승인을 받으면 두 사람의 연락처가 공개돼요.</p>
+      </section>
+
+      <section>
+        <h3>한눈에 보는 매칭 순서</h3>
+        <div class="guide-flow" aria-label="매칭 순서">
+          <span class="gf-step"><b>1</b>참가자 모으기</span><span class="gf-arrow">→</span>
+          <span class="gf-step"><b>2</b>매칭 요청</span><span class="gf-arrow">→</span>
+          <span class="gf-step"><b>3</b>상대 담당 수락</span><span class="gf-arrow">→</span>
+          <span class="gf-step"><b>4</b>관리자 승인</span><span class="gf-arrow">→</span>
+          <span class="gf-step"><b>5</b>연락처 공개 · 소개</span>
+        </div>
+      </section>
+
+      <section>
+        <h3>단계별 방법</h3>
+        <ol class="guide-steps">
+          <li>
+            <span class="guide-num">1</span>
+            <div>
+              <h4>참가자 모으기 <span class="who">나</span></h4>
+              <ul>
+                <li>화면 위쪽 <span class="guide-ui">내 등록 링크</span>를 눌러 링크를 복사하고, 소개할 지인에게 카톡으로 보내세요.</li>
+                <li>그 링크로 신청한 사람은 자동으로 <b>내 담당</b>이 돼요.</li>
+                <li>관리자가 신청을 승인하면 모든 주선자의 참가자 목록에 나타나요. 승인 전에는 나와 관리자만 볼 수 있어요.</li>
+              </ul>
+            </div>
+          </li>
+          <li>
+            <span class="guide-num">2</span>
+            <div>
+              <h4>내 담당 참가자 관리 <span class="who">나</span></h4>
+              <ul>
+                <li><span class="guide-ui">참가자 관리</span> 탭에서 담당 필터를 <span class="guide-ui">내 담당</span>으로 바꾸면 내 참가자만 볼 수 있어요.</li>
+                <li>카드의 연필 버튼으로 사진·직업·성격·연락처 같은 정보를 고칠 수 있어요.</li>
+                <li>내 담당 참가자는 이름과 연락처가 보이고, 다른 참가자는 <b>여자1·남자2</b> 같은 코드명과 프로필만 보여요.</li>
+              </ul>
+            </div>
+          </li>
+          <li>
+            <span class="guide-num">3</span>
+            <div>
+              <h4>매칭 요청하기 <span class="who">나</span></h4>
+              <ul>
+                <li>참가자 카드의 하트 버튼, <span class="guide-ui">빠른 매칭</span> 탭, 또는 <span class="guide-ui">매칭 기록</span> 탭의 <span class="guide-ui">새 매칭 등록</span>에서 두 사람을 골라 저장하세요.</li>
+                <li>보통은 내 참가자 한 명과, 잘 맞을 것 같은 다른 주선자의 참가자 한 명을 고르면 돼요.</li>
+                <li>저장하면 상대 참가자의 담당 주선자에게 요청이 가고, 관리자에게도 승인 요청이 가요.</li>
+              </ul>
+            </div>
+          </li>
+          <li>
+            <span class="guide-num">4</span>
+            <div>
+              <h4>상대 담당 주선자의 수락 <span class="who">상대 주선자</span></h4>
+              <ul>
+                <li>요청을 받은 주선자의 <span class="guide-ui">매칭 기록</span> 탭에 숫자 배지와 함께 <b>받은 요청</b>이 맨 위에 떠요.</li>
+                <li>자기 참가자에게 물어본 뒤 <span class="guide-ui">수락</span> 또는 <span class="guide-ui">거절</span>을 눌러요.</li>
+                <li>나도 다른 주선자에게서 요청을 받으면 같은 곳에서 수락·거절하면 돼요.</li>
+                <li>두 사람이 모두 내 담당이면 이 단계는 자동으로 넘어가요.</li>
+              </ul>
+            </div>
+          </li>
+          <li>
+            <span class="guide-num">5</span>
+            <div>
+              <h4>관리자 승인 <span class="who">관리자</span></h4>
+              <ul>
+                <li>관리자가 매칭을 확인하고 승인해요. 수락과 승인은 어느 쪽이 먼저 되어도 괜찮아요.</li>
+                <li>매칭 카드의 표시로 지금 무엇을 기다리는지 알 수 있어요. 예: <b>관리자 승인 대기</b>, <b>여자1 담당 민지 · 수락 대기</b></li>
+              </ul>
+            </div>
+          </li>
+          <li>
+            <span class="guide-num">6</span>
+            <div>
+              <h4>연락처 공개 · 소개 진행 <span class="who">나 + 상대 주선자</span></h4>
+              <ul>
+                <li>상대 수락과 관리자 승인이 모두 끝나면, 요청한 주선자와 양쪽 담당 주선자에게 <b>두 사람의 이름과 연락처</b>가 보여요.</li>
+                <li>담당 주선자끼리 연락해서 소개를 진행하고, 매칭 카드의 상태를 <b>제안됨 → 진행중 → 성사·불발·보류</b>로 바꿔 주세요.</li>
+                <li>후속 연락 날짜와 메모를 적어 두면 다음 할 일을 놓치지 않아요.</li>
+              </ul>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="guide-box">
+        <h3>누가 무엇을 볼 수 있나요?</h3>
+        <ul>
+          <li><b>모든 주선자:</b> 승인된 참가자의 코드명, 나이, 키, 직업, MBTI, 성격, 이상형, 사진</li>
+          <li><b>담당 주선자:</b> 내 담당 참가자의 이름과 연락처 (언제나)</li>
+          <li><b>매칭 관련 주선자:</b> 수락과 승인이 끝난 매칭의 두 사람 이름과 연락처</li>
+          <li><b>관리자:</b> 전체</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>자주 묻는 질문</h3>
+        <dl class="guide-faq">
+          <dt>상대 주선자가 거절하면요?</dt>
+          <dd>그 매칭은 공개되지 않아요. 카드에 '상대측 거절'로 표시되니 다른 분으로 다시 요청해 보세요.</dd>
+          <dt>승인된 매칭의 사람을 바꿀 수 있나요?</dt>
+          <dd>참가자는 바꿀 수 없어요. 상태·날짜·메모는 계속 수정할 수 있어요. 사람을 바꾸려면 새 매칭을 만들어 주세요.</dd>
+          <dt>담당이 없는 참가자와 매칭하면요?</dt>
+          <dd>상대 수락 단계 없이 관리자 승인만 받으면 공개돼요.</dd>
+          <dt>참가자 삭제나 담당 변경은요?</dt>
+          <dd>관리자만 할 수 있어요. 필요하면 관리자에게 말해 주세요.</dd>
+        </dl>
+      </section>
+
+      <section class="guide-box warn">
+        <h3>개인정보는 꼭 지켜 주세요</h3>
+        <ul>
+          <li>공개된 이름과 연락처는 소개 목적으로만 쓰고, 다른 사람에게 전달하지 마세요.</li>
+          <li>공용 기기에서는 사용이 끝나면 꼭 <span class="guide-ui">로그아웃</span>해 주세요.</li>
+        </ul>
+      </section>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-primary" id="guideOkBtn">확인했어요</button>
     </div>
   </div>
 </div>
@@ -565,6 +728,7 @@
     </svg>
     <div class="role-indicator">
       <span class="role-badge" id="roleBadge">주선자</span>
+      <button type="button" class="btn btn-ghost" id="btnGuide" title="매칭 순서와 사용 방법 보기">사용 가이드</button>
       <button type="button" class="btn btn-ghost" id="btnCopyRefLink" title="이 링크로 신청한 참가자는 내 담당으로 들어와요">내 등록 링크</button>
       <button type="button" class="btn btn-ghost" id="btnLogout">로그아웃</button>
     </div>
@@ -1388,6 +1552,25 @@
     $('mainApp').hidden = false;
     applyRolePermissions();
     start();
+    maybeShowGuideFirstTime();
+  }
+
+  /* ---------------- 주선자 가이드 ---------------- */
+  function guideSeenKey(){ return 'mm_guide_seen_' + (currentUser ? currentUser.id : ''); }
+  function openGuide(){
+    $('guideOverlay').hidden = false;
+    var body = document.querySelector('#guideOverlay .guide-body'); if(body) body.scrollTop = 0;
+  }
+  function closeGuide(){
+    $('guideOverlay').hidden = true;
+    try{ localStorage.setItem(guideSeenKey(), '1'); }catch(e){}
+  }
+  function maybeShowGuideFirstTime(){
+    // 주선자가 처음 들어왔을 때 한 번 자동으로 보여줘요 (이후에는 '사용 가이드' 버튼으로)
+    if(currentRole !== 'matchmaker') return;
+    var seen = false;
+    try{ seen = localStorage.getItem(guideSeenKey()) === '1'; }catch(e){}
+    if(!seen) setTimeout(openGuide, 400);
   }
 
   /* ---------------- data mapping (Postgres <-> JS) ---------------- */
@@ -2801,6 +2984,10 @@
 
     $('btnLogout').addEventListener('click', logout);
     $('btnCopyRefLink').addEventListener('click', copyMyRefLink);
+    $('btnGuide').addEventListener('click', openGuide);
+    $('guideClose').addEventListener('click', closeGuide);
+    $('guideOkBtn').addEventListener('click', closeGuide);
+    $('guideOverlay').addEventListener('click', function(e){ if(e.target === this) closeGuide(); });
     $('memberOwnerFilter').addEventListener('change', renderMembers);
     $('x-a').addEventListener('change', updateMatchModalNote);
     $('x-b').addEventListener('change', updateMatchModalNote);
@@ -2924,6 +3111,7 @@
         if(!$('matchOverlay').hidden) closeMatchModal();
         if(!$('confirmOverlay').hidden) closeConfirm();
         if(!$('photoViewerOverlay').hidden) closePhotoViewer();
+        if(!$('guideOverlay').hidden) closeGuide();
       }
     });
   }
