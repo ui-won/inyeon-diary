@@ -232,6 +232,46 @@
   .photo-add-tile{ width:72px; height:72px; border-radius:14px; border:1.5px dashed var(--line); background:transparent; color:var(--muted); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; cursor:pointer; font-size:11px; flex:none; }
   .photo-add-tile svg{ width:20px; height:20px; }
   .photo-add-tile:hover{ border-color:var(--accent); color:var(--accent); }
+  /* ---------- 참가자 등록 신청: 크게 보이는 전체 화면 양식 ---------- */
+  #regOverlay{ align-items:stretch; padding:0; }
+  #regOverlay .dialog{ max-width:none; width:100%; height:100%; max-height:none; border-radius:0; padding:0; display:flex; flex-direction:column; overflow:hidden; }
+  #regOverlay .dialog-head{ position:sticky; top:0; z-index:2; margin:0; padding:18px 20px 14px; background:var(--surface); border-bottom:1px solid var(--line); }
+  #regOverlay .dialog-head h2{ font-size:24px; }
+  #regOverlay #regClose{ padding:10px; }
+  #regOverlay #regClose svg{ width:26px; height:26px; }
+  #regOverlay .reg-scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  #regOverlay form, #regOverlay #regSuccess{ width:100%; max-width:640px; margin:0 auto; padding:22px 20px 0; }
+  #regOverlay form{ gap:22px; }
+  #regOverlay .reg-intro{ font-size:16px; line-height:1.6; color:var(--muted); margin:0; padding:14px 16px; background:var(--surface-2); border-radius:var(--radius-sm); }
+  #regOverlay #regRefNote{ font-size:17px; margin:0; }
+  #regOverlay .field{ gap:8px; }
+  #regOverlay .field label{ font-size:16px; color:var(--ink); font-weight:700; }
+  #regOverlay .field-input, #regOverlay select.select-input{ font-size:17px; padding:14px 16px; min-height:54px; border-radius:12px; }
+  #regOverlay textarea.field-input{ min-height:120px; line-height:1.5; }
+  #regOverlay .field-row{ gap:14px; }
+  #regOverlay .helper-text{ font-size:14px; margin-top:0; }
+  #regOverlay .photo-strip{ gap:12px; }
+  #regOverlay .photo-thumb, #regOverlay .photo-add-tile{ width:104px; height:104px; border-radius:16px; }
+  #regOverlay .photo-add-tile{ font-size:15px; gap:4px; }
+  #regOverlay .photo-add-tile svg{ width:28px; height:28px; }
+  #regOverlay .thumb-btn{ width:28px; height:28px; font-size:15px; }
+  #regOverlay .photo-thumb .cover-badge{ font-size:12px; padding:2px 8px; }
+  #regOverlay .dialog-actions{ position:sticky; bottom:0; z-index:2; margin:8px -20px 0; padding:14px 20px calc(14px + env(safe-area-inset-bottom, 0px)); background:var(--surface); border-top:1px solid var(--line); gap:10px; }
+  #regOverlay .dialog-actions .btn{ flex:1; font-size:18px; padding:16px 18px; }
+  #regOverlay .dialog-actions .btn-primary{ flex:2; }
+  #regOverlay #regSuccess{ padding-top:60px; }
+  #regOverlay #regSuccess p{ font-size:20px !important; line-height:1.6; }
+  #regOverlay #regSuccess .btn{ font-size:18px; padding:16px 40px; margin-top:20px !important; }
+  @media (max-width:480px){ #regOverlay .field-row.reg-pair{ flex-direction:row; } }
+  @media (min-width:640px){
+    #regOverlay{ align-items:center; padding:24px; }
+    #regOverlay .dialog{ max-width:760px; height:auto; max-height:94vh; border-radius:var(--radius); }
+    #regOverlay .dialog-head{ padding:22px 28px 16px; }
+    #regOverlay .dialog-head h2{ font-size:28px; }
+    #regOverlay form, #regOverlay #regSuccess{ padding:26px 28px 0; max-width:none; }
+    #regOverlay .dialog-actions{ margin:8px -28px 0; padding:16px 28px; }
+    #regOverlay .photo-thumb, #regOverlay .photo-add-tile{ width:116px; height:116px; }
+  }
   .visually-hidden-input{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 
   .viewer-strip{ display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; }
@@ -403,9 +443,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
       </button>
     </div>
+    <div class="reg-scroll">
     <form id="regForm">
       <p class="helper-text" id="regRefNote" hidden style="margin:0 0 4px; color:var(--accent); font-weight:700;"></p>
-      <p class="helper-text" style="margin:0 0 4px;">신청 내용은 관리자가 확인 후 승인해요. 이름과 연락처는 관리자와, 관리자가 승인한 매칭을 맡은 주선자에게만 공개돼요.</p>
+      <p class="reg-intro">신청 내용은 관리자가 확인 후 승인해요. 이름과 연락처는 관리자와, 관리자가 승인한 매칭을 맡은 주선자에게만 공개돼요.</p>
       <div class="field">
         <label>사진 (최대 6장, 선택)</label>
         <div class="photo-strip" id="reg-photo-strip"></div>
@@ -416,14 +457,14 @@
         <label for="reg-name">이름 <span class="required-mark">*</span></label>
         <input class="field-input" id="reg-name" maxlength="40" placeholder="예: 김지수" required>
       </div>
-      <div class="field-row">
-        <div class="field" style="max-width:140px">
+      <div class="field-row reg-pair">
+        <div class="field">
           <label for="reg-birthyear">출생연도 <span class="required-mark">*</span></label>
-          <input class="field-input" id="reg-birthyear" type="number" min="1930" placeholder="1997" required>
+          <input class="field-input" id="reg-birthyear" type="number" inputmode="numeric" min="1930" placeholder="1997" required>
         </div>
-        <div class="field" style="max-width:140px">
+        <div class="field">
           <label for="reg-height">키(cm) <span class="required-mark">*</span></label>
-          <input class="field-input" id="reg-height" type="number" min="100" max="250" placeholder="170" required>
+          <input class="field-input" id="reg-height" type="number" inputmode="numeric" min="100" max="250" placeholder="170" required>
         </div>
       </div>
       <div class="field-row">
@@ -438,7 +479,7 @@
         </div>
         <div class="field">
           <label for="reg-contact">연락처 <span class="required-mark">*</span></label>
-          <input class="field-input" id="reg-contact" placeholder="전화번호나 메신저 아이디" required>
+          <input class="field-input" id="reg-contact" autocomplete="tel" placeholder="전화번호나 메신저 아이디" required>
         </div>
       </div>
       <div class="field-row">
@@ -493,6 +534,7 @@
     <div id="regSuccess" hidden style="text-align:center; padding:12px 4px;">
       <p style="font-size:15px;">신청이 접수됐어요!<br>주선자가 확인 후 연락드릴게요.</p>
       <button type="button" class="btn btn-primary" id="regBackBtn" style="margin-top:8px;">확인</button>
+    </div>
     </div>
   </div>
 </div>
@@ -2227,6 +2269,7 @@
     $('regSuccess').hidden = true;
     $('lockOverlay').hidden = true;
     $('regOverlay').hidden = false;
+    var regSc = document.querySelector('#regOverlay .reg-scroll'); if(regSc) regSc.scrollTop = 0;
     setTimeout(function(){ $('reg-name').focus(); }, 30);
   }
   function closeRegForm(){
@@ -2277,6 +2320,7 @@
       regPhoto.working = [];
       $('regForm').hidden = true;
       $('regSuccess').hidden = false;
+      var sc = document.querySelector('#regOverlay .reg-scroll'); if(sc) sc.scrollTop = 0;
     }).catch(function(err){
       console.error(err);
       showToast('신청하지 못했어요. 다시 시도해 주세요.');
