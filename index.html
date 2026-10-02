@@ -101,7 +101,6 @@
   body:not(.role-admin) .admin-only,
   body:not(.role-admin) #btnAddMember,
   body:not(.role-admin) [data-action="delete-member"],
-  body:not(.role-admin) [data-action="approve-member"],
   body:not(.role-admin) [data-action="reject-member"]{ display:none !important; }
   .auth-form[hidden]{ display:none !important; }
   .auth-form .field-input{ text-align:left; }
@@ -597,6 +596,8 @@
               <h4>참가자 모으기 · 정보 채우기 <span class="who">나</span></h4>
               <ul>
                 <li>화면 위쪽 <span class="guide-ui">내 등록 링크</span>를 복사해 지인에게 보내면, 그 링크로 신청한 사람은 자동으로 <b>내 담당</b>이 돼요.</li>
+                <li>새 신청은 <b>승인 대기</b>로 들어와요. 내용을 확인하고 카드의 <span class="guide-ui">승인</span>을 누르면 다른 주선자들도 볼 수 있고 매칭할 수 있어요. 승인 전에는 나와 관리자만 볼 수 있어요.</li>
+                <li>장난이나 잘못된 신청은 승인하지 말고 관리자에게 삭제를 요청해 주세요. 삭제는 관리자만 할 수 있어요.</li>
                 <li>내 담당 참가자는 카드의 연필 버튼으로 지역·만남 목적·흡연·관심사 같은 <b>궁합 정보</b>를 채워 주세요. 많이 채울수록 추천이 정확해져요.</li>
               </ul>
             </div>
@@ -703,7 +704,7 @@
         <h3>관리자가 할 일</h3>
         <ul>
           <li><b>주선자 가입 승인</b>: <span class="guide-ui">주선자 관리</span> 탭에서 승인해요. 비밀번호를 잊은 주선자에게는 <span class="guide-ui">비밀번호 초기화</span>로 임시 비밀번호를 만들어 전해 주세요.</li>
-          <li><b>참가자 신청 승인</b>: 참가자 카드의 <span class="guide-ui">승인</span>·<span class="guide-ui">거절</span>을 눌러요. 담당이 없으면 연필 버튼에서 담당 주선자를 지정해 주세요.</li>
+          <li><b>참가자 신청 승인</b>: 담당 주선자가 있는 신청은 담당 주선자도 승인할 수 있어요. 담당이 없는 신청은 관리자가 카드의 <span class="guide-ui">승인</span>·<span class="guide-ui">거절</span>을 눌러 처리하고, 연필 버튼에서 담당 주선자를 지정해 주세요. 거절(삭제)은 관리자만 할 수 있어요.</li>
           <li><b>매칭 승인</b>: 매칭 기록 카드의 <span class="guide-ui">매칭 승인</span>을 누르면 담당 주선자가 참가자에게 결정 링크를 보낼 수 있어요.</li>
           <li><b>삭제 요청 처리</b>: 참가자가 정보 삭제를 요청하면 참가자 카드에서 삭제해 주세요.</li>
           <li>참가자 카드의 <b>동의</b> 줄에서 개인정보 동의 날짜를 확인할 수 있어요. '동의 기록 없음'은 신청서를 거치지 않고 직접 등록한 참가자예요.</li>
@@ -737,7 +738,7 @@
     <div class="reg-scroll">
     <form id="regForm">
       <p class="helper-text" id="regRefNote" hidden style="margin:0 0 4px; color:var(--accent); font-weight:700;"></p>
-      <p class="reg-intro">신청 내용은 관리자가 확인 후 승인해요. 이름과 연락처는 관리자와, 관리자가 승인한 매칭을 맡은 주선자에게만 공개돼요.</p>
+      <p class="reg-intro">신청 내용은 담당 주선자나 관리자가 확인 후 승인해요. 이름과 연락처는 관리자와, 관리자가 승인한 매칭을 맡은 주선자에게만 공개돼요.</p>
       <div class="field">
         <label>사진 (최대 6장, 선택)</label>
         <div class="photo-strip" id="reg-photo-strip"></div>
@@ -2932,7 +2933,7 @@
           (rows ? '<div class="card-body">'+rows+'</div>' : '') +
           '<div class="card-actions">' +
             (pending ?
-              '<button class="btn btn-primary" type="button" data-action="approve-member" data-id="'+esc(m.id)+'">승인</button>' +
+              (canApproveMember(m) ? '<button class="btn btn-primary" type="button" data-action="approve-member" data-id="'+esc(m.id)+'">승인</button>' : '') +
               '<button class="btn btn-danger-ghost" type="button" data-action="reject-member" data-id="'+esc(m.id)+'">거절</button>'
             : '') +
             (!pending ?
@@ -3823,10 +3824,20 @@
     closeConfirm();
   }
 
+  // 관리자는 모든 신청을, 담당 주선자는 본인 담당 신청만 승인할 수 있어요 (DB도 같은 규칙으로 막아요)
+  function canApproveMember(m){
+    if(!m || m.approved !== false) return false;
+    if(isAdmin()) return true;
+    return !!(m.ownerId && m.ownerId === myId());
+  }
+
   function approveMember(id){
-    supabase.from('participants').update({ approved: true }).eq('id', id).then(function(res){
+    var m = memberById(id);
+    if(!canApproveMember(m)){ showToast('담당 참가자만 승인할 수 있어요'); return; }
+    supabase.from('participants').update({ approved: true }).eq('id', id).select('id, approved').then(function(res){
       if(res.error) throw res.error;
-      showToast('승인했어요');
+      if(!res.data || !res.data.length || res.data[0].approved !== true) throw new Error('not approved');
+      showToast(isAdmin() ? '승인했어요' : '승인했어요. 이제 다른 주선자도 매칭 후보로 볼 수 있어요');
       refetchParticipants();
     }).catch(function(err){
       console.error(err);
