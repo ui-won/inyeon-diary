@@ -623,6 +623,7 @@
               <h4>참가자 모으기 · 정보 채우기 <span class="who">나</span></h4>
               <ul>
                 <li>화면 위쪽 <span class="guide-ui">내 등록 링크</span>를 복사해 지인에게 보내면, 그 링크로 신청한 사람은 자동으로 <b>내 담당</b>이 돼요.</li>
+                <li>링크 없이 신청할 때는 추천인 칸에 <b>등록된 주선자 이름</b>을 정확히 적어야 해요. 그 주선자가 담당이 되고, 등록되지 않은 이름으로는 신청할 수 없어요. 그래서 가입할 때 쓴 내 이름을 지인에게 알려 주세요.</li>
                 <li>새 신청은 <b>승인 대기</b>로 들어와요. 내용을 확인하고 카드의 <span class="guide-ui">승인</span>을 누르면 다른 주선자들도 볼 수 있고 매칭할 수 있어요. 승인 전에는 나와 관리자만 볼 수 있어요.</li>
                 <li>장난이나 잘못된 신청은 승인하지 말고 관리자에게 삭제를 요청해 주세요. 삭제는 관리자만 할 수 있어요.</li>
                 <li>내 담당 참가자는 카드의 연필 버튼으로 지역·만남 목적·흡연·관심사 같은 <b>궁합 정보</b>를 채워 주세요. 많이 채울수록 추천이 정확해져요.</li>
@@ -841,8 +842,9 @@
         </div>
       </div>
       <div class="field">
-        <label for="reg-referrer">추천인 <span class="required-mark">*</span></label>
-        <input class="field-input" id="reg-referrer" maxlength="40" placeholder="누구 소개로 신청하셨나요? (예: 민지)" required>
+        <label for="reg-referrer">추천인 (주선자 이름) <span class="required-mark">*</span></label>
+        <input class="field-input" id="reg-referrer" maxlength="40" placeholder="소개해 준 주선자 이름 (예: 민지)" required autocomplete="off">
+        <span class="helper-text" id="reg-referrer-check">등록된 주선자 이름만 쓸 수 있어요. 그 주선자가 담당이 돼요.</span>
       </div>
       <div id="reg-profile-fields"></div>
       <div class="field">
@@ -1932,6 +1934,8 @@
     $('regBackBtn').addEventListener('click', closeRegForm);
     $('regOverlay').addEventListener('click', function(e){ if(e.target === this) closeRegForm(); });
     $('regForm').addEventListener('submit', onRegSubmit);
+    $('reg-referrer').addEventListener('input', onReferrerInput);
+    $('reg-referrer').addEventListener('blur', function(){ if(!regRefId){ clearTimeout(refCheckTimer); verifyReferrer(); } });
     $('reg-photo-strip').addEventListener('click', function(e){
       var btn = e.target.closest('button');
       if(!btn) return;
@@ -3555,8 +3559,12 @@
       $('regRefNote').textContent = regRefName + ' 님 소개로 신청해요. ' + regRefName + ' 님이 담당해요.';
       $('regRefNote').hidden = false;
       $('reg-referrer').value = regRefName;
+      $('reg-referrer').readOnly = true;
+      setReferrerCheck('ok', regRefName + ' 님이 담당해요.');
     } else {
       $('regRefNote').hidden = true;
+      $('reg-referrer').readOnly = false;
+      setReferrerCheck('', '등록된 주선자 이름만 쓸 수 있어요. 그 주선자가 담당이 돼요.');
     }
     $('regForm').hidden = false;
     $('regSuccess').hidden = true;
@@ -3572,6 +3580,32 @@
     $('regOverlay').hidden = true;
     $('lockOverlay').hidden = false;
   }
+  // 추천인: 등록된(승인된) 주선자 이름인지 확인해요. DB(register_participant)도 같은 규칙으로 막아요.
+  var refCheckTimer = null, refCheckSeq = 0;
+  function setReferrerCheck(kind, text){
+    var el = $('reg-referrer-check');
+    el.textContent = text;
+    el.style.color = kind === 'ok' ? 'var(--success)' : (kind === 'bad' ? 'var(--danger, #C0392B)' : '');
+    el.style.fontWeight = kind ? '600' : '';
+  }
+  function verifyReferrer(){
+    var v = $('reg-referrer').value.trim();
+    if(!v){ setReferrerCheck('', '등록된 주선자 이름만 쓸 수 있어요. 그 주선자가 담당이 돼요.'); return Promise.resolve(null); }
+    var seq = ++refCheckSeq;
+    return supabase.rpc('check_referrer', { p_name: v }).then(function(res){
+      if(seq !== refCheckSeq) return res.data || null;
+      if(res.error) throw res.error;
+      if(res.data){ setReferrerCheck('ok', '✓ ' + res.data + ' 님이 담당해요.'); }
+      else { setReferrerCheck('bad', '등록된 주선자 이름이 아니에요. 소개해 준 주선자에게 이름을 확인해 주세요.'); }
+      return res.data || null;
+    }).catch(function(err){ console.error(err); return null; });
+  }
+  function onReferrerInput(){
+    if(regRefId) return;
+    clearTimeout(refCheckTimer);
+    refCheckTimer = setTimeout(verifyReferrer, 450);
+  }
+
   function onRegSubmit(e){
     e.preventDefault();
     var name = $('reg-name').value.trim();
@@ -3629,13 +3663,22 @@
     };
     var btn = $('regSubmitBtn');
     btn.disabled = true;
-    supabase.rpc('register_participant', params).then(function(res){
+    (regRefId ? Promise.resolve(regRefName || true) : verifyReferrer()).then(function(okName){
+      if(!okName){
+        $('reg-referrer').focus();
+        showToast('추천인은 등록된 주선자 이름만 쓸 수 있어요');
+        throw { soft:true };
+      }
+      if(!regRefId) params.p_referrer = okName;
+      return supabase.rpc('register_participant', params);
+    }).then(function(res){
       if(res.error) throw res.error;
       regPhoto.working = [];
       $('regForm').hidden = true;
       $('regSuccess').hidden = false;
       var sc = document.querySelector('#regOverlay .reg-scroll'); if(sc) sc.scrollTop = 0;
     }).catch(function(err){
+      if(err && err.soft) return;
       console.error(err);
       var msg = (err && err.message) || '';
       showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '신청하지 못했어요. 다시 시도해 주세요.');
@@ -4348,7 +4391,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-13.1';
+  var APP_VERSION = '2026-10-13.2';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
