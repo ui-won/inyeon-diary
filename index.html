@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>매칭메이커</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#C33149">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="매칭메이커">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -475,6 +482,17 @@
   [hidden]{ display:none !important; }
 
   @media (max-width:480px){ .field-row{ flex-direction:column; } .card-top{ flex-direction:column; } }
+  /* ---- 휴대폰 알림 ---- */
+  #notifyOverlay .dialog{ max-width:460px; }
+  .notify-state{ font-size:15px; line-height:1.65; margin:0 0 12px; }
+  .notify-steps{ margin:0 0 12px; padding-left:22px; font-size:15px; line-height:1.75; }
+  .notify-steps b{ color:var(--accent); }
+  .notify-what-title{ font-size:13px; font-weight:700; color:var(--muted); margin:14px 0 4px; }
+  .notify-list{ margin:0; padding-left:18px; font-size:14px; line-height:1.7; color:var(--ink); }
+  .notify-on{ display:inline-flex; align-items:center; gap:6px; color:var(--success); font-weight:700; }
+  #btnNotify.is-on{ color:var(--success); }
+  #btnNotify .notify-dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--accent); margin-left:5px; vertical-align:middle; }
+  #notifyActions{ flex-wrap:wrap; }
 </style>
 </head>
 <body>
@@ -677,6 +695,17 @@
       </section>
 
       <section>
+        <h3>휴대폰 알림 받기</h3>
+        <ul>
+          <li>화면 위쪽 <span class="guide-ui">알림 켜기</span>를 누르면 새 신청, 매칭 제안, 승인, 참가자 결정을 휴대폰 알림으로 받아요. 앱을 닫아 둬도 와요.</li>
+          <li><b>아이폰:</b> Safari로 이 사이트를 열고 공유 버튼 → <b>홈 화면에 추가</b>를 해요. 홈 화면의 매칭메이커 아이콘으로 열어 다시 로그인한 뒤 <span class="guide-ui">알림 켜기</span>를 눌러요. (iOS 16.4 이상)</li>
+          <li><b>안드로이드:</b> Chrome에서 바로 <span class="guide-ui">알림 켜기</span>를 누르면 돼요. 홈 화면에 추가하면 앱처럼 쓸 수 있어요.</li>
+          <li>알림은 기기마다 켜야 해요. 로그아웃하면 그 기기로는 알림이 가지 않아요.</li>
+          <li>잠금화면에 보이기 때문에 알림에는 이름 대신 코드명만 나와요.</li>
+        </ul>
+      </section>
+
+      <section>
         <h3>자주 묻는 질문</h3>
         <dl class="guide-faq">
           <dt>참가자가 '이번엔 괜찮아요'를 누르면요?</dt>
@@ -862,6 +891,7 @@
     </svg>
     <div class="role-indicator">
       <span class="role-badge" id="roleBadge">주선자</span>
+      <button type="button" class="btn btn-ghost" id="btnNotify" title="새 신청·매칭 소식을 휴대폰 알림으로 받기">알림 켜기</button>
       <button type="button" class="btn btn-ghost" id="btnGuide" title="매칭 순서와 사용 방법 보기">사용 가이드</button>
       <button type="button" class="btn btn-ghost" id="btnCopyRefLink" title="이 링크로 신청한 참가자는 내 담당으로 들어와요">내 등록 링크</button>
       <button type="button" class="btn btn-ghost" id="btnLogout">로그아웃</button>
@@ -1345,6 +1375,21 @@
         <button type="button" class="btn" id="tempPwCopy">복사</button>
         <button type="button" class="btn btn-primary" id="tempPwClose">닫기</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= PUSH NOTIFICATION MODAL ================= -->
+<div class="overlay" id="notifyOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="notifyTitle">
+    <div class="dialog-head">
+      <h2 id="notifyTitle">휴대폰 알림</h2>
+    </div>
+    <div id="notifyBody"><p class="notify-state">확인하는 중이에요…</p></div>
+    <p class="notify-what-title">이럴 때 알려드려요</p>
+    <ul class="notify-list" id="notifyWhat"></ul>
+    <div class="dialog-actions" id="notifyActions">
+      <button type="button" class="btn" id="notifyClose">닫기</button>
     </div>
   </div>
 </div>
@@ -1932,7 +1977,13 @@
   }
   function logout(){
     try{ localStorage.removeItem('idiary_unlocked'); localStorage.removeItem('mm_role'); }catch(e){}
-    supabase.auth.signOut().catch(function(){}).then(function(){ location.reload(); });
+    // 이 기기 알림을 끊고 로그아웃해요 (다른 사람이 같은 기기로 로그인해도 내 알림이 가지 않게)
+    var unsub = currentPushSubscription().then(function(sub){
+      return sub ? supabase.rpc('delete_push_subscription', { p_endpoint: sub.endpoint }) : null;
+    }).catch(function(){});
+    Promise.race([unsub, new Promise(function(r){ setTimeout(r, 2500); })]).then(function(){
+      return supabase.auth.signOut().catch(function(){});
+    }).then(function(){ location.reload(); });
   }
   function unlock(){
     if(appStarted) return;
@@ -1942,6 +1993,7 @@
     applyRolePermissions();
     start();
     maybeShowGuideFirstTime();
+    syncPushOnStart();
   }
 
   /* ---------------- AI 추천 (궁합 점수 기반 자동 후보) ---------------- */
@@ -2240,6 +2292,167 @@
     $('tempPwClose').addEventListener('click', closeTempPw);
     $('tempPwOk').addEventListener('click', confirmTempPw);
     $('tempPwCopy').addEventListener('click', function(){ copyText($('tempPwValue').textContent); });
+  }
+
+  /* ---------------- 휴대폰 푸시 알림 ---------------- */
+  // 알림 내용은 DB 트리거가 정하고, 발송은 Supabase Edge Function(push)이 해요.
+  // 이 기기에서 할 일: 서비스워커 등록 → 알림 권한 → 구독 → save_push_subscription
+  var pushReg = null;
+  function pushSupported(){ return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; }
+  function isIOSDevice(){ return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+  function isStandaloneApp(){ return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; }
+  function registerPushSW(){
+    if(!('serviceWorker' in navigator)) return Promise.resolve(null);
+    if(pushReg) return Promise.resolve(pushReg);
+    return navigator.serviceWorker.register('sw.js').then(function(r){ pushReg = r; return r; })
+      .catch(function(err){ console.error(err); return null; });
+  }
+  function b64uToBytes(str){
+    var s = String(str).replace(/-/g, '+').replace(/_/g, '/');
+    var bin = atob(s + '='.repeat((4 - s.length % 4) % 4));
+    var out = new Uint8Array(bin.length);
+    for(var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function currentPushSubscription(){
+    if(!pushSupported()) return Promise.resolve(null);
+    return registerPushSW().then(function(r){ return r ? r.pushManager.getSubscription() : null; }).catch(function(){ return null; });
+  }
+  function savePushSubscription(sub){
+    var j = sub.toJSON();
+    return supabase.rpc('save_push_subscription', {
+      p_endpoint: j.endpoint, p_p256dh: j.keys && j.keys.p256dh, p_auth: j.keys && j.keys.auth,
+      p_user_agent: (navigator.userAgent || '').slice(0, 200)
+    }).then(function(res){ if(res.error) throw res.error; return sub; });
+  }
+  function pushWhatItems(){
+    var items = [];
+    if(isAdmin()){
+      items.push('새 주선자가 가입을 신청했을 때');
+      items.push('담당 주선자가 없는 참가자 신청이 들어왔을 때');
+      items.push('매칭이 관리자 승인을 기다릴 때');
+    }
+    items.push('내 등록 링크로 새 참가자가 신청했을 때');
+    items.push('다른 주선자가 내 참가자와의 소개를 제안했을 때');
+    items.push('매칭이 승인돼 결정 링크를 보낼 차례일 때');
+    items.push('참가자가 결정 링크에서 수락하거나 거절했을 때');
+    return items;
+  }
+  function updateNotifyBtn(){
+    var btn = $('btnNotify');
+    if(!btn) return;
+    currentPushSubscription().then(function(sub){
+      var on = !!sub && pushSupported() && Notification.permission === 'granted';
+      btn.classList.toggle('is-on', on);
+      btn.innerHTML = on ? '알림 켜짐' : '알림 켜기<span class="notify-dot" aria-hidden="true"></span>';
+    });
+  }
+  function setNotifyActions(html){
+    $('notifyActions').innerHTML = html + '<button type="button" class="btn" id="notifyClose">닫기</button>';
+    $('notifyClose').addEventListener('click', closeNotify);
+  }
+  function renderNotify(){
+    $('notifyWhat').innerHTML = pushWhatItems().map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('');
+    var body = $('notifyBody');
+    if(isIOSDevice() && !isStandaloneApp()){
+      body.innerHTML =
+        '<p class="notify-state">아이폰은 홈 화면에 추가한 앱에서만 알림을 받을 수 있어요. (iOS 16.4 이상)</p>' +
+        '<ol class="notify-steps">' +
+          '<li><b>Safari</b>로 이 사이트를 열어요.</li>' +
+          '<li>아래쪽 <b>공유 버튼</b>(네모에 위쪽 화살표)을 눌러요.</li>' +
+          '<li><b>홈 화면에 추가</b>를 눌러요.</li>' +
+          '<li>홈 화면의 <b>매칭메이커</b> 아이콘으로 열고 다시 로그인해요.</li>' +
+          '<li>위쪽 <b>알림 켜기</b>를 눌러 알림을 허용해요.</li>' +
+        '</ol>';
+      setNotifyActions('');
+      return;
+    }
+    if(!pushSupported()){
+      body.innerHTML = '<p class="notify-state">이 브라우저에서는 알림을 받을 수 없어요. 안드로이드는 Chrome, 아이폰은 Safari에서 홈 화면에 추가한 뒤 열어 주세요.</p>';
+      setNotifyActions('');
+      return;
+    }
+    if(Notification.permission === 'denied'){
+      body.innerHTML = '<p class="notify-state">이 기기에서 알림이 <b>차단</b>돼 있어요.<br>' +
+        (isIOSDevice() ? '아이폰 설정 → 알림 → 매칭메이커에서 알림을 허용해 주세요.' : '주소창 왼쪽 자물쇠(사이트 설정) → 알림을 <b>허용</b>으로 바꾼 뒤 다시 열어 주세요.') + '</p>';
+      setNotifyActions('');
+      return;
+    }
+    body.innerHTML = '<p class="notify-state">확인하는 중이에요…</p>';
+    currentPushSubscription().then(function(sub){
+      if(sub && Notification.permission === 'granted'){
+        body.innerHTML = '<p class="notify-state"><span class="notify-on">● 이 기기에서 알림을 받고 있어요</span><br>' +
+          '<span class="helper-text">잘 오는지 궁금하면 테스트 알림을 보내 보세요.</span></p>';
+        setNotifyActions('<button type="button" class="btn" data-push="disable">이 기기 알림 끄기</button>' +
+          '<button type="button" class="btn btn-primary" data-push="test">테스트 알림 보내기</button>');
+      } else {
+        body.innerHTML = '<p class="notify-state">알림을 켜면 앱을 닫아 둬도 새 소식을 휴대폰으로 바로 알려드려요.<br>' +
+          '<span class="helper-text">버튼을 누르고 나오는 창에서 <b>허용</b>을 눌러 주세요.</span></p>';
+        setNotifyActions('<button type="button" class="btn btn-primary" data-push="enable">이 기기에서 알림 켜기</button>');
+      }
+    });
+  }
+  function openNotify(){
+    $('notifyOverlay').hidden = false;
+    renderNotify();
+  }
+  function closeNotify(){ $('notifyOverlay').hidden = true; }
+  function enablePush(btn){
+    if(!pushSupported()){ renderNotify(); return; }
+    if(btn){ btn.disabled = true; btn.textContent = '켜는 중…'; }
+    // 아이폰은 버튼을 누른 그 순간에 권한을 물어야 해서 가장 먼저 요청해요
+    var permP = Notification.permission === 'granted' ? Promise.resolve('granted') : Notification.requestPermission();
+    Promise.resolve(permP).then(function(perm){
+      if(perm !== 'granted') throw new Error('permission ' + perm);
+      return Promise.all([registerPushSW(), supabase.rpc('get_push_public_key')]);
+    }).then(function(arr){
+      var keyRes = arr[1];
+      if(!arr[0]) throw new Error('service worker');
+      if(keyRes.error || !keyRes.data) throw (keyRes.error || new Error('no key'));
+      return navigator.serviceWorker.ready.then(function(ready){
+        return ready.pushManager.getSubscription().then(function(old){
+          return old || ready.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(keyRes.data) });
+        });
+      });
+    }).then(savePushSubscription).then(function(){
+      showToast('이 기기에서 알림을 켰어요');
+      renderNotify(); updateNotifyBtn();
+    }).catch(function(err){
+      console.error(err);
+      showToast(Notification.permission === 'denied' ? '알림이 차단됐어요. 설정에서 허용해 주세요' : '알림을 켜지 못했어요. 다시 시도해 주세요');
+      renderNotify(); updateNotifyBtn();
+    });
+  }
+  function testPush(btn){
+    if(btn){ btn.disabled = true; }
+    supabase.rpc('send_test_push').then(function(res){
+      if(res.error) throw res.error;
+      showToast('테스트 알림을 보냈어요. 몇 초 안에 도착해요');
+    }).catch(function(err){
+      console.error(err);
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '테스트 알림을 보내지 못했어요');
+    }).then(function(){ if(btn) setTimeout(function(){ btn.disabled = false; }, 3000); });
+  }
+  function disablePush(btn){
+    if(btn){ btn.disabled = true; }
+    currentPushSubscription().then(function(sub){
+      if(!sub) return;
+      return supabase.rpc('delete_push_subscription', { p_endpoint: sub.endpoint }).then(function(){ return sub.unsubscribe(); });
+    }).then(function(){
+      showToast('이 기기 알림을 껐어요');
+    }).catch(function(err){
+      console.error(err);
+      showToast('알림을 끄지 못했어요. 다시 시도해 주세요');
+    }).then(function(){ renderNotify(); updateNotifyBtn(); });
+  }
+  function syncPushOnStart(){
+    // 이미 알림을 켠 기기라면 로그인할 때마다 이 계정으로 다시 연결해요
+    if(!pushSupported()){ updateNotifyBtn(); return; }
+    registerPushSW().then(function(){
+      if(Notification.permission !== 'granted') return null;
+      return currentPushSubscription().then(function(sub){ return sub ? savePushSubscription(sub) : null; });
+    }).catch(function(err){ console.error(err); }).then(updateNotifyBtn);
   }
 
   /* ---------------- 주선자 가이드 ---------------- */
@@ -3904,6 +4117,16 @@
     $('btnLogout').addEventListener('click', logout);
     $('btnCopyRefLink').addEventListener('click', copyMyRefLink);
     $('btnGuide').addEventListener('click', openGuide);
+    $('btnNotify').addEventListener('click', openNotify);
+    $('notifyClose').addEventListener('click', closeNotify);
+    $('notifyOverlay').addEventListener('click', function(e){ if(e.target === this) closeNotify(); });
+    $('notifyActions').addEventListener('click', function(e){
+      var b = e.target.closest('button[data-push]');
+      if(!b) return;
+      if(b.dataset.push === 'enable') enablePush(b);
+      if(b.dataset.push === 'test') testPush(b);
+      if(b.dataset.push === 'disable') disablePush(b);
+    });
     initTempPw();
     initOfferLink();
     $('guideClose').addEventListener('click', closeGuide);
@@ -4034,6 +4257,7 @@
         if(!$('confirmOverlay').hidden) closeConfirm();
         if(!$('photoViewerOverlay').hidden) closePhotoViewer();
         if(!$('guideOverlay').hidden) closeGuide();
+        if(!$('notifyOverlay').hidden) closeNotify();
         if(!$('tempPwOverlay').hidden) closeTempPw();
         if(!$('offerLinkOverlay').hidden) closeOfferLink();
       }
