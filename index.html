@@ -477,15 +477,26 @@
   .reg-cta-btn:active{ transform:scale(.98); }
   .reg-cta-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
   .reg-cta-sub{ margin:8px 0 0; font-size:13px; color:var(--muted); }
-  .reg-cta-edit{ appearance:none; width:100%; margin-top:10px; padding:12px 18px; border-radius:999px; border:1.5px solid var(--line); background:transparent; color:var(--ink); font-family:inherit; font-size:15px; font-weight:700; cursor:pointer; }
-  .reg-cta-edit:hover{ border-color:var(--accent); color:var(--accent); }
   .photo-thumb .photo-ph{ width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; background:var(--surface-2); color:var(--muted); font-size:12.5px; font-weight:700; }
   .photo-thumb .photo-ph svg{ width:22px; height:22px; }
-  .pw-pair{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  @media (max-width:420px){ .pw-pair{ grid-template-columns:1fr; } }
-  #peLoginOverlay .dialog, #pePwOverlay .dialog{ max-width:420px; }
-  #peLoginOverlay .field-input{ font-size:17px; }
-  .pe-pw-value{ font-family:ui-monospace, Menlo, Consolas, monospace; font-size:22px; font-weight:700; letter-spacing:1px; text-align:center; padding:12px; border-radius:12px; background:var(--surface-2); user-select:all; }
+  .intro-q{ margin-bottom:14px; }
+  .intro-q > label{ display:block; font-weight:700; margin-bottom:6px; }
+  #reg-consent-box[hidden], #regCancel[hidden], .legacy-box[hidden], #regForm[hidden]{ display:none !important; }
+  .q-hint{ font-weight:500; color:var(--muted); font-size:12.5px; margin-left:4px; }
+  .intro-count{ display:block; text-align:right; font-size:12px; color:var(--muted); margin-top:4px; }
+  .legacy-box{ border:1px dashed var(--line); border-radius:12px; padding:10px 12px; font-size:13.5px; color:var(--muted); background:var(--surface-2); margin:0 0 6px; }
+  .legacy-box b{ color:var(--ink); }
+  .legacy-box p{ margin:4px 0 0; white-space:pre-wrap; color:var(--ink); }
+  #elOverlay .dialog, #crOverlay .dialog{ max-width:480px; }
+  .el-url{ font-size:13px; word-break:break-all; padding:10px 12px; border-radius:10px; background:var(--surface-2); user-select:all; }
+  .el-msg{ width:100%; min-height:120px; font-size:13.5px; }
+  .cr-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  .cr-table th, .cr-table td{ text-align:left; vertical-align:top; padding:8px 6px; border-bottom:1px solid var(--line); }
+  .cr-table th{ color:var(--muted); font-weight:600; width:24%; }
+  .cr-table td.old{ color:var(--muted); text-decoration:line-through; text-decoration-color:rgba(0,0,0,.25); }
+  .cr-table td.new{ color:var(--ink); font-weight:600; }
+  .cr-scroll{ max-height:55vh; overflow:auto; margin-bottom:6px; }
+  .cr-box{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; background:var(--accent-soft); border-radius:10px; padding:8px 10px; font-size:13px; margin-top:8px; }
   .btn-link{ appearance:none; border:none; background:none; padding:0; color:var(--accent); font-weight:700; font-size:13px; cursor:pointer; text-decoration:underline; font-family:inherit; }
 
   [hidden]{ display:none !important; }
@@ -593,7 +604,6 @@
         참가자 등록 신청하기
       </button>
       <p class="reg-cta-sub">로그인 없이 바로 신청할 수 있어요</p>
-      <button type="button" id="btnGoToSelfEdit" class="reg-cta-edit">내 신청 내용 수정하기</button>
     </div>
   </div>
 </div>
@@ -728,8 +738,8 @@
       <section>
         <h3>자주 묻는 질문</h3>
         <dl class="guide-faq">
-          <dt>참가자가 신청 내용을 고치고 싶다고 하면요?</dt>
-          <dd>첫 화면의 <span class="guide-ui">내 신청 내용 수정하기</span>에서 연락처와 수정용 비밀번호로 직접 고칠 수 있어요. 비밀번호가 없거나(예전 신청자) 잊었다면, 참가자 카드의 <b>열쇠 버튼</b>으로 임시 비밀번호를 만들어 안내 문구째 보내 주세요. 고치면 담당 주선자에게 알림이 와요.</dd>
+          <dt>참가자가 정보를 고치고 싶다고 하면요?</dt>
+          <dd>참가자 카드의 <b>링크 버튼</b>으로 수정 링크를 만들어 카톡으로 보내 주세요. 7일 동안 한 번만 제출할 수 있고, 새로 만들면 이전 링크는 끝나요. 제출되면 카드에 <span class="guide-ui">정보 수정 요청</span>이 뜨고, <span class="guide-ui">변경 확인</span>에서 전·후를 비교해 <b>반영하기</b>를 눌러야 실제로 바뀌어요. 그전까지는 기존 내용 그대로 매칭할 수 있어요. 예전에 쓴 성격·이상형 글은 그대로 보관돼요.</dd>
           <dt>참가자가 '이번엔 괜찮아요'를 누르면요?</dt>
           <dd>매칭 카드에 '참가자 거절'로 표시되고 연락처는 공개되지 않아요. 그 짝은 AI 추천에 다시 나오지 않아요.</dd>
           <dt>상대 주선자가 거절하면요?</dt>
@@ -789,6 +799,7 @@
     <div class="reg-scroll">
     <form id="regForm">
       <p class="helper-text" id="regRefNote" hidden style="margin:0 0 4px; color:var(--accent); font-weight:700;"></p>
+      <div class="legacy-box" id="reg-legacy" hidden></div>
       <p class="reg-intro">신청 내용은 담당 주선자나 관리자가 확인 후 승인해요. 이름과 연락처는 관리자와, 관리자가 승인한 매칭을 맡은 주선자에게만 공개돼요.</p>
       <div class="field">
         <label>사진 (최대 6장, 선택)</label>
@@ -860,24 +871,8 @@
       </div>
       <div id="reg-profile-fields"></div>
       <div class="field">
-        <label for="reg-personality">성격 · 특징 (선택)</label>
-        <textarea class="field-input" id="reg-personality" maxlength="300" placeholder="차분하고 유머 있음, 운동 좋아함"></textarea>
-      </div>
-      <div class="field">
-        <label for="reg-ideal">이상형 조건 (선택)</label>
-        <textarea class="field-input" id="reg-ideal" maxlength="300" placeholder="비흡연, 30km 이내, 강아지 좋아하는 사람"></textarea>
-      </div>
-      <div class="field">
         <label for="reg-memo">하고 싶은 말 (선택)</label>
         <textarea class="field-input" id="reg-memo" maxlength="500" placeholder="그 외 전달하고 싶은 내용"></textarea>
-      </div>
-      <div class="field" id="reg-pw-field">
-        <label for="reg-pw" id="reg-pw-label">수정용 비밀번호 <span class="required-mark">*</span></label>
-        <div class="pw-pair">
-          <input class="field-input" type="password" id="reg-pw" minlength="4" maxlength="40" placeholder="4자 이상" autocomplete="new-password">
-          <input class="field-input" type="password" id="reg-pw2" minlength="4" maxlength="40" placeholder="한 번 더 입력" autocomplete="new-password">
-        </div>
-        <span class="helper-text" id="reg-pw-help">나중에 신청 내용을 고칠 때 연락처와 함께 입력해요. 잊으면 담당 주선자에게 새로 받을 수 있어요.</span>
       </div>
       <div class="consent-box" id="reg-consent-box">
         <div class="consent-title">개인정보 수집·이용 동의</div>
@@ -905,7 +900,7 @@
       </div>
     </form>
     <div id="regSuccess" hidden style="text-align:center; padding:12px 4px;">
-      <p style="font-size:15px;" id="regSuccessText">신청이 접수됐어요!<br>주선자가 확인 후 연락드릴게요.<br><span class="helper-text">내용을 고치고 싶으면 첫 화면의 '내 신청 내용 수정하기'에서 연락처와 수정용 비밀번호로 들어오세요.</span></p>
+      <p style="font-size:15px;" id="regSuccessText">신청이 접수됐어요!<br>주선자가 확인 후 연락드릴게요.</p>
       <button type="button" class="btn btn-primary" id="regBackBtn" style="margin-top:8px;">확인</button>
     </div>
     </div>
@@ -1245,11 +1240,11 @@
       </div>
       <div id="m-profile-fields"></div>
       <div class="field">
-        <label for="m-personality">성격 · 특징</label>
+        <label for="m-personality">성격 · 특징 <span class="q-hint">예전 주관식 답변 (그대로 보관돼요)</span></label>
         <textarea class="field-input" id="m-personality" maxlength="300" placeholder="차분하고 유머 있음, 운동 좋아함"></textarea>
       </div>
       <div class="field">
-        <label for="m-ideal">이상형 조건</label>
+        <label for="m-ideal">이상형 조건 <span class="q-hint">예전 주관식 답변 (그대로 보관돼요)</span></label>
         <textarea class="field-input" id="m-ideal" maxlength="300" placeholder="비흡연, 30km 이내, 강아지 좋아하는 사람"></textarea>
       </div>
       <div class="field">
@@ -1410,52 +1405,48 @@
   </div>
 </div>
 
-<!-- ================= PARTICIPANT SELF-EDIT LOGIN ================= -->
-<div class="overlay" id="peLoginOverlay" hidden>
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="peLoginTitle">
+<!-- ================= EDIT LINK (주선자용) ================= -->
+<div class="overlay" id="elOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="elTitle">
     <div class="dialog-head">
-      <h2 id="peLoginTitle">내 신청 내용 수정</h2>
+      <h2 id="elTitle">정보 수정 링크</h2>
     </div>
-    <form id="peLoginForm" autocomplete="on">
-      <p class="helper-text" style="margin:0 0 12px; font-size:14px;">신청할 때 적은 연락처와 수정용 비밀번호를 입력해 주세요.</p>
-      <div class="field">
-        <label for="peContact">연락처</label>
-        <input class="field-input" id="peContact" inputmode="tel" autocomplete="tel" placeholder="010-1234-5678" required>
-      </div>
-      <div class="field">
-        <label for="pePassword">수정용 비밀번호</label>
-        <input class="field-input" type="password" id="pePassword" autocomplete="current-password" required>
-      </div>
-      <p class="helper-text" style="margin:4px 0 0;">비밀번호가 없거나 잊었으면 <b>담당 주선자</b>에게 임시 비밀번호를 요청해 주세요.</p>
+    <div id="elAsk">
+      <p id="elAskText" style="font-size:15px; margin:0 0 10px; line-height:1.6;"></p>
+      <ul class="notify-list" style="margin:0 0 14px; padding-left:18px; font-size:13.5px; line-height:1.7; color:var(--muted);">
+        <li>7일 동안 <b>한 번만</b> 제출할 수 있어요.</li>
+        <li>새로 만들면 아직 안 쓴 이전 링크는 끝나요.</li>
+        <li>제출한 내용은 내가 확인하고 <b>반영하기</b>를 눌러야 바뀌어요.</li>
+      </ul>
       <div class="dialog-actions">
-        <button type="button" class="btn" id="peLoginCancel">취소</button>
-        <button type="submit" class="btn btn-primary" id="peLoginBtn">확인</button>
+        <button type="button" class="btn" id="elCancel">취소</button>
+        <button type="button" class="btn btn-primary" id="elOk">링크 만들기</button>
       </div>
-    </form>
+    </div>
+    <div id="elDone" hidden>
+      <p class="helper-text" style="margin:0 0 6px;">참가자 본인에게만 보내 주세요.</p>
+      <div class="el-url" id="elUrl"></div>
+      <textarea class="field-input el-msg" id="elMsg" readonly style="margin-top:10px;"></textarea>
+      <div class="dialog-actions">
+        <button type="button" class="btn" id="elCopy">메시지 복사</button>
+        <button type="button" class="btn btn-primary" id="elClose">닫기</button>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- ================= PARTICIPANT TEMP PASSWORD (주선자용) ================= -->
-<div class="overlay" id="pePwOverlay" hidden>
-  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="pePwTitle">
+<!-- ================= CHANGE REQUEST REVIEW ================= -->
+<div class="overlay" id="crOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="crTitle">
     <div class="dialog-head">
-      <h2 id="pePwTitle">참가자 수정 비밀번호</h2>
+      <h2 id="crTitle">변경 내용 확인</h2>
     </div>
-    <div id="pePwAsk">
-      <p id="pePwAskText" style="font-size:15px; margin:0 0 16px; line-height:1.6;"></p>
-      <div class="dialog-actions">
-        <button type="button" class="btn" id="pePwCancel">취소</button>
-        <button type="button" class="btn btn-primary" id="pePwOk">임시 비밀번호 만들기</button>
-      </div>
-    </div>
-    <div id="pePwDone" hidden>
-      <p id="pePwDoneText" style="font-size:15px; margin:0 0 10px; line-height:1.6;"></p>
-      <div class="pe-pw-value" id="pePwValue"></div>
-      <p class="helper-text" style="margin:10px 0 14px;">이 창을 닫으면 다시 볼 수 없어요. 아래 '안내 문구 복사'로 참가자 본인에게만 보내 주세요.</p>
-      <div class="dialog-actions">
-        <button type="button" class="btn" id="pePwCopy">안내 문구 복사</button>
-        <button type="button" class="btn btn-primary" id="pePwClose">닫기</button>
-      </div>
+    <p class="helper-text" id="crSub" style="margin:0 0 8px;"></p>
+    <div class="cr-scroll"><table class="cr-table" id="crTable"></table></div>
+    <div class="dialog-actions">
+      <button type="button" class="btn" id="crCancel">닫기</button>
+      <button type="button" class="btn btn-danger-ghost" id="crReject">반려</button>
+      <button type="button" class="btn btn-primary" id="crApply">반영하기</button>
     </div>
   </div>
 </div>
@@ -1562,6 +1553,13 @@
   var RELIGION_PREF_LABEL = { any:'상관없어요', same:'같은 종교였으면 해요', none:'종교 없는 분이면 좋겠어요' };
   var INTEREST_OPTIONS = ['운동·헬스','러닝','등산','골프','여행','캠핑','맛집','카페','요리','와인·술','영화','드라마','음악','공연·전시','독서','게임','사진','반려동물','자기계발','쇼핑'];
   var MAX_INTERESTS = 8;
+  // 소개 문항 (모두 선택 입력) — DB에는 영어 키로 저장해요
+  var TRAIT_LABEL = { calm:'차분해요', active:'활발해요', humor:'유머가 있어요', warm:'다정해요', honest:'솔직해요', careful:'신중해요' };
+  var ATTRACT_LABEL = { talk:'대화가 잘 통하는 사람', caring:'배려가 느껴지는 사람', humor:'유머가 맞는 사람', passion:'자기 일에 열정적인 사람', stable:'생활이 안정적인 사람', hobby:'취미를 함께 즐길 사람' };
+  var CONTACT_STYLE_LABEL = { often_short:'짧게라도 자주', ample:'하루 중 여유 있을 때 충분히', meet_first:'연락 횟수보다는 직접 만남', adapt:'서로 맞춰갈 수 있어요' };
+  var MEET_FREQ_LABEL = { twice_plus:'주 2회 이상', weekly:'주 1회 정도', biweekly:'격주 정도', flexible:'일정에 맞춰 유연하게' };
+  var EXTRA_MAX = 200;
+  function tagLabels(keys, map){ return (keys || []).map(function(k){ return map[k]; }).filter(Boolean); }
 
   function optionsHtml(map, placeholder){
     var html = '<option value="">'+esc(placeholder)+'</option>';
@@ -1597,8 +1595,30 @@
             '<div class="field"><label for="'+p+'-religion-pref">상대 종교</label><select class="select-input" id="'+p+'-religion-pref">'+optionsHtml(RELIGION_PREF_LABEL, '선택')+'</select></div>' +
           '</div>' +
         '</div>' +
-      '</div>'
+      '</div>' + introFieldsHtml(p)
     );
+  }
+  function introFieldsHtml(p){
+    function chips(map){ return Object.keys(map).map(function(k){ return '<button type="button" class="chip" aria-pressed="false" data-v="'+k+'">'+esc(map[k])+'</button>'; }).join(''); }
+    function q(id, title, hint, map, max){
+      return '<div class="intro-q"><label>'+esc(title)+'<span class="q-hint">'+esc(hint)+'</span></label>' +
+        '<div class="chip-group" id="'+p+'-'+id+'" data-max="'+max+'" role="group" aria-label="'+esc(title)+'">'+chips(map)+'</div></div>';
+    }
+    return '<div class="pf-section">' +
+      '<div class="pf-title">나를 소개해요 <span>모두 선택 입력이에요. 누르면 선택, 다시 누르면 해제돼요</span></div>' +
+      q('traits', '나는 어떤 사람인가요?', '최대 3개', TRAIT_LABEL, 3) +
+      q('attracts', '어떤 사람에게 끌리나요?', '최대 3개', ATTRACT_LABEL, 3) +
+      q('contact-style', '편한 연락 스타일은 어떤가요?', '1개', CONTACT_STYLE_LABEL, 1) +
+      q('meet-freq', '연인과 얼마나 자주 만나고 싶나요?', '1개', MEET_FREQ_LABEL, 1) +
+      '<div class="field" style="margin-bottom:0;"><label for="'+p+'-extra">추가로 알려주고 싶은 내 모습이나, 상대와 꼭 맞았으면 하는 점이 있나요? <span class="q-hint">선택 · 최대 '+EXTRA_MAX+'자</span></label>' +
+        '<textarea class="field-input" id="'+p+'-extra" maxlength="'+EXTRA_MAX+'" placeholder="예: 주말엔 등산을 자주 가요. 반려동물을 좋아하는 분이면 좋겠어요."></textarea>' +
+        '<span class="intro-count" id="'+p+'-extra-count">0/'+EXTRA_MAX+'</span></div>' +
+    '</div>';
+  }
+  function chipValues(el){ return Array.prototype.map.call(el.querySelectorAll('.chip[aria-pressed="true"]'), function(c){ return c.getAttribute('data-v'); }); }
+  function setChipValues(el, vals){
+    var set = {}; (vals || []).forEach(function(v){ set[v] = true; });
+    Array.prototype.forEach.call(el.querySelectorAll('.chip'), function(c){ c.setAttribute('aria-pressed', set[c.getAttribute('data-v')] ? 'true' : 'false'); });
   }
   function setReligionLocked(p, locked){
     $(p+'-religion').disabled = locked;
@@ -1617,6 +1637,21 @@
       }
       chip.setAttribute('aria-pressed', on ? 'false' : 'true');
     });
+    ['traits','attracts','contact-style','meet-freq'].forEach(function(g){
+      $(p+'-'+g).addEventListener('click', function(e){
+        var chip = e.target.closest('.chip');
+        if(!chip) return;
+        var max = Number(this.getAttribute('data-max')) || 1;
+        var on = chip.getAttribute('aria-pressed') === 'true';
+        if(!on){
+          var sel = this.querySelectorAll('.chip[aria-pressed="true"]');
+          if(max === 1){ Array.prototype.forEach.call(sel, function(c){ c.setAttribute('aria-pressed', 'false'); }); }
+          else if(sel.length >= max){ showToast('최대 ' + max + '개까지 고를 수 있어요'); return; }
+        }
+        chip.setAttribute('aria-pressed', on ? 'false' : 'true');
+      });
+    });
+    $(p+'-extra').addEventListener('input', function(){ $(p+'-extra-count').textContent = this.value.length + '/' + EXTRA_MAX; });
     if(forReg){
       $('reg-sensitive-consent').addEventListener('change', function(){ setReligionLocked('reg', !this.checked); });
     }
@@ -1639,7 +1674,12 @@
       prefHeightMin: ht[0], prefHeightMax: ht[1],
       interests: interests,
       religion: $(p+'-religion').disabled ? '' : ($(p+'-religion').value || ''),
-      religionPref: $(p+'-religion-pref').disabled ? '' : ($(p+'-religion-pref').value || '')
+      religionPref: $(p+'-religion-pref').disabled ? '' : ($(p+'-religion-pref').value || ''),
+      traitTags: chipValues($(p+'-traits')),
+      attractTags: chipValues($(p+'-attracts')),
+      contactStyle: chipValues($(p+'-contact-style'))[0] || '',
+      meetFreq: chipValues($(p+'-meet-freq'))[0] || '',
+      extraIntro: $(p+'-extra').value.trim()
     };
   }
   function fillProfileFields(p, m){
@@ -1660,6 +1700,12 @@
     });
     $(p+'-religion').value = m.religion || '';
     $(p+'-religion-pref').value = m.religionPref || '';
+    setChipValues($(p+'-traits'), m.traitTags);
+    setChipValues($(p+'-attracts'), m.attractTags);
+    setChipValues($(p+'-contact-style'), m.contactStyle ? [m.contactStyle] : []);
+    setChipValues($(p+'-meet-freq'), m.meetFreq ? [m.meetFreq] : []);
+    $(p+'-extra').value = m.extraIntro || '';
+    $(p+'-extra-count').textContent = ($(p+'-extra').value.length) + '/' + EXTRA_MAX;
   }
   function rangeText(lo, hi, unit){
     if(lo != null && hi != null) return lo + '~' + hi + unit;
@@ -1975,6 +2021,13 @@
     initProfileFields('reg', true);
     initProfileFields('m', false);
     initRegForm();
+    var editParam = null;
+    try{ editParam = new URLSearchParams(location.search).get('edit'); }catch(e){}
+    if(editParam){
+      // 참가자 정보 수정 링크: 로그인 없이 이 사람 정보만 고쳐서 보내요
+      initEditLinkView(String(editParam).toLowerCase().replace(/[^0-9a-f]/g, '').slice(0, 32));
+      return;
+    }
     showAuthView('loading');
     var refParam = null;
     try{ refParam = new URLSearchParams(location.search).get('ref'); }catch(e){}
@@ -2002,9 +2055,6 @@
     $('regClose').addEventListener('click', closeRegForm);
     $('regCancel').addEventListener('click', closeRegForm);
     $('regBackBtn').addEventListener('click', closeRegForm);
-    $('btnGoToSelfEdit').addEventListener('click', openPeLogin);
-    $('peLoginCancel').addEventListener('click', closePeLogin);
-    $('peLoginForm').addEventListener('submit', onPeLogin);
     $('regOverlay').addEventListener('click', function(e){ if(e.target === this) closeRegForm(); });
     $('regForm').addEventListener('submit', onRegSubmit);
     $('reg-referrer').addEventListener('input', onReferrerInput);
@@ -2289,6 +2339,10 @@
       (data.note ? '<div class="offer-note"><b>주선자의 한마디</b>'+esc(data.note)+'</div>' : '') +
       photosHtml +
       offerFactsHtml(o) +
+      ((o.trait_tags && o.trait_tags.length) ? '<div class="offer-text"><h3>이런 사람이에요</h3><p>'+esc(tagLabels(o.trait_tags, TRAIT_LABEL).join(' · '))+'</p></div>' : '') +
+      ((o.attract_tags && o.attract_tags.length) ? '<div class="offer-text"><h3>이런 사람에게 끌려요</h3><p>'+esc(tagLabels(o.attract_tags, ATTRACT_LABEL).join(' · '))+'</p></div>' : '') +
+      ((o.contact_style || o.meet_freq) ? '<div class="offer-text"><h3>연락 · 만남</h3><p>'+esc([CONTACT_STYLE_LABEL[o.contact_style], MEET_FREQ_LABEL[o.meet_freq]].filter(Boolean).join(' · '))+'</p></div>' : '') +
+      (o.extra_intro ? '<div class="offer-text"><h3>더 알려주고 싶은 점</h3><p>'+esc(o.extra_intro)+'</p></div>' : '') +
       (o.personality ? '<div class="offer-text"><h3>성격 · 특징</h3><p>'+esc(o.personality)+'</p></div>' : '') +
       (o.ideal_type ? '<div class="offer-text"><h3>이상형</h3><p>'+esc(o.ideal_type)+'</p></div>' : '') +
       '<p class="helper-text" style="margin:0;">이름과 연락처는 두 분이 모두 만나보기로 한 뒤에 주선자가 전해 드려요. 한 번 답하면 바꿀 수 없어요.</p>';
@@ -2423,6 +2477,7 @@
     items.push('다른 주선자가 내 참가자와의 소개를 제안했을 때');
     items.push('매칭이 승인돼 결정 링크를 보낼 차례일 때');
     items.push('참가자가 결정 링크에서 수락하거나 거절했을 때');
+    items.push('참가자가 수정 링크로 정보를 고쳐 보냈을 때');
     return items;
   }
   function updateNotifyBtn(){
@@ -2593,6 +2648,11 @@
       interests: row.interests || [],
       religion: row.religion || '',
       religionPref: row.religion_pref || '',
+      traitTags: row.trait_tags || [],
+      attractTags: row.attract_tags || [],
+      contactStyle: row.contact_style || '',
+      meetFreq: row.meet_freq || '',
+      extraIntro: row.extra_intro || '',
       consentAt: row.consent_at || null,
       sensitiveConsent: !!row.sensitive_consent_at,
       approved: row.approved !== false,
@@ -2626,7 +2686,12 @@
       pref_height_max: data.prefHeightMax,
       interests: data.interests || [],
       religion: data.religion || null,
-      religion_pref: data.religionPref || null
+      religion_pref: data.religionPref || null,
+      trait_tags: data.traitTags || [],
+      attract_tags: data.attractTags || [],
+      contact_style: data.contactStyle || null,
+      meet_freq: data.meetFreq || null,
+      extra_intro: data.extraIntro || null
     };
   }
   function rowToMatch(row){
@@ -2790,7 +2855,8 @@
       $('statMembers').textContent = '–';
     }
     if(membersLoaded && matchesLoaded){
-      var pendingMembers = members.filter(function(m){ return m.approved === false; }).length;
+      var pendingMembers = members.filter(function(m){ return m.approved === false; }).length +
+        members.filter(function(m){ return changeRequests[m.id] && canEditMember(m); }).length;
       var pendingMatches = matches.filter(function(x){ return !x.approved; }).length;
       $('statPending').textContent = String(pendingMembers + pendingMatches);
     } else {
@@ -3205,8 +3271,13 @@
       if(m.ownerId) rows += '<div class="row"><span class="k">담당</span><span class="v">'+esc(ownerName(m.ownerId))+'</span></div>';
       if(m.referrer) rows += '<div class="row"><span class="k">추천인</span><span class="v">'+esc(m.referrer)+'</span></div>';
       if(m.contact) rows += '<div class="row row-contact"><span class="k">연락처</span><span class="v">'+esc(m.contact)+'</span></div>';
-      if(m.personality) rows += '<div class="row"><span class="k">특징</span><span class="v">'+esc(m.personality)+'</span></div>';
-      if(m.idealType) rows += '<div class="row"><span class="k">이상형</span><span class="v">'+esc(m.idealType)+'</span></div>';
+      if(m.traitTags && m.traitTags.length) rows += '<div class="row"><span class="k">나는</span><span class="v chip-row">'+tagLabels(m.traitTags, TRAIT_LABEL).map(function(x){ return '<span class="badge badge-accent">'+esc(x)+'</span>'; }).join('')+'</span></div>';
+      if(m.attractTags && m.attractTags.length) rows += '<div class="row"><span class="k">끌리는 사람</span><span class="v chip-row">'+tagLabels(m.attractTags, ATTRACT_LABEL).map(function(x){ return '<span class="badge badge-neutral">'+esc(x)+'</span>'; }).join('')+'</span></div>';
+      if(m.contactStyle) rows += '<div class="row"><span class="k">연락</span><span class="v">'+esc(CONTACT_STYLE_LABEL[m.contactStyle] || '')+'</span></div>';
+      if(m.meetFreq) rows += '<div class="row"><span class="k">만남</span><span class="v">'+esc(MEET_FREQ_LABEL[m.meetFreq] || '')+'</span></div>';
+      if(m.extraIntro) rows += '<div class="row"><span class="k">더 알려줄 점</span><span class="v">'+esc(m.extraIntro)+'</span></div>';
+      if(m.personality) rows += '<div class="row"><span class="k">특징(이전)</span><span class="v">'+esc(m.personality)+'</span></div>';
+      if(m.idealType) rows += '<div class="row"><span class="k">이상형(이전)</span><span class="v">'+esc(m.idealType)+'</span></div>';
       if(m.memo) rows += '<div class="row"><span class="k">메모</span><span class="v">'+esc(m.memo)+'</span></div>';
       if(isAdmin()) rows += '<div class="row"><span class="k">동의</span><span class="v">'+(m.consentAt ? esc(fmtDate(String(m.consentAt).slice(0,10))) + ' 개인정보 동의' + (m.sensitiveConsent ? ' · 종교 동의' : '') : '<span style="color:var(--muted)">신청서 동의 기록 없음</span>')+'</span></div>';
       var photoPaths = getPhotoPaths(m);
@@ -3228,9 +3299,13 @@
               '</div>' +
             '</div>' +
             (pending ? '<span class="badge badge-warn" style="margin-right:6px;">승인 대기</span>' : '') +
+            (changeRequests[m.id] && canEditMember(m) ? '<span class="badge badge-info" style="margin-right:6px;">정보 수정 요청</span>' : '') +
             '<span class="badge '+st.cls+'">'+st.label+'</span>' +
           '</div>' +
           (rows ? '<div class="card-body">'+rows+'</div>' : '') +
+          (changeRequests[m.id] && canEditMember(m)
+            ? '<div class="cr-box"><span>참가자가 정보를 고쳐 보냈어요. 확인 후 반영해 주세요.</span><button class="btn btn-primary" type="button" data-action="review-change" data-id="'+esc(m.id)+'">변경 확인</button></div>'
+            : '') +
           '<div class="card-actions">' +
             (pending ?
               (canApproveMember(m) ? '<button class="btn btn-primary" type="button" data-action="approve-member" data-id="'+esc(m.id)+'">승인</button>' : '') +
@@ -3245,8 +3320,8 @@
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" stroke-linecap="round"/></svg>' +
             '</button>' +
             (canEditMember(m) ?
-            '<button class="btn btn-ghost" type="button" data-action="pe-password" data-id="'+esc(m.id)+'" aria-label="참가자 수정 비밀번호 만들기" title="참가자가 직접 신청 내용을 고칠 수 있게 임시 비밀번호 만들기">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 9.2-9.2M17 6l3 3M14.5 8.5l2 2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+            '<button class="btn btn-ghost" type="button" data-action="edit-link" data-id="'+esc(m.id)+'" aria-label="참가자에게 정보 수정 링크 보내기" title="참가자에게 정보 수정 링크 보내기 (7일·1회용)">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
             '</button>' : '') +
             (canEditMember(m) ?
             '<button class="btn btn-ghost" type="button" data-action="edit-member" data-id="'+esc(m.id)+'" aria-label="수정">' +
@@ -3606,7 +3681,7 @@
   function renderRegPhotoStrip(){
     var strip = $('reg-photo-strip');
     var html = regPhoto.working.map(function(path, idx){
-      // 수정 모드: 예전에 올린 사진은 로그인 없이 볼 수 없어서 자리만 보여줘요
+      // 수정 링크: 예전에 올린 사진은 로그인 없이 볼 수 없어서 자리만 보여줘요
       var inner = (regEdit && !localPhotoUrls[path])
         ? '<div class="photo-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5-5-8 8" stroke-linecap="round" stroke-linejoin="round"/></svg>올린 사진 ' + (idx + 1) + '</div>'
         : '<img '+photoImgAttrs(path)+' alt="">';
@@ -3631,14 +3706,18 @@
   /* ---------------- participant registration (public) ---------------- */
   function setRegMode(edit){
     regEdit = edit || null;
-    $('regModalTitle').textContent = edit ? '내 신청 내용 수정' : '참가자 등록 신청';
+    $('regModalTitle').textContent = edit ? '내 정보 수정' : '참가자 등록 신청';
+    var until = edit && edit.data && edit.data.expires_at ? fmtDate(String(edit.data.expires_at).slice(0,10)) : '';
     document.querySelector('#regForm .reg-intro').textContent = edit
-      ? '고친 내용은 바로 반영되고 담당 주선자에게 알려드려요. 추천인(담당 주선자)은 바꿀 수 없어요.'
+      ? '고친 내용을 보내면 담당 주선자가 확인한 뒤 반영해요. 이 링크는 한 번만 제출할 수 있어요' + (until ? ' (' + until + '까지)' : '') + '. 추천인(담당 주선자)은 바꿀 수 없어요.'
       : '신청 내용은 담당 주선자나 관리자가 확인 후 승인해요. 이름과 연락처는 관리자와, 관리자가 승인한 매칭을 맡은 주선자에게만 공개돼요.';
     $('reg-consent-box').hidden = !!edit;
-    $('reg-pw-label').innerHTML = edit ? '새 수정용 비밀번호 (바꿀 때만)' : '수정용 비밀번호 <span class="required-mark">*</span>';
-    $('reg-pw-help').textContent = edit ? '비워 두면 지금 비밀번호를 그대로 써요.' : '나중에 신청 내용을 고칠 때 연락처와 함께 입력해요. 잊으면 담당 주선자에게 새로 받을 수 있어요.';
-    $('regSubmitBtn').textContent = edit ? '저장하기' : '신청하기';
+    $('regSubmitBtn').textContent = edit ? '수정 내용 보내기' : '신청하기';
+    $('regCancel').hidden = !!edit;
+    if(!edit){
+      $('reg-legacy').hidden = true;
+      $('regSuccessText').innerHTML = '신청이 접수됐어요!<br>주선자가 확인 후 연락드릴게요.';
+    }
   }
   function openRegForm(){
     setRegMode(null);
@@ -3668,9 +3747,8 @@
   }
   function closeRegForm(){
     if(regEdit){
-      var tk = regEdit.token;
-      supabase.rpc('participant_logout', { p_token: tk }).then(function(){}, function(){});
       setRegMode(null);
+      try{ history.replaceState(null, '', location.pathname); }catch(e){}
     }
     var orphans = regPhoto.working.slice();
     orphans.forEach(function(p){ deletePhoto(p); });
@@ -3706,7 +3784,7 @@
 
   function onRegSubmit(e){
     e.preventDefault();
-    if(regEdit){ onSelfEditSubmit(); return; }
+    if(regEdit){ onLinkEditSubmit(); return; }
     var name = $('reg-name').value.trim();
     var birthYearVal = $('reg-birthyear').value ? Number($('reg-birthyear').value) : null;
     var heightVal = $('reg-height').value ? Number($('reg-height').value) : null;
@@ -3730,9 +3808,6 @@
     if(new Date().getFullYear() - birthYearVal < 19){ showToast('만 19세 이상만 신청할 수 있어요'); return; }
     if(!$('reg-consent').checked){ showToast('개인정보 수집·이용에 동의해 주세요'); return; }
     if(!$('reg-adult').checked){ showToast('만 19세 이상인지 확인해 주세요'); return; }
-    var editPw = $('reg-pw').value;
-    if(editPw.length < 4){ $('reg-pw').focus(); showToast('수정용 비밀번호를 4자 이상 정해 주세요'); return; }
-    if(editPw !== $('reg-pw2').value){ $('reg-pw2').focus(); showToast('수정용 비밀번호가 서로 달라요'); return; }
     var sensitive = $('reg-sensitive-consent').checked;
     // 이름·연락처는 비공개 테이블로 바로 들어가요 (로그인 없이 쓰기만 가능, 읽기는 불가)
     var params = {
@@ -3744,8 +3819,8 @@
       p_job: job,
       p_mbti: mbti,
       p_referrer: referrer,
-      p_personality: $('reg-personality').value.trim(),
-      p_ideal_type: $('reg-ideal').value.trim(),
+      p_personality: null,
+      p_ideal_type: null,
       p_memo: $('reg-memo').value.trim(),
       p_photo_paths: regPhoto.working.slice(),
       p_owner: regRefId,
@@ -3758,11 +3833,13 @@
         pref_height_max: prof.prefHeightMax == null ? null : String(prof.prefHeightMax),
         interests: prof.interests,
         religion: sensitive ? prof.religion : null,
-        religion_pref: sensitive ? prof.religionPref : null
+        religion_pref: sensitive ? prof.religionPref : null,
+        trait_tags: prof.traitTags, attract_tags: prof.attractTags,
+        contact_style: prof.contactStyle || null, meet_freq: prof.meetFreq || null,
+        extra_intro: prof.extraIntro || null
       },
       p_consent: true,
-      p_sensitive_consent: sensitive,
-      p_edit_password: editPw
+      p_sensitive_consent: sensitive
     };
     var btn = $('regSubmitBtn');
     btn.disabled = true;
@@ -3788,44 +3865,31 @@
     }).finally(function(){ btn.disabled = false; });
   }
 
-  /* ---------------- 참가자 본인 수정 ----------------
-     연락처 + 수정용 비밀번호 → participant_login → 30분짜리 토큰 → 신청서를 수정 모드로 열어요.
-     실제 확인·저장은 모두 DB 함수(participant_get / participant_update)가 해요. */
-  var regEdit = null;   // { token, data }
-  function openPeLogin(){
-    $('peLoginForm').reset();
+  /* ---------------- 참가자 정보 수정 링크 (7일·1회용) ----------------
+     참가자: ?edit=토큰 → 신청서를 수정 모드로 열고 → edit_link_submit 으로 '변경 요청'만 보내요.
+     주선자: 카드의 링크 버튼으로 만들고, '변경 확인'에서 비교 후 반영하기/반려해요. */
+  var regEdit = null;          // { token, data }
+  var changeRequests = {};     // participant_id -> 대기 중인 변경 요청
+  function showRegMessage(html){
     $('lockOverlay').hidden = true;
-    $('peLoginOverlay').hidden = false;
-    setTimeout(function(){ $('peContact').focus(); }, 30);
+    setRegMode(null);
+    $('regForm').hidden = true;
+    $('regSuccessText').innerHTML = html;
+    $('regSuccess').hidden = false;
+    $('regOverlay').hidden = false;
   }
-  function closePeLogin(){
-    $('peLoginOverlay').hidden = true;
-    $('lockOverlay').hidden = false;
-  }
-  function onPeLogin(e){
-    e.preventDefault();
-    var contact = $('peContact').value.trim(), pw = $('pePassword').value;
-    if(!contact || !pw){ showToast('연락처와 비밀번호를 입력해 주세요'); return; }
-    var btn = $('peLoginBtn'); btn.disabled = true;
-    supabase.rpc('participant_login', { p_contact: contact, p_password: pw }).then(function(res){
+  function initEditLinkView(token){
+    $('lockOverlay').hidden = true;
+    supabase.rpc('edit_link_get', { p_token: token }).then(function(res){
       if(res.error) throw res.error;
-      var r = res.data || {};
-      if(!r.ok){
-        showToast(r.reason === 'locked' ? '여러 번 틀려서 잠겼어요. 15분 뒤에 다시 해 주세요' : '연락처나 비밀번호가 맞지 않아요');
-        return;
-      }
-      return supabase.rpc('participant_get', { p_token: r.token }).then(function(g){
-        if(g.error) throw g.error;
-        $('peLoginOverlay').hidden = true;
-        openSelfEditForm(r.token, g.data || {});
-      });
+      openLinkEditForm(token, res.data || {});
     }).catch(function(err){
       console.error(err);
       var msg = (err && err.message) || '';
-      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '확인하지 못했어요. 다시 시도해 주세요');
-    }).then(function(){ btn.disabled = false; });
+      showRegMessage(esc(/[가-힣]/.test(msg) && msg.length < 80 ? msg : '링크를 열지 못했어요. 담당 주선자에게 문의해 주세요.'));
+    });
   }
-  function openSelfEditForm(token, d){
+  function openLinkEditForm(token, d){
     $('regForm').reset();
     setRegMode({ token: token, data: d });
     $('regRefNote').hidden = true;
@@ -3839,17 +3903,23 @@
     $('reg-referrer').value = d.referrer || '';
     $('reg-referrer').readOnly = true;
     setReferrerCheck('', '추천인(담당 주선자)은 바꿀 수 없어요.');
-    $('reg-personality').value = d.personality || '';
-    $('reg-ideal').value = d.ideal_type || '';
     $('reg-memo').value = d.memo || '';
     fillProfileFields('reg', {
       regionSido: d.region_sido, regionDetail: d.region_detail, purpose: d.purpose, smoking: d.smoking,
       smokingPref: d.smoking_pref, drinking: d.drinking, prefAgeMin: d.pref_age_min, prefAgeMax: d.pref_age_max,
-      prefHeightMin: d.pref_height_min, prefHeightMax: d.pref_height_max, interests: d.interests || []
+      prefHeightMin: d.pref_height_min, prefHeightMax: d.pref_height_max, interests: d.interests || [],
+      traitTags: d.trait_tags || [], attractTags: d.attract_tags || [], contactStyle: d.contact_style || '',
+      meetFreq: d.meet_freq || '', extraIntro: d.extra_intro || ''
     });
     $('reg-sensitive-consent').checked = !!d.sensitive_consent;
     setReligionLocked('reg', !d.sensitive_consent);
     if(d.sensitive_consent){ $('reg-religion').value = d.religion || ''; $('reg-religion-pref').value = d.religion_pref || ''; }
+    // 예전 주관식 답변은 그대로 보관하고 보여만 줘요
+    var legacy = '';
+    if(d.personality) legacy += '<b>예전에 적은 성격·특징</b><p>' + esc(d.personality) + '</p>';
+    if(d.ideal_type) legacy += '<b style="display:block; margin-top:6px;">예전에 적은 이상형 조건</b><p>' + esc(d.ideal_type) + '</p>';
+    $('reg-legacy').innerHTML = legacy ? legacy + '<span style="display:block; margin-top:6px;">이 내용은 그대로 보관돼요. 아래 새 문항에 답하면 함께 볼 수 있어요.</span>' : '';
+    $('reg-legacy').hidden = !legacy;
     regPhoto.working = (d.photo_paths || []).slice();
     renderRegPhotoStrip();
     $('reg-photo-status').innerHTML = '&nbsp;';
@@ -3858,15 +3928,14 @@
     $('regOverlay').hidden = false;
     var sc = document.querySelector('#regOverlay .reg-scroll'); if(sc) sc.scrollTop = 0;
   }
-  function onSelfEditSubmit(){
+  function onLinkEditSubmit(){
     var by = $('reg-birthyear').value ? Number($('reg-birthyear').value) : null;
     var prof = readProfileFields('reg');
     var data = {
       name: $('reg-name').value.trim(), contact: $('reg-contact').value.trim(),
       birth_year: by ? String(by) : '', height: $('reg-height').value ? String(Number($('reg-height').value)) : '',
       gender: $('reg-gender').value || '', job: $('reg-job').value.trim(), mbti: $('reg-mbti').value || '',
-      personality: $('reg-personality').value.trim(), ideal_type: $('reg-ideal').value.trim(), memo: $('reg-memo').value.trim(),
-      photo_paths: regPhoto.working.slice(),
+      memo: $('reg-memo').value.trim(), photo_paths: regPhoto.working.slice(),
       region_sido: prof.regionSido, region_detail: prof.regionDetail, purpose: prof.purpose,
       smoking: prof.smoking, smoking_pref: prof.smokingPref, drinking: prof.drinking,
       pref_age_min: prof.prefAgeMin == null ? null : String(prof.prefAgeMin),
@@ -3875,7 +3944,9 @@
       pref_height_max: prof.prefHeightMax == null ? null : String(prof.prefHeightMax),
       interests: prof.interests,
       sensitive_consent: $('reg-sensitive-consent').checked,
-      religion: prof.religion || null, religion_pref: prof.religionPref || null
+      religion: prof.religion || null, religion_pref: prof.religionPref || null,
+      trait_tags: prof.traitTags, attract_tags: prof.attractTags,
+      contact_style: prof.contactStyle || null, meet_freq: prof.meetFreq || null, extra_intro: prof.extraIntro || null
     };
     if(!data.name){ showToast('이름을 입력해 주세요'); return; }
     if(!by){ showToast('출생연도를 입력해 주세요'); return; }
@@ -3884,58 +3955,140 @@
     if(!data.region_sido){ showToast('사는 곳(시·도)을 선택해 주세요'); return; }
     if(!data.purpose){ showToast('만남 목적을 선택해 주세요'); return; }
     if(!data.smoking){ showToast('흡연 여부를 선택해 주세요'); return; }
-    var newPw = $('reg-pw').value;
-    if(newPw && newPw.length < 4){ showToast('새 비밀번호는 4자 이상이에요'); return; }
-    if(newPw && newPw !== $('reg-pw2').value){ showToast('새 비밀번호가 서로 달라요'); return; }
     var btn = $('regSubmitBtn'); btn.disabled = true;
-    supabase.rpc('participant_update', { p_token: regEdit.token, p_data: data, p_new_password: newPw || null }).then(function(res){
+    supabase.rpc('edit_link_submit', { p_token: regEdit.token, p_data: data }).then(function(res){
       if(res.error) throw res.error;
       regPhoto.working = [];
       $('regForm').hidden = true;
-      $('regSuccessText').innerHTML = '수정했어요!<br>담당 주선자에게도 알려드렸어요.';
+      $('regSuccessText').innerHTML = '보냈어요!<br>담당 주선자가 확인한 뒤 반영돼요.<br><span class="helper-text">이 링크는 이제 쓸 수 없어요. 더 고칠 게 있으면 담당 주선자에게 새 링크를 요청해 주세요.</span>';
       $('regSuccess').hidden = false;
       var sc = document.querySelector('#regOverlay .reg-scroll'); if(sc) sc.scrollTop = 0;
     }).catch(function(err){
       console.error(err);
       var msg = (err && err.message) || '';
-      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '저장하지 못했어요. 다시 시도해 주세요');
-      if(/다시 로그인/.test(msg)){ setRegMode(null); $('regOverlay').hidden = true; openPeLogin(); }
+      showToast(/[가-힣]/.test(msg) && msg.length < 80 ? msg : '보내지 못했어요. 다시 시도해 주세요');
     }).then(function(){ btn.disabled = false; });
   }
 
-  /* 주선자/관리자: 참가자 임시 수정 비밀번호 */
-  var pePwTarget = null, pePwMessage = '';
-  function openPePw(id){
+  /* 주선자: 링크 만들기 */
+  var elTarget = null;
+  function openEditLinkModal(id){
     var m = memberById(id);
     if(!m || !canEditMember(m)) return;
-    pePwTarget = m;
-    $('pePwAskText').textContent = displayName(m) + ' 님이 신청 내용을 직접 고칠 수 있도록 임시 비밀번호를 만들어요. 예전 비밀번호는 더 이상 쓸 수 없어요.';
-    $('pePwAsk').hidden = false; $('pePwDone').hidden = true;
-    $('pePwOverlay').hidden = false;
+    elTarget = m;
+    $('elAskText').textContent = displayName(m) + ' 님이 직접 소개 정보와 사진을 고칠 수 있는 링크를 만들어요.';
+    $('elAsk').hidden = false; $('elDone').hidden = true;
+    $('elOverlay').hidden = false;
   }
-  function closePePw(){ $('pePwOverlay').hidden = true; $('pePwValue').textContent = ''; pePwMessage = ''; pePwTarget = null; }
-  function confirmPePw(){
-    if(!pePwTarget) return;
-    var temp = makeTempPassword();
-    var btn = $('pePwOk'); btn.disabled = true;
-    supabase.rpc('set_participant_password', { p_participant: pePwTarget.id, p_temp: temp }).then(function(res){
+  function closeEditLinkModal(){ $('elOverlay').hidden = true; elTarget = null; $('elMsg').value = ''; $('elUrl').textContent = ''; }
+  function createEditLink(){
+    if(!elTarget) return;
+    var btn = $('elOk'); btn.disabled = true;
+    supabase.rpc('create_edit_link', { p_participant: elTarget.id }).then(function(res){
       if(res.error) throw res.error;
-      var url = location.origin + location.pathname;
-      $('pePwDoneText').textContent = displayName(pePwTarget) + ' 님의 임시 수정 비밀번호예요.';
-      $('pePwValue').textContent = temp;
-      pePwMessage = '[매칭메이커] 신청 내용 수정 안내\n' + url + '\n첫 화면 아래 \'내 신청 내용 수정하기\'를 누르고\n신청할 때 적은 연락처와 임시 비밀번호 ' + temp + ' 를 입력해 주세요.\n수정 화면에서 비밀번호를 새로 바꿀 수 있어요.';
-      $('pePwAsk').hidden = true; $('pePwDone').hidden = false;
+      var url = location.origin + location.pathname + '?edit=' + res.data;
+      var until = new Date(Date.now() + 7 * 86400000);
+      var untilText = (until.getMonth() + 1) + '월 ' + until.getDate() + '일';
+      $('elUrl').textContent = url;
+      $('elMsg').value = '[매칭메이커] 소개 정보 수정 안내\n아래 링크에서 소개 문항, 소개글, 사진을 고칠 수 있어요.\n' + url +
+        '\n· ' + untilText + '까지, 한 번만 제출할 수 있어요.\n· 보내 주시면 제가 확인한 뒤 반영할게요.';
+      $('elAsk').hidden = true; $('elDone').hidden = false;
     }).catch(function(err){
       console.error(err);
       var msg = (err && err.message) || '';
-      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '만들지 못했어요. 다시 시도해 주세요');
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '링크를 만들지 못했어요. 다시 시도해 주세요');
     }).then(function(){ btn.disabled = false; });
   }
-  function initPePw(){
-    $('pePwCancel').addEventListener('click', closePePw);
-    $('pePwClose').addEventListener('click', closePePw);
-    $('pePwOk').addEventListener('click', confirmPePw);
-    $('pePwCopy').addEventListener('click', function(){ if(pePwMessage) copyText(pePwMessage); });
+
+  /* 주선자: 변경 요청 확인 */
+  function refetchChangeRequests(){
+    if(!appStarted) return Promise.resolve();
+    return supabase.from('participant_change_requests').select('id,participant_id,data,created_at').eq('status', 'pending')
+      .order('created_at', { ascending:true }).then(function(res){
+        if(res.error) throw res.error;
+        var map = {};
+        (res.data || []).forEach(function(r){ map[r.participant_id] = r; });
+        var changed = JSON.stringify(Object.keys(map).sort().map(function(k){ return map[k].id; })) !== JSON.stringify(Object.keys(changeRequests).sort().map(function(k){ return changeRequests[k].id; }));
+        changeRequests = map;
+        if(changed){ renderMembers(); renderStats(); }
+      }).catch(function(err){ console.error('change requests fetch error', err); });
+  }
+  var crTarget = null;
+  function crRows(m, d){
+    function arr(a){ return (a || []).slice().sort().join(','); }
+    function txt(v){ return v == null || v === '' ? '—' : String(v); }
+    var rows = [];
+    function add(label, oldV, newV, same){ if(!same) rows.push([label, txt(oldV), txt(newV)]); }
+    add('이름', m.name, d.name, (m.name || '') === (d.name || ''));
+    add('연락처', m.contact, d.contact, (m.contact || '') === (d.contact || ''));
+    add('출생연도', m.birthYear, d.birth_year, String(m.birthYear || '') === String(d.birth_year || ''));
+    add('키', m.height ? m.height + 'cm' : '', d.height ? d.height + 'cm' : '', String(m.height || '') === String(d.height || ''));
+    add('성별', GENDER_LABEL[m.gender], GENDER_LABEL[d.gender], (m.gender || '') === (d.gender || ''));
+    add('직업', m.job, d.job, (m.job || '') === (d.job || ''));
+    add('MBTI', m.mbti, d.mbti, (m.mbti || '') === (d.mbti || ''));
+    var oldRegion = [m.regionSido, m.regionDetail].filter(Boolean).join(' '), newRegion = [d.region_sido, d.region_detail].filter(Boolean).join(' ');
+    add('지역', oldRegion, newRegion, oldRegion === newRegion);
+    add('만남 목적', PURPOSE_LABEL[m.purpose], PURPOSE_LABEL[d.purpose], (m.purpose || '') === (d.purpose || ''));
+    add('흡연', SMOKING_LABEL[m.smoking], SMOKING_LABEL[d.smoking], (m.smoking || '') === (d.smoking || ''));
+    add('음주', DRINKING_LABEL[m.drinking], DRINKING_LABEL[d.drinking], (m.drinking || '') === (d.drinking || ''));
+    var nm = { prefAgeMin:d.pref_age_min, prefAgeMax:d.pref_age_max, prefHeightMin:d.pref_height_min, prefHeightMax:d.pref_height_max, smokingPref:d.smoking_pref, religionPref:d.religion_pref };
+    add('원하는 분', wantedText(m), wantedText(nm), wantedText(m) === wantedText(nm));
+    add('관심사', (m.interests || []).join(', '), (d.interests || []).join(', '), arr(m.interests) === arr(d.interests));
+    add('나는', tagLabels(m.traitTags, TRAIT_LABEL).join(', '), tagLabels(d.trait_tags, TRAIT_LABEL).join(', '), arr(m.traitTags) === arr(d.trait_tags));
+    add('끌리는 사람', tagLabels(m.attractTags, ATTRACT_LABEL).join(', '), tagLabels(d.attract_tags, ATTRACT_LABEL).join(', '), arr(m.attractTags) === arr(d.attract_tags));
+    add('연락 스타일', CONTACT_STYLE_LABEL[m.contactStyle], CONTACT_STYLE_LABEL[d.contact_style], (m.contactStyle || '') === (d.contact_style || ''));
+    add('만남 빈도', MEET_FREQ_LABEL[m.meetFreq], MEET_FREQ_LABEL[d.meet_freq], (m.meetFreq || '') === (d.meet_freq || ''));
+    add('더 알려줄 점', m.extraIntro, d.extra_intro, (m.extraIntro || '') === (d.extra_intro || ''));
+    add('하고 싶은 말', m.memo, d.memo, (m.memo || '') === (d.memo || ''));
+    add('종교', m.sensitiveConsent ? (RELIGION_LABEL[m.religion] || '선택 안 함') : '동의 안 함', d.sensitive_consent ? (RELIGION_LABEL[d.religion] || '선택 안 함') : '동의 안 함',
+        !!m.sensitiveConsent === !!d.sensitive_consent && (m.religion || '') === (d.religion || ''));
+    var oldP = m.photoPaths || [], newP = d.photo_paths || [];
+    if(oldP.join(',') !== newP.join(',')){
+      var added = newP.filter(function(x){ return oldP.indexOf(x) === -1; }).length;
+      var removed = oldP.filter(function(x){ return newP.indexOf(x) === -1; }).length;
+      var bits = [];
+      if(added) bits.push('새 사진 ' + added + '장');
+      if(removed) bits.push(removed + '장 삭제');
+      if(!added && !removed) bits.push('순서·대표 사진 변경');
+      rows.push(['사진', oldP.length + '장', newP.length + '장 (' + bits.join(', ') + ')']);
+    }
+    return rows;
+  }
+  function openChangeReview(id){
+    var m = memberById(id), r = changeRequests[id];
+    if(!m || !r) return;
+    crTarget = r;
+    var rows = crRows(m, r.data || {});
+    $('crSub').textContent = displayName(m) + ' 님이 ' + fmtDate(String(r.created_at).slice(0,10)) + '에 보낸 수정 내용이에요. 반영하기를 누르면 아래처럼 바뀌어요.';
+    $('crTable').innerHTML = rows.length
+      ? '<tr><th></th><th>지금</th><th>바뀔 내용</th></tr>' + rows.map(function(x){ return '<tr><th>'+esc(x[0])+'</th><td class="old">'+esc(x[1])+'</td><td class="new">'+esc(x[2])+'</td></tr>'; }).join('')
+      : '<tr><td>바뀐 내용이 없어요.</td></tr>';
+    $('crOverlay').hidden = false;
+  }
+  function closeChangeReview(){ $('crOverlay').hidden = true; crTarget = null; }
+  function decideChange(apply){
+    if(!crTarget) return;
+    var id = crTarget.id;
+    $('crApply').disabled = $('crReject').disabled = true;
+    supabase.rpc(apply ? 'apply_change_request' : 'reject_change_request', { p_id: id }).then(function(res){
+      if(res.error) throw res.error;
+      showToast(apply ? '반영했어요' : '반려했어요. 필요하면 새 링크를 보내 주세요');
+      closeChangeReview();
+      return Promise.all([refetchChangeRequests(), refetchParticipants()]);
+    }).catch(function(err){
+      console.error(err);
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '처리하지 못했어요. 다시 시도해 주세요');
+    }).then(function(){ $('crApply').disabled = $('crReject').disabled = false; });
+  }
+  function initEditLinkUI(){
+    $('elCancel').addEventListener('click', closeEditLinkModal);
+    $('elClose').addEventListener('click', closeEditLinkModal);
+    $('elOk').addEventListener('click', createEditLink);
+    $('elCopy').addEventListener('click', function(){ if($('elMsg').value) copyText($('elMsg').value); });
+    $('crCancel').addEventListener('click', closeChangeReview);
+    $('crApply').addEventListener('click', function(){ decideChange(true); });
+    $('crReject').addEventListener('click', function(){ decideChange(false); });
   }
 
   /* ---------------- photo viewer ---------------- */
@@ -4059,6 +4212,11 @@
     if(lifestyleText(m)) lines.push('생활 습관: ' + lifestyleText(m));
     if(m.interests && m.interests.length) lines.push('관심사: ' + m.interests.join(', '));
     if(wantedText(m)) lines.push('원하는 분: ' + wantedText(m));
+    if(m.traitTags && m.traitTags.length) lines.push('나는: ' + tagLabels(m.traitTags, TRAIT_LABEL).join(', '));
+    if(m.attractTags && m.attractTags.length) lines.push('끌리는 사람: ' + tagLabels(m.attractTags, ATTRACT_LABEL).join(', '));
+    if(m.contactStyle) lines.push('연락 스타일: ' + (CONTACT_STYLE_LABEL[m.contactStyle] || ''));
+    if(m.meetFreq) lines.push('만남 빈도: ' + (MEET_FREQ_LABEL[m.meetFreq] || ''));
+    if(m.extraIntro) lines.push('더 알려줄 점: ' + m.extraIntro);
     if(m.personality) lines.push('성격: ' + m.personality);
     if(m.idealType) lines.push('이상형: ' + m.idealType);
     if(m.memo) lines.push('메모: ' + m.memo);
@@ -4371,7 +4529,8 @@
       if(!btn) return;
       var id = btn.dataset.id;
       if(btn.dataset.action === 'edit-member') openMemberModal(id);
-      if(btn.dataset.action === 'pe-password') openPePw(id);
+      if(btn.dataset.action === 'edit-link') openEditLinkModal(id);
+      if(btn.dataset.action === 'review-change') openChangeReview(id);
       if(btn.dataset.action === 'view-photos') openPhotoViewer(id);
       if(btn.dataset.action === 'copy-member') copyMemberInfo(id);
       if(btn.dataset.action === 'quick-match'){
@@ -4435,7 +4594,7 @@
       if(b.dataset.push === 'disable') disablePush(b);
     });
     initTempPw();
-    initPePw();
+    initEditLinkUI();
     initOfferLink();
     $('guideClose').addEventListener('click', closeGuide);
     $('guideOkBtn').addEventListener('click', closeGuide);
@@ -4567,7 +4726,8 @@
         if(!$('guideOverlay').hidden) closeGuide();
         if(!$('notifyOverlay').hidden) closeNotify();
         if(!$('tempPwOverlay').hidden) closeTempPw();
-        if(!$('pePwOverlay').hidden) closePePw();
+        if(!$('elOverlay').hidden) closeEditLinkModal();
+        if(!$('crOverlay').hidden) closeChangeReview();
         if(!$('offerLinkOverlay').hidden) closeOfferLink();
       }
     });
@@ -4640,6 +4800,7 @@
     rtChannel = supabase.channel('idiary-changes')
       .on('postgres_changes', { event:'*', schema:'public', table:'participants' }, function(){ refetchParticipants(); })
       .on('postgres_changes', { event:'*', schema:'public', table:'matches' }, function(){ refetchMatches(); })
+      .on('postgres_changes', { event:'*', schema:'public', table:'participant_change_requests' }, function(){ refetchChangeRequests(); })
       .subscribe(function(status){ rtStatus = status; });
   }
 
@@ -4647,7 +4808,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-13.3';
+  var APP_VERSION = '2026-10-13.4';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
@@ -4676,7 +4837,7 @@
     // 잠들었다 깨어나면 로그인 토큰이 만료됐을 수 있어 먼저 세션을 확인해요
     return supabase.auth.getSession().catch(function(){}).then(function(){
       if(rtStatus !== 'SUBSCRIBED') subscribeRealtime();
-      var jobs = [refetchParticipants(), refetchMatches(), refetchMemberNames()];
+      var jobs = [refetchParticipants(), refetchMatches(), refetchMemberNames(), refetchChangeRequests()];
       if(isAdmin()) jobs.push(refetchProfiles());
       if(reason === 'resume' || reason === 'pull') jobs.push(checkNewVersion());
       return Promise.all(jobs);
@@ -4739,6 +4900,7 @@
     refetchMatches();
     refetchProfiles();
     refetchMemberNames();
+    refetchChangeRequests();
     subscribeRealtime();
     initAutoRefresh();
     lastRefreshAt = Date.now();
