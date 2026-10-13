@@ -477,6 +477,15 @@
   .reg-cta-btn:active{ transform:scale(.98); }
   .reg-cta-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
   .reg-cta-sub{ margin:8px 0 0; font-size:13px; color:var(--muted); }
+  .reg-cta-edit{ appearance:none; width:100%; margin-top:10px; padding:12px 18px; border-radius:999px; border:1.5px solid var(--line); background:transparent; color:var(--ink); font-family:inherit; font-size:15px; font-weight:700; cursor:pointer; }
+  .reg-cta-edit:hover{ border-color:var(--accent); color:var(--accent); }
+  .photo-thumb .photo-ph{ width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; background:var(--surface-2); color:var(--muted); font-size:12.5px; font-weight:700; }
+  .photo-thumb .photo-ph svg{ width:22px; height:22px; }
+  .pw-pair{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:420px){ .pw-pair{ grid-template-columns:1fr; } }
+  #peLoginOverlay .dialog, #pePwOverlay .dialog{ max-width:420px; }
+  #peLoginOverlay .field-input{ font-size:17px; }
+  .pe-pw-value{ font-family:ui-monospace, Menlo, Consolas, monospace; font-size:22px; font-weight:700; letter-spacing:1px; text-align:center; padding:12px; border-radius:12px; background:var(--surface-2); user-select:all; }
   .btn-link{ appearance:none; border:none; background:none; padding:0; color:var(--accent); font-weight:700; font-size:13px; cursor:pointer; text-decoration:underline; font-family:inherit; }
 
   [hidden]{ display:none !important; }
@@ -584,6 +593,7 @@
         참가자 등록 신청하기
       </button>
       <p class="reg-cta-sub">로그인 없이 바로 신청할 수 있어요</p>
+      <button type="button" id="btnGoToSelfEdit" class="reg-cta-edit">내 신청 내용 수정하기</button>
     </div>
   </div>
 </div>
@@ -718,6 +728,8 @@
       <section>
         <h3>자주 묻는 질문</h3>
         <dl class="guide-faq">
+          <dt>참가자가 신청 내용을 고치고 싶다고 하면요?</dt>
+          <dd>첫 화면의 <span class="guide-ui">내 신청 내용 수정하기</span>에서 연락처와 수정용 비밀번호로 직접 고칠 수 있어요. 비밀번호가 없거나(예전 신청자) 잊었다면, 참가자 카드의 <b>열쇠 버튼</b>으로 임시 비밀번호를 만들어 안내 문구째 보내 주세요. 고치면 담당 주선자에게 알림이 와요.</dd>
           <dt>참가자가 '이번엔 괜찮아요'를 누르면요?</dt>
           <dd>매칭 카드에 '참가자 거절'로 표시되고 연락처는 공개되지 않아요. 그 짝은 AI 추천에 다시 나오지 않아요.</dd>
           <dt>상대 주선자가 거절하면요?</dt>
@@ -859,7 +871,15 @@
         <label for="reg-memo">하고 싶은 말 (선택)</label>
         <textarea class="field-input" id="reg-memo" maxlength="500" placeholder="그 외 전달하고 싶은 내용"></textarea>
       </div>
-      <div class="consent-box">
+      <div class="field" id="reg-pw-field">
+        <label for="reg-pw" id="reg-pw-label">수정용 비밀번호 <span class="required-mark">*</span></label>
+        <div class="pw-pair">
+          <input class="field-input" type="password" id="reg-pw" minlength="4" maxlength="40" placeholder="4자 이상" autocomplete="new-password">
+          <input class="field-input" type="password" id="reg-pw2" minlength="4" maxlength="40" placeholder="한 번 더 입력" autocomplete="new-password">
+        </div>
+        <span class="helper-text" id="reg-pw-help">나중에 신청 내용을 고칠 때 연락처와 함께 입력해요. 잊으면 담당 주선자에게 새로 받을 수 있어요.</span>
+      </div>
+      <div class="consent-box" id="reg-consent-box">
         <div class="consent-title">개인정보 수집·이용 동의</div>
         <details>
           <summary>내용 자세히 보기</summary>
@@ -885,7 +905,7 @@
       </div>
     </form>
     <div id="regSuccess" hidden style="text-align:center; padding:12px 4px;">
-      <p style="font-size:15px;">신청이 접수됐어요!<br>주선자가 확인 후 연락드릴게요.</p>
+      <p style="font-size:15px;" id="regSuccessText">신청이 접수됐어요!<br>주선자가 확인 후 연락드릴게요.<br><span class="helper-text">내용을 고치고 싶으면 첫 화면의 '내 신청 내용 수정하기'에서 연락처와 수정용 비밀번호로 들어오세요.</span></p>
       <button type="button" class="btn btn-primary" id="regBackBtn" style="margin-top:8px;">확인</button>
     </div>
     </div>
@@ -1385,6 +1405,56 @@
       <div class="dialog-actions">
         <button type="button" class="btn" id="tempPwCopy">복사</button>
         <button type="button" class="btn btn-primary" id="tempPwClose">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= PARTICIPANT SELF-EDIT LOGIN ================= -->
+<div class="overlay" id="peLoginOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="peLoginTitle">
+    <div class="dialog-head">
+      <h2 id="peLoginTitle">내 신청 내용 수정</h2>
+    </div>
+    <form id="peLoginForm" autocomplete="on">
+      <p class="helper-text" style="margin:0 0 12px; font-size:14px;">신청할 때 적은 연락처와 수정용 비밀번호를 입력해 주세요.</p>
+      <div class="field">
+        <label for="peContact">연락처</label>
+        <input class="field-input" id="peContact" inputmode="tel" autocomplete="tel" placeholder="010-1234-5678" required>
+      </div>
+      <div class="field">
+        <label for="pePassword">수정용 비밀번호</label>
+        <input class="field-input" type="password" id="pePassword" autocomplete="current-password" required>
+      </div>
+      <p class="helper-text" style="margin:4px 0 0;">비밀번호가 없거나 잊었으면 <b>담당 주선자</b>에게 임시 비밀번호를 요청해 주세요.</p>
+      <div class="dialog-actions">
+        <button type="button" class="btn" id="peLoginCancel">취소</button>
+        <button type="submit" class="btn btn-primary" id="peLoginBtn">확인</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= PARTICIPANT TEMP PASSWORD (주선자용) ================= -->
+<div class="overlay" id="pePwOverlay" hidden>
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="pePwTitle">
+    <div class="dialog-head">
+      <h2 id="pePwTitle">참가자 수정 비밀번호</h2>
+    </div>
+    <div id="pePwAsk">
+      <p id="pePwAskText" style="font-size:15px; margin:0 0 16px; line-height:1.6;"></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn" id="pePwCancel">취소</button>
+        <button type="button" class="btn btn-primary" id="pePwOk">임시 비밀번호 만들기</button>
+      </div>
+    </div>
+    <div id="pePwDone" hidden>
+      <p id="pePwDoneText" style="font-size:15px; margin:0 0 10px; line-height:1.6;"></p>
+      <div class="pe-pw-value" id="pePwValue"></div>
+      <p class="helper-text" style="margin:10px 0 14px;">이 창을 닫으면 다시 볼 수 없어요. 아래 '안내 문구 복사'로 참가자 본인에게만 보내 주세요.</p>
+      <div class="dialog-actions">
+        <button type="button" class="btn" id="pePwCopy">안내 문구 복사</button>
+        <button type="button" class="btn btn-primary" id="pePwClose">닫기</button>
       </div>
     </div>
   </div>
@@ -1932,6 +2002,9 @@
     $('regClose').addEventListener('click', closeRegForm);
     $('regCancel').addEventListener('click', closeRegForm);
     $('regBackBtn').addEventListener('click', closeRegForm);
+    $('btnGoToSelfEdit').addEventListener('click', openPeLogin);
+    $('peLoginCancel').addEventListener('click', closePeLogin);
+    $('peLoginForm').addEventListener('submit', onPeLogin);
     $('regOverlay').addEventListener('click', function(e){ if(e.target === this) closeRegForm(); });
     $('regForm').addEventListener('submit', onRegSubmit);
     $('reg-referrer').addEventListener('input', onReferrerInput);
@@ -3172,6 +3245,10 @@
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" stroke-linecap="round"/></svg>' +
             '</button>' +
             (canEditMember(m) ?
+            '<button class="btn btn-ghost" type="button" data-action="pe-password" data-id="'+esc(m.id)+'" aria-label="참가자 수정 비밀번호 만들기" title="참가자가 직접 신청 내용을 고칠 수 있게 임시 비밀번호 만들기">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 9.2-9.2M17 6l3 3M14.5 8.5l2 2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+            '</button>' : '') +
+            (canEditMember(m) ?
             '<button class="btn btn-ghost" type="button" data-action="edit-member" data-id="'+esc(m.id)+'" aria-label="수정">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
             '</button>' : '') +
@@ -3529,8 +3606,12 @@
   function renderRegPhotoStrip(){
     var strip = $('reg-photo-strip');
     var html = regPhoto.working.map(function(path, idx){
+      // 수정 모드: 예전에 올린 사진은 로그인 없이 볼 수 없어서 자리만 보여줘요
+      var inner = (regEdit && !localPhotoUrls[path])
+        ? '<div class="photo-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5-5-8 8" stroke-linecap="round" stroke-linejoin="round"/></svg>올린 사진 ' + (idx + 1) + '</div>'
+        : '<img '+photoImgAttrs(path)+' alt="">';
       return '<div class="photo-thumb" data-path="'+esc(path)+'">' +
-        '<img '+photoImgAttrs(path)+' alt="">' +
+        inner +
         (idx === 0
           ? '<span class="cover-badge">대표</span>'
           : '<button type="button" class="thumb-btn thumb-cover" data-path="'+esc(path)+'" title="대표 사진으로 설정">★</button>') +
@@ -3548,7 +3629,19 @@
   }
 
   /* ---------------- participant registration (public) ---------------- */
+  function setRegMode(edit){
+    regEdit = edit || null;
+    $('regModalTitle').textContent = edit ? '내 신청 내용 수정' : '참가자 등록 신청';
+    document.querySelector('#regForm .reg-intro').textContent = edit
+      ? '고친 내용은 바로 반영되고 담당 주선자에게 알려드려요. 추천인(담당 주선자)은 바꿀 수 없어요.'
+      : '신청 내용은 담당 주선자나 관리자가 확인 후 승인해요. 이름과 연락처는 관리자와, 관리자가 승인한 매칭을 맡은 주선자에게만 공개돼요.';
+    $('reg-consent-box').hidden = !!edit;
+    $('reg-pw-label').innerHTML = edit ? '새 수정용 비밀번호 (바꿀 때만)' : '수정용 비밀번호 <span class="required-mark">*</span>';
+    $('reg-pw-help').textContent = edit ? '비워 두면 지금 비밀번호를 그대로 써요.' : '나중에 신청 내용을 고칠 때 연락처와 함께 입력해요. 잊으면 담당 주선자에게 새로 받을 수 있어요.';
+    $('regSubmitBtn').textContent = edit ? '저장하기' : '신청하기';
+  }
   function openRegForm(){
+    setRegMode(null);
     regPhoto.working = [];
     renderRegPhotoStrip();
     $('reg-photo-status').innerHTML = '&nbsp;';
@@ -3574,6 +3667,11 @@
     setTimeout(function(){ $('reg-name').focus(); }, 30);
   }
   function closeRegForm(){
+    if(regEdit){
+      var tk = regEdit.token;
+      supabase.rpc('participant_logout', { p_token: tk }).then(function(){}, function(){});
+      setRegMode(null);
+    }
     var orphans = regPhoto.working.slice();
     orphans.forEach(function(p){ deletePhoto(p); });
     regPhoto.working = [];
@@ -3608,6 +3706,7 @@
 
   function onRegSubmit(e){
     e.preventDefault();
+    if(regEdit){ onSelfEditSubmit(); return; }
     var name = $('reg-name').value.trim();
     var birthYearVal = $('reg-birthyear').value ? Number($('reg-birthyear').value) : null;
     var heightVal = $('reg-height').value ? Number($('reg-height').value) : null;
@@ -3631,6 +3730,9 @@
     if(new Date().getFullYear() - birthYearVal < 19){ showToast('만 19세 이상만 신청할 수 있어요'); return; }
     if(!$('reg-consent').checked){ showToast('개인정보 수집·이용에 동의해 주세요'); return; }
     if(!$('reg-adult').checked){ showToast('만 19세 이상인지 확인해 주세요'); return; }
+    var editPw = $('reg-pw').value;
+    if(editPw.length < 4){ $('reg-pw').focus(); showToast('수정용 비밀번호를 4자 이상 정해 주세요'); return; }
+    if(editPw !== $('reg-pw2').value){ $('reg-pw2').focus(); showToast('수정용 비밀번호가 서로 달라요'); return; }
     var sensitive = $('reg-sensitive-consent').checked;
     // 이름·연락처는 비공개 테이블로 바로 들어가요 (로그인 없이 쓰기만 가능, 읽기는 불가)
     var params = {
@@ -3659,7 +3761,8 @@
         religion_pref: sensitive ? prof.religionPref : null
       },
       p_consent: true,
-      p_sensitive_consent: sensitive
+      p_sensitive_consent: sensitive,
+      p_edit_password: editPw
     };
     var btn = $('regSubmitBtn');
     btn.disabled = true;
@@ -3683,6 +3786,156 @@
       var msg = (err && err.message) || '';
       showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '신청하지 못했어요. 다시 시도해 주세요.');
     }).finally(function(){ btn.disabled = false; });
+  }
+
+  /* ---------------- 참가자 본인 수정 ----------------
+     연락처 + 수정용 비밀번호 → participant_login → 30분짜리 토큰 → 신청서를 수정 모드로 열어요.
+     실제 확인·저장은 모두 DB 함수(participant_get / participant_update)가 해요. */
+  var regEdit = null;   // { token, data }
+  function openPeLogin(){
+    $('peLoginForm').reset();
+    $('lockOverlay').hidden = true;
+    $('peLoginOverlay').hidden = false;
+    setTimeout(function(){ $('peContact').focus(); }, 30);
+  }
+  function closePeLogin(){
+    $('peLoginOverlay').hidden = true;
+    $('lockOverlay').hidden = false;
+  }
+  function onPeLogin(e){
+    e.preventDefault();
+    var contact = $('peContact').value.trim(), pw = $('pePassword').value;
+    if(!contact || !pw){ showToast('연락처와 비밀번호를 입력해 주세요'); return; }
+    var btn = $('peLoginBtn'); btn.disabled = true;
+    supabase.rpc('participant_login', { p_contact: contact, p_password: pw }).then(function(res){
+      if(res.error) throw res.error;
+      var r = res.data || {};
+      if(!r.ok){
+        showToast(r.reason === 'locked' ? '여러 번 틀려서 잠겼어요. 15분 뒤에 다시 해 주세요' : '연락처나 비밀번호가 맞지 않아요');
+        return;
+      }
+      return supabase.rpc('participant_get', { p_token: r.token }).then(function(g){
+        if(g.error) throw g.error;
+        $('peLoginOverlay').hidden = true;
+        openSelfEditForm(r.token, g.data || {});
+      });
+    }).catch(function(err){
+      console.error(err);
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '확인하지 못했어요. 다시 시도해 주세요');
+    }).then(function(){ btn.disabled = false; });
+  }
+  function openSelfEditForm(token, d){
+    $('regForm').reset();
+    setRegMode({ token: token, data: d });
+    $('regRefNote').hidden = true;
+    $('reg-name').value = d.name || '';
+    $('reg-birthyear').value = d.birth_year || '';
+    $('reg-height').value = d.height || '';
+    $('reg-gender').value = d.gender || '';
+    $('reg-contact').value = d.contact || '';
+    $('reg-job').value = d.job || '';
+    $('reg-mbti').value = d.mbti || '';
+    $('reg-referrer').value = d.referrer || '';
+    $('reg-referrer').readOnly = true;
+    setReferrerCheck('', '추천인(담당 주선자)은 바꿀 수 없어요.');
+    $('reg-personality').value = d.personality || '';
+    $('reg-ideal').value = d.ideal_type || '';
+    $('reg-memo').value = d.memo || '';
+    fillProfileFields('reg', {
+      regionSido: d.region_sido, regionDetail: d.region_detail, purpose: d.purpose, smoking: d.smoking,
+      smokingPref: d.smoking_pref, drinking: d.drinking, prefAgeMin: d.pref_age_min, prefAgeMax: d.pref_age_max,
+      prefHeightMin: d.pref_height_min, prefHeightMax: d.pref_height_max, interests: d.interests || []
+    });
+    $('reg-sensitive-consent').checked = !!d.sensitive_consent;
+    setReligionLocked('reg', !d.sensitive_consent);
+    if(d.sensitive_consent){ $('reg-religion').value = d.religion || ''; $('reg-religion-pref').value = d.religion_pref || ''; }
+    regPhoto.working = (d.photo_paths || []).slice();
+    renderRegPhotoStrip();
+    $('reg-photo-status').innerHTML = '&nbsp;';
+    $('regForm').hidden = false;
+    $('regSuccess').hidden = true;
+    $('regOverlay').hidden = false;
+    var sc = document.querySelector('#regOverlay .reg-scroll'); if(sc) sc.scrollTop = 0;
+  }
+  function onSelfEditSubmit(){
+    var by = $('reg-birthyear').value ? Number($('reg-birthyear').value) : null;
+    var prof = readProfileFields('reg');
+    var data = {
+      name: $('reg-name').value.trim(), contact: $('reg-contact').value.trim(),
+      birth_year: by ? String(by) : '', height: $('reg-height').value ? String(Number($('reg-height').value)) : '',
+      gender: $('reg-gender').value || '', job: $('reg-job').value.trim(), mbti: $('reg-mbti').value || '',
+      personality: $('reg-personality').value.trim(), ideal_type: $('reg-ideal').value.trim(), memo: $('reg-memo').value.trim(),
+      photo_paths: regPhoto.working.slice(),
+      region_sido: prof.regionSido, region_detail: prof.regionDetail, purpose: prof.purpose,
+      smoking: prof.smoking, smoking_pref: prof.smokingPref, drinking: prof.drinking,
+      pref_age_min: prof.prefAgeMin == null ? null : String(prof.prefAgeMin),
+      pref_age_max: prof.prefAgeMax == null ? null : String(prof.prefAgeMax),
+      pref_height_min: prof.prefHeightMin == null ? null : String(prof.prefHeightMin),
+      pref_height_max: prof.prefHeightMax == null ? null : String(prof.prefHeightMax),
+      interests: prof.interests,
+      sensitive_consent: $('reg-sensitive-consent').checked,
+      religion: prof.religion || null, religion_pref: prof.religionPref || null
+    };
+    if(!data.name){ showToast('이름을 입력해 주세요'); return; }
+    if(!by){ showToast('출생연도를 입력해 주세요'); return; }
+    if(!data.gender){ showToast('성별을 선택해 주세요'); return; }
+    if(!data.contact){ showToast('연락처를 입력해 주세요'); return; }
+    if(!data.region_sido){ showToast('사는 곳(시·도)을 선택해 주세요'); return; }
+    if(!data.purpose){ showToast('만남 목적을 선택해 주세요'); return; }
+    if(!data.smoking){ showToast('흡연 여부를 선택해 주세요'); return; }
+    var newPw = $('reg-pw').value;
+    if(newPw && newPw.length < 4){ showToast('새 비밀번호는 4자 이상이에요'); return; }
+    if(newPw && newPw !== $('reg-pw2').value){ showToast('새 비밀번호가 서로 달라요'); return; }
+    var btn = $('regSubmitBtn'); btn.disabled = true;
+    supabase.rpc('participant_update', { p_token: regEdit.token, p_data: data, p_new_password: newPw || null }).then(function(res){
+      if(res.error) throw res.error;
+      regPhoto.working = [];
+      $('regForm').hidden = true;
+      $('regSuccessText').innerHTML = '수정했어요!<br>담당 주선자에게도 알려드렸어요.';
+      $('regSuccess').hidden = false;
+      var sc = document.querySelector('#regOverlay .reg-scroll'); if(sc) sc.scrollTop = 0;
+    }).catch(function(err){
+      console.error(err);
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '저장하지 못했어요. 다시 시도해 주세요');
+      if(/다시 로그인/.test(msg)){ setRegMode(null); $('regOverlay').hidden = true; openPeLogin(); }
+    }).then(function(){ btn.disabled = false; });
+  }
+
+  /* 주선자/관리자: 참가자 임시 수정 비밀번호 */
+  var pePwTarget = null, pePwMessage = '';
+  function openPePw(id){
+    var m = memberById(id);
+    if(!m || !canEditMember(m)) return;
+    pePwTarget = m;
+    $('pePwAskText').textContent = displayName(m) + ' 님이 신청 내용을 직접 고칠 수 있도록 임시 비밀번호를 만들어요. 예전 비밀번호는 더 이상 쓸 수 없어요.';
+    $('pePwAsk').hidden = false; $('pePwDone').hidden = true;
+    $('pePwOverlay').hidden = false;
+  }
+  function closePePw(){ $('pePwOverlay').hidden = true; $('pePwValue').textContent = ''; pePwMessage = ''; pePwTarget = null; }
+  function confirmPePw(){
+    if(!pePwTarget) return;
+    var temp = makeTempPassword();
+    var btn = $('pePwOk'); btn.disabled = true;
+    supabase.rpc('set_participant_password', { p_participant: pePwTarget.id, p_temp: temp }).then(function(res){
+      if(res.error) throw res.error;
+      var url = location.origin + location.pathname;
+      $('pePwDoneText').textContent = displayName(pePwTarget) + ' 님의 임시 수정 비밀번호예요.';
+      $('pePwValue').textContent = temp;
+      pePwMessage = '[매칭메이커] 신청 내용 수정 안내\n' + url + '\n첫 화면 아래 \'내 신청 내용 수정하기\'를 누르고\n신청할 때 적은 연락처와 임시 비밀번호 ' + temp + ' 를 입력해 주세요.\n수정 화면에서 비밀번호를 새로 바꿀 수 있어요.';
+      $('pePwAsk').hidden = true; $('pePwDone').hidden = false;
+    }).catch(function(err){
+      console.error(err);
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '만들지 못했어요. 다시 시도해 주세요');
+    }).then(function(){ btn.disabled = false; });
+  }
+  function initPePw(){
+    $('pePwCancel').addEventListener('click', closePePw);
+    $('pePwClose').addEventListener('click', closePePw);
+    $('pePwOk').addEventListener('click', confirmPePw);
+    $('pePwCopy').addEventListener('click', function(){ if(pePwMessage) copyText(pePwMessage); });
   }
 
   /* ---------------- photo viewer ---------------- */
@@ -4118,6 +4371,7 @@
       if(!btn) return;
       var id = btn.dataset.id;
       if(btn.dataset.action === 'edit-member') openMemberModal(id);
+      if(btn.dataset.action === 'pe-password') openPePw(id);
       if(btn.dataset.action === 'view-photos') openPhotoViewer(id);
       if(btn.dataset.action === 'copy-member') copyMemberInfo(id);
       if(btn.dataset.action === 'quick-match'){
@@ -4181,6 +4435,7 @@
       if(b.dataset.push === 'disable') disablePush(b);
     });
     initTempPw();
+    initPePw();
     initOfferLink();
     $('guideClose').addEventListener('click', closeGuide);
     $('guideOkBtn').addEventListener('click', closeGuide);
@@ -4312,6 +4567,7 @@
         if(!$('guideOverlay').hidden) closeGuide();
         if(!$('notifyOverlay').hidden) closeNotify();
         if(!$('tempPwOverlay').hidden) closeTempPw();
+        if(!$('pePwOverlay').hidden) closePePw();
         if(!$('offerLinkOverlay').hidden) closeOfferLink();
       }
     });
@@ -4391,7 +4647,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-13.2';
+  var APP_VERSION = '2026-10-13.3';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
