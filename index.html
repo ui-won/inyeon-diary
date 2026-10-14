@@ -1139,6 +1139,16 @@
       <p class="helper-text" style="margin:0; flex:1;">주선자가 가입하면 여기서 승인해 주세요. 승인된 주선자는 참가자를 코드네임으로만 보고, 관리자가 승인한 본인 매칭의 두 사람만 이름·연락처를 볼 수 있어요.</p>
       <button class="btn" id="btnRefreshAccounts" type="button">새로고침</button>
     </div>
+    <div class="card" style="padding:12px 14px;">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:space-between;">
+        <div style="flex:1; min-width:200px;">
+          <b>사진 용량 줄이기</b>
+          <p class="helper-text" style="margin:4px 0 0;">예전에 원본 그대로 올라간 큰 사진을 가벼운 사본으로 바꿔 Supabase 트래픽을 줄여요. 원본 파일은 지우지 않아요. 한 번만 하면 돼요.</p>
+        </div>
+        <button class="btn btn-primary" id="btnOptimizePhotos" type="button">사진 줄이기</button>
+      </div>
+      <p class="helper-text" id="photoOptStatus" hidden style="margin:8px 0 0; font-weight:600;"></p>
+    </div>
     <div id="accountsList" style="display:flex; flex-direction:column; gap:10px;"></div>
     <p class="helper-text" id="accountsEmpty" hidden>아직 가입한 주선자가 없어요.</p>
   </section>
@@ -2113,7 +2123,7 @@
     $('roleBadge').textContent = (ROLE_LABEL[currentRole] || '') + who;
   }
   function logout(){
-    try{ localStorage.removeItem('idiary_unlocked'); localStorage.removeItem('mm_role'); }catch(e){}
+    try{ localStorage.removeItem('idiary_unlocked'); localStorage.removeItem('mm_role'); localStorage.removeItem(sigStoreKey()); }catch(e){}
     // 이 기기 알림을 끊고 로그아웃해요 (다른 사람이 같은 기기로 로그인해도 내 알림이 가지 않게)
     var unsub = currentPushSubscription().then(function(sub){
       return sub ? supabase.rpc('delete_push_subscription', { p_endpoint: sub.endpoint }) : null;
@@ -2128,6 +2138,7 @@
     $('lockOverlay').hidden = true;
     $('mainApp').hidden = false;
     applyRolePermissions();
+    loadSigCache();
     start();
     maybeShowGuideFirstTime();
     syncPushOnStart();
@@ -2733,14 +2744,33 @@
   /* ---------------- photo storage helpers ---------------- */
   // 사진 저장소는 비공개예요. 로그인한 승인 회원만 잠깐(1시간) 유효한 서명 링크로 볼 수 있어요.
   var BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-  var SIGNED_URL_TTL = 3600;
+  // 서명 링크를 3일 동안 같은 주소로 다시 써서, 브라우저가 한 번 받은 사진은 다시 받지 않게 해요 (트래픽 절약)
+  var SIGNED_URL_TTL = 3 * 86400;
+  var PHOTO_CACHE_CONTROL = '2592000';   // 새로 올리는 사진: 브라우저가 30일 동안 저장해 둬요
+  var thumbMissing = {};     // 미리보기(작은 사진)가 아직 없는 사진
   var signedUrlCache = {};   // path -> { url, exp }
   var localPhotoUrls = {};   // path -> 이번 세션에 올린 파일의 미리보기 URL
   var pendingSignPaths = {};
   var signTimer = null;
 
+  function thumbPath(path){ return 't/' + path; }
+  function sigStoreKey(){ return 'mm_sig_v1_' + (currentUser ? currentUser.id : ''); }
+  function loadSigCache(){
+    try{
+      var o = JSON.parse(localStorage.getItem(sigStoreKey()) || '{}'), now = Date.now();
+      Object.keys(o).forEach(function(k){ if(o[k] && o[k].url && o[k].exp > now) signedUrlCache[k] = o[k]; });
+    }catch(e){}
+  }
+  function saveSigCache(){
+    try{
+      var o = {}, now = Date.now();
+      Object.keys(signedUrlCache).forEach(function(k){ var c = signedUrlCache[k]; if(c && c.url && c.exp > now) o[k] = c; });
+      localStorage.setItem(sigStoreKey(), JSON.stringify(o));
+    }catch(e){}
+  }
   function cachedPhotoUrl(path){
     if(localPhotoUrls[path]) return localPhotoUrls[path];
+    if(path.indexOf('t/') === 0 && localPhotoUrls[path.slice(2)]) return localPhotoUrls[path.slice(2)];
     var c = signedUrlCache[path];
     if(c && c.exp > Date.now()) return c.url;
     return null;
@@ -2748,8 +2778,10 @@
   function photoUrl(path){
     return cachedPhotoUrl(path) || BLANK_IMG;
   }
-  function photoImgAttrs(path){
-    return 'data-photo-path="'+esc(path)+'" src="'+esc(photoUrl(path))+'"';
+  function photoImgAttrs(path, thumb){
+    // thumb: 카드·목록에는 작은 미리보기를 써요 (없으면 원래 사진)
+    var p = thumb && !thumbMissing[path] ? thumbPath(path) : path;
+    return 'data-photo-path="'+esc(p)+'" data-photo-main="'+esc(path)+'" src="'+esc(photoUrl(p))+'"';
   }
   function hydratePhotos(){
     var imgs = document.querySelectorAll('img[data-photo-path]');
@@ -2779,12 +2811,23 @@
       list.forEach(function(p){ signedUrlCache[p] = { url:null, exp: Date.now() + 60000 }; });
       supabase.storage.from(PHOTO_BUCKET).createSignedUrls(list, SIGNED_URL_TTL).then(function(res){
         if(res.error) throw res.error;
-        var exp = Date.now() + (SIGNED_URL_TTL - 120) * 1000;
-        (res.data || []).forEach(function(item){
-          if(item && item.path && item.signedUrl && !item.error){
-            signedUrlCache[item.path] = { url: item.signedUrl, exp: exp };
+        var exp = Date.now() + (SIGNED_URL_TTL - 3600) * 1000;
+        var fellBack = false;
+        (res.data || []).forEach(function(item, i){
+          var path = (item && item.path) || list[i];
+          if(item && item.signedUrl && !item.error){
+            signedUrlCache[path] = { url: item.signedUrl, exp: exp };
+          } else if(path && path.indexOf('t/') === 0){
+            // 미리보기가 없는 예전 사진은 원래 사진으로 보여줘요
+            var main = path.slice(2);
+            thumbMissing[main] = true;
+            Array.prototype.forEach.call(document.querySelectorAll('img[data-photo-path]'), function(img){
+              if(img.getAttribute('data-photo-path') === path) img.setAttribute('data-photo-path', main);
+            });
+            fellBack = true;
           }
         });
+        saveSigCache();
         hydratePhotos();
       }).catch(function(err){ console.error('photo sign error', err); });
     }, 0);
@@ -2795,15 +2838,133 @@
     if(type === 'image/gif') return 'gif';
     return 'jpg';
   }
-  function uploadPhoto(file){
-    var ext = extFromType(file.type) || (file.name.split('.').pop() || 'jpg').toLowerCase();
-    var rand = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : (Date.now() + '_' + Math.random().toString(36).slice(2));
-    var path = rand + '.' + ext;
-    return supabase.storage.from(PHOTO_BUCKET).upload(path, file, { upsert:false, contentType:file.type }).then(function(res){
-      if(res.error) throw res.error;
-      try{ localPhotoUrls[path] = URL.createObjectURL(file); }catch(e){}
-      return path;
+  /* 사진 줄이기: 올릴 때 긴 변 1280px JPEG + 320px 미리보기를 만들어요 */
+  var PHOTO_MAX = 1280, THUMB_MAX = 320;
+  function decodeImage(blob){
+    return new Promise(function(resolve, reject){
+      var url = URL.createObjectURL(blob);
+      var img = new Image();
+      img.onload = function(){ resolve({ img: img, url: url }); };
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('decode failed')); };
+      img.src = url;
     });
+  }
+  function resizeImage(img, max, quality){
+    var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+    var sc = Math.min(1, max / Math.max(w, h));
+    var cw = Math.max(1, Math.round(w * sc)), ch = Math.max(1, Math.round(h * sc));
+    var c = document.createElement('canvas'); c.width = cw; c.height = ch;
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cw, ch);
+    ctx.drawImage(img, 0, 0, cw, ch);
+    return new Promise(function(resolve, reject){
+      c.toBlob(function(b){ b ? resolve(b) : reject(new Error('encode failed')); }, 'image/jpeg', quality);
+    });
+  }
+  function makePhotoVariants(blob){
+    return decodeImage(blob).then(function(d){
+      return Promise.all([resizeImage(d.img, PHOTO_MAX, 0.82), resizeImage(d.img, THUMB_MAX, 0.75)]).then(function(r){
+        URL.revokeObjectURL(d.url);
+        var main = (blob.type === 'image/jpeg' && blob.size <= r[0].size) ? blob : r[0];
+        return { main: main, thumb: r[1] };
+      });
+    });
+  }
+  function newPhotoName(){
+    var rand = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : (Date.now() + '_' + Math.random().toString(36).slice(2));
+    return rand + '.jpg';
+  }
+  function putPhoto(path, blob){
+    return supabase.storage.from(PHOTO_BUCKET).upload(path, blob, { upsert:false, contentType:'image/jpeg', cacheControl: PHOTO_CACHE_CONTROL })
+      .then(function(res){ if(res.error) throw res.error; return path; });
+  }
+  function uploadPhoto(file){
+    return makePhotoVariants(file).then(function(v){
+      var path = newPhotoName();
+      return putPhoto(path, v.main).then(function(){
+        return putPhoto(thumbPath(path), v.thumb).catch(function(){ thumbMissing[path] = true; });
+      }).then(function(){
+        try{ localPhotoUrls[path] = URL.createObjectURL(v.main); }catch(e){}
+        return path;
+      });
+    }, function(){
+      // 브라우저가 열 수 없는 형식이면 원본 그대로 올려요
+      var ext = extFromType(file.type) || (file.name.split('.').pop() || 'jpg').toLowerCase();
+      var path = newPhotoName().replace(/\.jpg$/, '.' + ext);
+      thumbMissing[path] = true;
+      return supabase.storage.from(PHOTO_BUCKET).upload(path, file, { upsert:false, contentType:file.type, cacheControl: PHOTO_CACHE_CONTROL }).then(function(res){
+        if(res.error) throw res.error;
+        try{ localPhotoUrls[path] = URL.createObjectURL(file); }catch(e){}
+        return path;
+      });
+    });
+  }
+
+  /* 관리자: 이미 올라간 큰 사진 줄이기 (원본은 저장소에 그대로 둬요) */
+  var photoOptRunning = false;
+  function optimizeExistingPhotos(){
+    if(!isAdmin() || photoOptRunning) return;
+    if(!window.confirm('이미 올라간 사진을 작게 줄인 사본으로 바꿔요.\n원본 파일은 저장소에 그대로 남아요.\n사진이 많으면 몇 분 걸려요. 이 창을 닫지 말고 기다려 주세요.\n\n시작할까요?')) return;
+    photoOptRunning = true;
+    var btn = $('btnOptimizePhotos'), status = $('photoOptStatus');
+    btn.disabled = true;
+    status.hidden = false;
+    status.textContent = '사진 목록을 확인하는 중…';
+    var sizes = {}, thumbs = {}, done = 0, changed = 0, failed = 0, total = 0;
+    Promise.all([
+      supabase.storage.from(PHOTO_BUCKET).list('', { limit: 1000 }),
+      supabase.storage.from(PHOTO_BUCKET).list('t', { limit: 1000 })
+    ]).then(function(r){
+      if(r[0].error) throw r[0].error;
+      (r[0].data || []).forEach(function(o){ if(o && o.name) sizes[o.name] = (o.metadata && o.metadata.size) || 0; });
+      (r[1].data || []).forEach(function(o){ if(o && o.name) thumbs[o.name] = true; });
+      var jobs = [];
+      members.forEach(function(m){
+        (m.photoPaths || []).forEach(function(path, idx){
+          var big = !(sizes[path] && sizes[path] <= 450 * 1024);
+          if(big || !thumbs[path]) jobs.push({ m: m, path: path, idx: idx, big: big });
+        });
+      });
+      total = jobs.length;
+      if(!total){ status.textContent = '줄일 사진이 없어요. 모두 가벼운 상태예요.'; return; }
+      var newPaths = {};   // participant id -> paths 배열
+      function next(){
+        if(!jobs.length) return Promise.resolve();
+        var j = jobs.shift();
+        status.textContent = '사진 줄이는 중… ' + (done + 1) + ' / ' + total;
+        return supabase.storage.from(PHOTO_BUCKET).download(j.path).then(function(res){
+          if(res.error || !res.data) throw (res.error || new Error('download failed'));
+          return makePhotoVariants(res.data);
+        }).then(function(v){
+          if(!j.big){
+            return putPhoto(thumbPath(j.path), v.thumb).catch(function(){});
+          }
+          var np = newPhotoName();
+          return putPhoto(np, v.main).then(function(){ return putPhoto(thumbPath(np), v.thumb).catch(function(){}); }).then(function(){
+            var arr = newPaths[j.m.id] || (newPaths[j.m.id] = (j.m.photoPaths || []).slice());
+            arr[j.idx] = np;
+          });
+        }).catch(function(err){ console.error('photo optimize', j.path, err); failed++; })
+          .then(function(){ done++; return next(); });
+      }
+      return next().then(function(){
+        var ids = Object.keys(newPaths);
+        return ids.reduce(function(pr, id){
+          return pr.then(function(){
+            return supabase.from('participants').update({ photo_paths: newPaths[id] }).eq('id', id).then(function(res){
+              if(res.error){ console.error(res.error); failed++; } else changed++;
+            });
+          });
+        }, Promise.resolve());
+      }).then(function(){
+        thumbMissing = {};
+        status.textContent = '끝났어요. 사진 ' + total + '장을 확인했고, 참가자 ' + changed + '명의 사진을 가벼운 사본으로 바꿨어요.' + (failed ? ' (' + failed + '건은 실패했어요. 다시 누르면 남은 것만 해요)' : '');
+        refetchParticipants();
+      });
+    }).catch(function(err){
+      console.error(err);
+      status.textContent = '사진 줄이기에 실패했어요. 잠시 뒤 다시 눌러 주세요.';
+    }).then(function(){ photoOptRunning = false; btn.disabled = false; });
   }
   function deletePhoto(path){
     // 삭제는 관리자만 가능해요 (등록 신청 중 지운 사진은 서버에 남을 수 있어요)
@@ -3282,7 +3443,7 @@
       if(isAdmin()) rows += '<div class="row"><span class="k">동의</span><span class="v">'+(m.consentAt ? esc(fmtDate(String(m.consentAt).slice(0,10))) + ' 개인정보 동의' + (m.sensitiveConsent ? ' · 종교 동의' : '') : '<span style="color:var(--muted)">신청서 동의 기록 없음</span>')+'</span></div>';
       var photoPaths = getPhotoPaths(m);
       var avatarInner = photoPaths.length
-        ? '<img class="avatar" '+photoImgAttrs(photoPaths[0])+' alt="">'
+        ? '<img class="avatar" '+photoImgAttrs(photoPaths[0], true)+' alt="">'
         : '<div class="avatar-placeholder">'+esc((displayName(m)||'?').trim().charAt(0) || '?')+'</div>';
       var countBadge = photoPaths.length > 1 ? '<span class="avatar-count">+'+(photoPaths.length-1)+'</span>' : '';
       var avatarHtml = '<button type="button" class="avatar-btn" data-action="'+(photoPaths.length ? 'view-photos' : 'noop')+'" data-id="'+esc(m.id)+'" aria-label="사진 보기">' + avatarInner + countBadge + '</button>';
@@ -3513,6 +3674,7 @@
       if(res.error) throw res.error;
       var map = {};
       (res.data || []).forEach(function(r){ map[r.id] = r.display_name || ''; });
+      if(JSON.stringify(map) === JSON.stringify(memberNames)) return;
       memberNames = map;
       renderMembers();
       renderMatches();
@@ -3662,7 +3824,7 @@
     var strip = $('m-photo-strip');
     var html = memberPhoto.working.map(function(path, idx){
       return '<div class="photo-thumb" data-path="'+esc(path)+'">' +
-        '<img '+photoImgAttrs(path)+' alt="">' +
+        '<img '+photoImgAttrs(path, true)+' alt="">' +
         (idx === 0
           ? '<span class="cover-badge">대표</span>'
           : '<button type="button" class="thumb-btn thumb-cover" data-path="'+esc(path)+'" title="대표 사진으로 설정">★</button>') +
@@ -3684,7 +3846,7 @@
       // 수정 링크: 예전에 올린 사진은 로그인 없이 볼 수 없어서 자리만 보여줘요
       var inner = (regEdit && !localPhotoUrls[path])
         ? '<div class="photo-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5-5-8 8" stroke-linecap="round" stroke-linejoin="round"/></svg>올린 사진 ' + (idx + 1) + '</div>'
-        : '<img '+photoImgAttrs(path)+' alt="">';
+        : '<img '+photoImgAttrs(path, true)+' alt="">';
       return '<div class="photo-thumb" data-path="'+esc(path)+'">' +
         inner +
         (idx === 0
@@ -4574,6 +4736,7 @@
       if(btn.dataset.action === 'reset-password') openTempPw(p);
     });
     $('btnRefreshAccounts').addEventListener('click', refetchProfiles);
+    $('btnOptimizePhotos').addEventListener('click', optimizeExistingPhotos);
   }
 
   function initStaticUI(){
@@ -4808,7 +4971,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-13.4';
+  var APP_VERSION = '2026-10-14.1';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
