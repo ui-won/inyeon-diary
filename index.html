@@ -123,14 +123,23 @@
   .decision-row .btn{ padding:5px 12px; font-size:12.5px; margin-left:auto; }
   /* AI 추천 */
   .rec-group{ display:flex; flex-direction:column; gap:10px; padding:14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
-  .rec-head{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .rec-head{ display:flex; align-items:center; gap:10px; }
   .rec-head b{ font-size:16px; }
-  .rec-head span{ color:var(--muted); font-size:13px; }
-  .rec-item{ display:flex; flex-direction:column; gap:6px; padding:10px 12px; border-radius:var(--radius-sm); background:var(--surface-2); }
-  .rec-item-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .rec-item-top .nm{ font-weight:700; }
-  .rec-item-top .meta{ color:var(--muted); font-size:13px; }
-  .rec-item-top .btn{ margin-left:auto; padding:6px 14px; font-size:13px; }
+  .rec-who{ display:flex; flex-direction:column; gap:1px; min-width:0; flex:1 1 auto; }
+  .rec-who > span{ color:var(--muted); font-size:13px; }
+  .rec-who .rec-traits{ color:var(--accent); font-size:12.5px; font-weight:600; }
+  .rec-item{ display:flex; flex-direction:column; gap:8px; padding:10px 12px; border-radius:var(--radius-sm); background:var(--surface-2); }
+  .rec-item-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .rec-item-top .nm{ font-weight:700; color:var(--ink); font-size:15px; }
+  .rec-side{ display:flex; align-items:center; gap:8px; margin-left:auto; }
+  .rec-side .btn{ padding:6px 14px; font-size:13px; }
+  .rec-more{ font-size:13.5px; }
+  .rec-more > summary{ cursor:pointer; color:var(--accent); font-weight:600; font-size:13px; padding:2px 0; list-style:none; }
+  .rec-more > summary::-webkit-details-marker{ display:none; }
+  .rec-more > summary::before{ content:'▸ '; }
+  .rec-more[open] > summary::before{ content:'▾ '; }
+  .rec-more .card-body{ margin-top:6px; padding:10px 12px; border-radius:var(--radius-sm); background:var(--surface); border:1px solid var(--line); }
+  @media (max-width:520px){ .rec-side{ width:100%; justify-content:space-between; } }
   .rec-empty{ color:var(--muted); font-size:13.5px; }
   /* 참가자 결정 화면 */
   #offerOverlay{ align-items:stretch; padding:0; z-index:60; }
@@ -655,7 +664,7 @@
             <div>
               <h4>AI 추천 보고 제안하기 <span class="who">나</span></h4>
               <ul>
-                <li><span class="guide-ui">AI 추천</span> 탭에서 내 참가자마다 잘 맞을 후보와 이유를 자동으로 보여줘요. 조건이 안 맞는 사람과 이미 제안한 짝은 빠져 있어요.</li>
+                <li><span class="guide-ui">AI 추천</span> 탭에서 내 참가자마다 잘 맞을 후보와 이유를 자동으로 보여줘요. 조건이 안 맞는 사람과 이미 제안한 짝은 빠져 있어요. 사진을 누르면 크게 보이고, <b>프로필 자세히 보기</b>로 참가자 관리에 가지 않아도 전체 정보를 볼 수 있어요.</li>
                 <li>후보를 살펴보고 괜찮으면 <span class="guide-ui">제안하기</span>를 눌러요. 직접 고르고 싶으면 <span class="guide-ui">빠른 매칭</span>이나 <span class="guide-ui">새 매칭 등록</span>을 써도 돼요.</li>
               </ul>
             </div>
@@ -2194,7 +2203,9 @@
       return;
     }
     $('recList').innerHTML = targets.map(function(t){
-      var head = '<div class="rec-head"><b>'+esc(displayName(t))+'</b><span>'+esc(memberMetaText(t))+'</span></div>';
+      var head = '<div class="rec-head">' + memberAvatarHtml(t) +
+        '<div class="rec-who"><b>'+esc(displayName(t))+'</b><span>'+esc(memberMetaText(t))+'</span>' + recTraitLine(t) + '</div></div>' +
+        recProfileHtml(t, 'me:' + t.id, '프로필 보기');
       if(t.status !== 'available') return '<div class="rec-group">'+head+'<p class="rec-empty">지금은 소개 가능 상태가 아니에요.</p></div>';
       var recs = recommendFor(t, limit);
       var body = recs.length ? recs.map(function(r){
@@ -2203,14 +2214,28 @@
         var chips = sc.reasons.slice(0, 4).map(function(x){ return '<span class="badge badge-success">'+esc(x)+'</span>'; }).join('') +
                     sc.cautions.slice(0, 2).map(function(x){ return '<span class="badge badge-warn">'+esc(x)+'</span>'; }).join('');
         return '<div class="rec-item">' +
-          '<div class="rec-item-top"><span class="nm">'+esc(displayName(c))+'</span><span class="meta">'+esc(memberMetaText(c))+'</span>' +
-          '<span class="badge '+cls+'">궁합 '+sc.pct+'%'+(sc.lowInfo ? ' · 정보 적음' : '')+'</span>' +
-          '<button class="btn btn-primary" type="button" data-action="rec-propose" data-a="'+esc(t.id)+'" data-b="'+esc(c.id)+'" data-pct="'+sc.pct+'">제안하기</button></div>' +
+          '<div class="rec-item-top">' + memberAvatarHtml(c) +
+            '<div class="rec-who"><span class="nm">'+esc(displayName(c))+'</span><span class="meta">'+esc(memberMetaText(c))+'</span>' + recTraitLine(c) + '</div>' +
+            '<div class="rec-side"><span class="badge '+cls+'">궁합 '+sc.pct+'%'+(sc.lowInfo ? ' · 정보 적음' : '')+'</span>' +
+            '<button class="btn btn-primary" type="button" data-action="rec-propose" data-a="'+esc(t.id)+'" data-b="'+esc(c.id)+'" data-pct="'+sc.pct+'">제안하기</button></div></div>' +
           (chips ? '<div class="qm-reasons" style="margin:0;">'+chips+'</div>' : '') +
+          recProfileHtml(c, t.id + ':' + c.id, '프로필 자세히 보기') +
         '</div>';
       }).join('') : '<p class="rec-empty">조건에 맞는 새 후보가 없어요. 정보를 더 채우거나 새 참가자가 들어오면 다시 확인해 보세요.</p>';
       return '<div class="rec-group">'+head+body+'</div>';
     }).join('');
+    hydratePhotos();
+  }
+  // AI 추천: 펼친 프로필은 화면이 새로고침돼도 펼친 채로 둬요
+  var recOpen = {};
+  function recTraitLine(m){
+    var t = tagLabels(m.traitTags, TRAIT_LABEL);
+    return t.length ? '<span class="rec-traits">'+esc(t.join(' · '))+'</span>' : '';
+  }
+  function recProfileHtml(m, key, label){
+    var rows = memberRowsHtml(m, { noConsent:true });
+    if(!rows) return '';
+    return '<details class="rec-more" data-key="'+esc(key)+'"'+(recOpen[key] ? ' open' : '')+'><summary>'+esc(label)+'</summary><div class="card-body">'+rows+'</div></details>';
   }
   function recPropose(btn){
     var aId = btn.dataset.a, bId = btn.dataset.b;
@@ -2297,7 +2322,15 @@
     $('recList').addEventListener('click', function(e){
       var b = e.target.closest('button[data-action="rec-propose"]');
       if(b) recPropose(b);
+      var v = e.target.closest('button[data-action="view-photos"]');
+      if(v) openPhotoViewer(v.dataset.id);
     });
+    $('recList').addEventListener('toggle', function(e){
+      var d = e.target;
+      if(d && d.classList && d.classList.contains('rec-more')){
+        if(d.open) recOpen[d.dataset.key] = true; else delete recOpen[d.dataset.key];
+      }
+    }, true);
   }
 
   /* ---------------- 참가자 결정 화면 (?offer=) ---------------- */
@@ -3341,6 +3374,42 @@
     };
   }
 
+  // 참가자 프로필 줄 (참가자 카드와 AI 추천에서 같이 써요)
+  function memberRowsHtml(m, opt){
+    opt = opt || {};
+    var rows = '';
+    if(m.job) rows += '<div class="row"><span class="k">직업</span><span class="v">'+esc(m.job)+'</span></div>';
+    if(m.height) rows += '<div class="row"><span class="k">키</span><span class="v">'+esc(String(m.height))+'cm</span></div>';
+    if(m.mbti) rows += '<div class="row"><span class="k">MBTI</span><span class="v">'+esc(m.mbti)+'</span></div>';
+    if(regionText(m)) rows += '<div class="row"><span class="k">지역</span><span class="v">'+esc(regionText(m))+'</span></div>';
+    if(m.purpose) rows += '<div class="row"><span class="k">목적</span><span class="v">'+esc(PURPOSE_LABEL[m.purpose] || '')+'</span></div>';
+    if(lifestyleText(m)) rows += '<div class="row"><span class="k">습관</span><span class="v">'+esc(lifestyleText(m))+'</span></div>';
+    if(m.religion) rows += '<div class="row"><span class="k">종교</span><span class="v">'+esc(RELIGION_LABEL[m.religion] || '')+'</span></div>';
+    if(wantedText(m)) rows += '<div class="row"><span class="k">원하는 분</span><span class="v">'+esc(wantedText(m))+'</span></div>';
+    if(m.interests && m.interests.length) rows += '<div class="row"><span class="k">관심사</span><span class="v chip-row">'+m.interests.map(function(x){ return '<span class="badge badge-neutral">'+esc(x)+'</span>'; }).join('')+'</span></div>';
+    if(m.ownerId) rows += '<div class="row"><span class="k">담당</span><span class="v">'+esc(ownerName(m.ownerId))+'</span></div>';
+    if(m.referrer) rows += '<div class="row"><span class="k">추천인</span><span class="v">'+esc(m.referrer)+'</span></div>';
+    if(m.contact && !opt.noContact) rows += '<div class="row row-contact"><span class="k">연락처</span><span class="v">'+esc(m.contact)+'</span></div>';
+    if(m.traitTags && m.traitTags.length) rows += '<div class="row"><span class="k">나는</span><span class="v chip-row">'+tagLabels(m.traitTags, TRAIT_LABEL).map(function(x){ return '<span class="badge badge-accent">'+esc(x)+'</span>'; }).join('')+'</span></div>';
+    if(m.attractTags && m.attractTags.length) rows += '<div class="row"><span class="k">끌리는 사람</span><span class="v chip-row">'+tagLabels(m.attractTags, ATTRACT_LABEL).map(function(x){ return '<span class="badge badge-neutral">'+esc(x)+'</span>'; }).join('')+'</span></div>';
+    if(m.contactStyle) rows += '<div class="row"><span class="k">연락</span><span class="v">'+esc(CONTACT_STYLE_LABEL[m.contactStyle] || '')+'</span></div>';
+    if(m.meetFreq) rows += '<div class="row"><span class="k">만남</span><span class="v">'+esc(MEET_FREQ_LABEL[m.meetFreq] || '')+'</span></div>';
+    if(m.extraIntro) rows += '<div class="row"><span class="k">더 알려줄 점</span><span class="v">'+esc(m.extraIntro)+'</span></div>';
+    if(m.personality) rows += '<div class="row"><span class="k">특징(이전)</span><span class="v">'+esc(m.personality)+'</span></div>';
+    if(m.idealType) rows += '<div class="row"><span class="k">이상형(이전)</span><span class="v">'+esc(m.idealType)+'</span></div>';
+    if(m.memo) rows += '<div class="row"><span class="k">메모</span><span class="v">'+esc(m.memo)+'</span></div>';
+    if(isAdmin() && !opt.noConsent) rows += '<div class="row"><span class="k">동의</span><span class="v">'+(m.consentAt ? esc(fmtDate(String(m.consentAt).slice(0,10))) + ' 개인정보 동의' + (m.sensitiveConsent ? ' · 종교 동의' : '') : '<span style="color:var(--muted)">신청서 동의 기록 없음</span>')+'</span></div>';
+    return rows;
+  }
+  function memberAvatarHtml(m){
+    var photoPaths = getPhotoPaths(m);
+    var avatarInner = photoPaths.length
+      ? '<img class="avatar" '+photoImgAttrs(photoPaths[0], true)+' alt="">'
+      : '<div class="avatar-placeholder">'+esc((displayName(m)||'?').trim().charAt(0) || '?')+'</div>';
+    var countBadge = photoPaths.length > 1 ? '<span class="avatar-count">+'+(photoPaths.length-1)+'</span>' : '';
+    var avatarHtml = '<button type="button" class="avatar-btn" data-action="'+(photoPaths.length ? 'view-photos' : 'noop')+'" data-id="'+esc(m.id)+'" aria-label="사진 보기">' + avatarInner + countBadge + '</button>';
+    return avatarHtml;
+  }
   function renderMembers(){
     var listEl = $('membersList');
     var loadingEl = $('membersLoading');
@@ -3419,34 +3488,8 @@
         var computedAge = ageFromBirthYear(m.birthYear);
         metaBits.push((computedAge != null ? computedAge + '세 · ' : '') + String(m.birthYear).slice(-2) + '년생');
       }
-      var rows = '';
-      if(m.job) rows += '<div class="row"><span class="k">직업</span><span class="v">'+esc(m.job)+'</span></div>';
-      if(m.height) rows += '<div class="row"><span class="k">키</span><span class="v">'+esc(String(m.height))+'cm</span></div>';
-      if(m.mbti) rows += '<div class="row"><span class="k">MBTI</span><span class="v">'+esc(m.mbti)+'</span></div>';
-      if(regionText(m)) rows += '<div class="row"><span class="k">지역</span><span class="v">'+esc(regionText(m))+'</span></div>';
-      if(m.purpose) rows += '<div class="row"><span class="k">목적</span><span class="v">'+esc(PURPOSE_LABEL[m.purpose] || '')+'</span></div>';
-      if(lifestyleText(m)) rows += '<div class="row"><span class="k">습관</span><span class="v">'+esc(lifestyleText(m))+'</span></div>';
-      if(m.religion) rows += '<div class="row"><span class="k">종교</span><span class="v">'+esc(RELIGION_LABEL[m.religion] || '')+'</span></div>';
-      if(wantedText(m)) rows += '<div class="row"><span class="k">원하는 분</span><span class="v">'+esc(wantedText(m))+'</span></div>';
-      if(m.interests && m.interests.length) rows += '<div class="row"><span class="k">관심사</span><span class="v chip-row">'+m.interests.map(function(x){ return '<span class="badge badge-neutral">'+esc(x)+'</span>'; }).join('')+'</span></div>';
-      if(m.ownerId) rows += '<div class="row"><span class="k">담당</span><span class="v">'+esc(ownerName(m.ownerId))+'</span></div>';
-      if(m.referrer) rows += '<div class="row"><span class="k">추천인</span><span class="v">'+esc(m.referrer)+'</span></div>';
-      if(m.contact) rows += '<div class="row row-contact"><span class="k">연락처</span><span class="v">'+esc(m.contact)+'</span></div>';
-      if(m.traitTags && m.traitTags.length) rows += '<div class="row"><span class="k">나는</span><span class="v chip-row">'+tagLabels(m.traitTags, TRAIT_LABEL).map(function(x){ return '<span class="badge badge-accent">'+esc(x)+'</span>'; }).join('')+'</span></div>';
-      if(m.attractTags && m.attractTags.length) rows += '<div class="row"><span class="k">끌리는 사람</span><span class="v chip-row">'+tagLabels(m.attractTags, ATTRACT_LABEL).map(function(x){ return '<span class="badge badge-neutral">'+esc(x)+'</span>'; }).join('')+'</span></div>';
-      if(m.contactStyle) rows += '<div class="row"><span class="k">연락</span><span class="v">'+esc(CONTACT_STYLE_LABEL[m.contactStyle] || '')+'</span></div>';
-      if(m.meetFreq) rows += '<div class="row"><span class="k">만남</span><span class="v">'+esc(MEET_FREQ_LABEL[m.meetFreq] || '')+'</span></div>';
-      if(m.extraIntro) rows += '<div class="row"><span class="k">더 알려줄 점</span><span class="v">'+esc(m.extraIntro)+'</span></div>';
-      if(m.personality) rows += '<div class="row"><span class="k">특징(이전)</span><span class="v">'+esc(m.personality)+'</span></div>';
-      if(m.idealType) rows += '<div class="row"><span class="k">이상형(이전)</span><span class="v">'+esc(m.idealType)+'</span></div>';
-      if(m.memo) rows += '<div class="row"><span class="k">메모</span><span class="v">'+esc(m.memo)+'</span></div>';
-      if(isAdmin()) rows += '<div class="row"><span class="k">동의</span><span class="v">'+(m.consentAt ? esc(fmtDate(String(m.consentAt).slice(0,10))) + ' 개인정보 동의' + (m.sensitiveConsent ? ' · 종교 동의' : '') : '<span style="color:var(--muted)">신청서 동의 기록 없음</span>')+'</span></div>';
-      var photoPaths = getPhotoPaths(m);
-      var avatarInner = photoPaths.length
-        ? '<img class="avatar" '+photoImgAttrs(photoPaths[0], true)+' alt="">'
-        : '<div class="avatar-placeholder">'+esc((displayName(m)||'?').trim().charAt(0) || '?')+'</div>';
-      var countBadge = photoPaths.length > 1 ? '<span class="avatar-count">+'+(photoPaths.length-1)+'</span>' : '';
-      var avatarHtml = '<button type="button" class="avatar-btn" data-action="'+(photoPaths.length ? 'view-photos' : 'noop')+'" data-id="'+esc(m.id)+'" aria-label="사진 보기">' + avatarInner + countBadge + '</button>';
+      var rows = memberRowsHtml(m);
+      var avatarHtml = memberAvatarHtml(m);
       return (
         '<div class="card" data-id="'+esc(m.id)+'">' +
           '<div class="card-top">' +
@@ -4971,7 +5014,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-14.1';
+  var APP_VERSION = '2026-10-15.1';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
