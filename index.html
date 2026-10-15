@@ -153,6 +153,41 @@
   .close-box .close-date{ color:var(--muted); font-size:12.5px; }
   .close-box .close-note{ white-space:pre-wrap; color:var(--ink); }
   .stale-hint{ font-size:12.5px; color:var(--warn); background:var(--warn-soft); border-radius:8px; padding:6px 10px; }
+  /* 쪽지 (주선자 ↔ 관리자) */
+  #btnMessages .msg-badge{ display:inline-block; min-width:18px; padding:0 5px; margin-left:4px; border-radius:999px; background:var(--accent); color:var(--accent-ink); font-size:11px; font-weight:700; line-height:18px; text-align:center; }
+  #btnMessages .msg-badge[hidden]{ display:none; }
+  #msgOverlay{ padding:0; z-index:55; }
+  #msgOverlay .dialog{ max-width:640px; width:100%; height:100%; max-height:none; border-radius:0; padding:0; display:flex; flex-direction:column; overflow:hidden; }
+  @media (min-width:640px){ #msgOverlay{ padding:20px; } #msgOverlay .dialog{ height:min(760px, 92vh); border-radius:var(--radius); } }
+  #msgOverlay .dialog-head{ margin:0; padding:14px 16px; border-bottom:1px solid var(--line); gap:8px; }
+  #msgOverlay .dialog-head h2{ flex:1; font-size:18px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #msgBack[hidden]{ display:none; }
+  .msg-scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; background:var(--surface-2); }
+  .msg-threads{ display:flex; flex-direction:column; }
+  .msg-thread{ appearance:none; border:none; border-bottom:1px solid var(--line); background:var(--surface); text-align:left; font-family:inherit; padding:12px 16px; display:flex; flex-direction:column; gap:3px; cursor:pointer; color:var(--ink); }
+  .msg-thread-top{ display:flex; align-items:center; gap:8px; }
+  .msg-thread-top b{ font-size:15px; }
+  .msg-thread-top .t{ margin-left:auto; color:var(--muted); font-size:12px; }
+  .msg-thread .snip{ color:var(--muted); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .msg-thread .unread{ background:var(--accent); color:var(--accent-ink); border-radius:999px; font-size:11px; font-weight:700; padding:0 6px; line-height:18px; }
+  .msg-list{ display:flex; flex-direction:column; gap:10px; padding:14px 14px 18px; }
+  .msg-empty{ color:var(--muted); font-size:13.5px; text-align:center; padding:28px 10px; line-height:1.6; }
+  .msg-day{ align-self:center; font-size:11.5px; color:var(--muted); background:var(--surface); border-radius:999px; padding:2px 10px; }
+  .msg-b{ max-width:82%; display:flex; flex-direction:column; gap:3px; }
+  .msg-b.mine{ align-self:flex-end; align-items:flex-end; }
+  .msg-b.theirs{ align-self:flex-start; align-items:flex-start; }
+  .msg-b .meta{ font-size:11.5px; color:var(--muted); }
+  .msg-b .body{ white-space:pre-wrap; overflow-wrap:anywhere; font-size:14.5px; line-height:1.5; padding:9px 12px; border-radius:14px; background:var(--surface); color:var(--ink); border:1px solid var(--line); }
+  .msg-b.mine .body{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .msg-att{ appearance:none; border:1px solid var(--line); background:var(--surface); color:var(--accent); font-family:inherit; font-size:12.5px; font-weight:600; border-radius:999px; padding:4px 10px; cursor:pointer; }
+  .msg-compose{ border-top:1px solid var(--line); background:var(--surface); padding:10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); display:flex; flex-direction:column; gap:8px; }
+  .msg-compose[hidden]{ display:none; }
+  .msg-compose select{ font-size:13px; padding:7px 10px; }
+  .msg-input-row{ display:flex; gap:8px; align-items:flex-end; }
+  .msg-input-row textarea{ flex:1; min-height:44px; max-height:140px; resize:none; font-size:15px; }
+  .msg-input-row .btn{ flex:none; }
+  .flash{ animation:flashIn 1.6s ease; }
+  @keyframes flashIn{ 0%,40%{ box-shadow:0 0 0 3px var(--accent); } 100%{ box-shadow:0 0 0 0 transparent; } }
   /* 참가자 결정 화면 */
   #offerOverlay{ align-items:stretch; padding:0; z-index:60; }
   #offerOverlay .dialog{ max-width:none; width:100%; height:100%; max-height:none; border-radius:0; padding:0; display:flex; flex-direction:column; overflow:hidden; }
@@ -765,6 +800,8 @@
           <dd>매칭 카드에 '참가자 거절'로 표시되고 연락처는 공개되지 않아요. 그 짝은 AI 추천에 다시 나오지 않아요.</dd>
           <dt>상대 주선자가 거절하면요?</dt>
           <dd>그 매칭은 공개되지 않아요. 카드에 '상대측 거절'로 표시되니 다른 분으로 다시 요청해 보세요.</dd>
+          <dt>관리자에게 물어보고 싶은 게 있으면요?</dt>
+          <dd>위쪽 <span class="guide-ui">쪽지</span> 버튼으로 관리자에게 바로 보낼 수 있어요. 궁금한 참가자나 매칭을 골라 함께 붙이면 관리자가 쪽지에서 바로 그 카드로 이동해 확인해요. 답이 오면 쪽지 버튼에 숫자가 뜨고, 알림을 켜 두었다면 휴대폰으로도 알려 드려요.</dd>
           <dt>안 된 매칭은 어디서 보나요?</dt>
           <dd>매칭 기록의 <span class="guide-ui">안 된 매칭</span>에 따로 모여요. 상대 주선자나 참가자가 거절하면 자동으로 옮겨지고, 직접 <b>안 됨으로 정리</b>를 눌러 이유와 메모를 남길 수도 있어요. 지워지지 않고 참가자 카드의 <b>소개 이력</b>에 남아서 다음 소개 때 참고할 수 있어요. 거절 없이 정리한 매칭은 <b>다시 진행</b>으로 되돌릴 수 있어요. 30일 넘게 변화가 없는 매칭에는 '멈춘 매칭' 표시가 떠요.</dd>
           <dt>승인된 매칭의 사람을 바꿀 수 있나요?</dt>
@@ -940,6 +977,7 @@
     </svg>
     <div class="role-indicator">
       <span class="role-badge" id="roleBadge">주선자</span>
+      <button type="button" class="btn btn-ghost" id="btnMessages" title="관리자와 쪽지 주고받기">쪽지<span class="msg-badge" id="msgUnread" hidden></span></button>
       <button type="button" class="btn btn-ghost" id="btnNotify" title="새 신청·매칭 소식을 휴대폰 알림으로 받기">알림 켜기</button>
       <button type="button" class="btn btn-ghost" id="btnGuide" title="매칭 순서와 사용 방법 보기">사용 가이드</button>
       <button type="button" class="btn btn-ghost" id="btnCopyRefLink" title="이 링크로 신청한 참가자는 내 담당으로 들어와요">내 등록 링크</button>
@@ -1433,6 +1471,32 @@
         <button type="button" class="btn btn-primary" id="tempPwClose">닫기</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ================= MESSAGES (주선자 ↔ 관리자 쪽지) ================= -->
+<div class="overlay" id="msgOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="msgTitle">
+    <div class="dialog-head">
+      <button class="btn btn-ghost" type="button" id="msgBack" hidden aria-label="목록으로">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <h2 id="msgTitle">쪽지</h2>
+      <button class="btn btn-ghost" type="button" id="msgClose" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="msg-scroll" id="msgScroll">
+      <div class="msg-threads" id="msgThreads" hidden></div>
+      <div class="msg-list" id="msgList"></div>
+    </div>
+    <form class="msg-compose" id="msgCompose" hidden>
+      <select class="select-input" id="msgAttach" aria-label="관련 참가자나 매칭 붙이기"></select>
+      <div class="msg-input-row">
+        <textarea class="field-input" id="msgText" maxlength="1000" rows="2" placeholder="궁금한 점이나 요청을 적어 주세요"></textarea>
+        <button type="submit" class="btn btn-primary" id="msgSend">보내기</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -4799,6 +4863,217 @@
     }).finally(function(){ btn.disabled = false; });
   }
 
+  /* ---------------- 쪽지 (주선자 ↔ 관리자) ---------------- */
+  var adminMessages = [], messagesLoaded = false, lastMessagesSig = '', msgThread = null, msgSending = false;
+  function refetchMessages(){
+    if(!currentUser) return Promise.resolve();
+    return supabase.from('admin_messages').select('*').order('created_at', { ascending:true }).then(function(res){
+      if(res.error) throw res.error;
+      var sig = JSON.stringify(res.data || []);
+      messagesLoaded = true;
+      if(sig === lastMessagesSig) return;
+      lastMessagesSig = sig;
+      adminMessages = res.data || [];
+      updateMsgBadge();
+      if(!$('msgOverlay').hidden) renderMessages();
+    }).catch(function(err){ console.error('messages fetch error', err); });
+  }
+  function msgIsUnreadForMe(x){ return !x.read_at && (isAdmin() ? !x.from_admin : x.from_admin); }
+  function updateMsgBadge(){
+    var n = adminMessages.filter(msgIsUnreadForMe).length;
+    $('msgUnread').textContent = n > 99 ? '99+' : String(n);
+    $('msgUnread').hidden = n === 0;
+  }
+  function msgThreadName(uid){
+    var p = profileById(uid);
+    return (p && p.display_name) || memberNames[uid] || '주선자';
+  }
+  function fmtMsgTime(iso, withDate){
+    var d = new Date(iso);
+    if(isNaN(d)) return '';
+    var hm = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    if(!withDate) return hm;
+    var today = new Date();
+    if(d.toDateString() === today.toDateString()) return hm;
+    return (d.getMonth()+1) + '/' + d.getDate() + ' ' + hm;
+  }
+  function msgDayLabel(iso){
+    var d = new Date(iso);
+    var w = ['일','월','화','수','목','금','토'][d.getDay()];
+    return d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0') + ' (' + w + ')';
+  }
+  function openMessages(){
+    msgThread = isAdmin() ? null : myId();
+    $('msgOverlay').hidden = false;
+    renderMessages();
+    refetchMessages();
+    if(isAdmin() && !profilesLoaded) refetchProfiles();
+  }
+  function closeMessages(){ $('msgOverlay').hidden = true; }
+  function msgAttachLabel(x){
+    if(x.participant_id){
+      var m = memberById(x.participant_id);
+      return '참가자 · ' + (m ? displayName(m) + (m.name && m.codeName ? ' (' + m.codeName + ')' : '') : '삭제된 참가자');
+    }
+    if(x.match_id){
+      var mt = matches.filter(function(y){ return y.id === x.match_id; })[0];
+      if(!mt) return '매칭 · 볼 수 없는 매칭';
+      var a = memberById(mt.aId), b = memberById(mt.bId);
+      return '매칭 · ' + (a ? displayName(a) : (mt.aName || '참가자')) + ' ↔ ' + (b ? displayName(b) : (mt.bName || '참가자'));
+    }
+    return '';
+  }
+  function renderMessages(){
+    var listMode = isAdmin() && !msgThread;
+    $('msgBack').hidden = !(isAdmin() && msgThread);
+    $('msgThreads').hidden = !listMode;
+    $('msgList').hidden = listMode;
+    $('msgCompose').hidden = listMode;
+    if(listMode){
+      $('msgTitle').textContent = '주선자 쪽지';
+      var ids = {};
+      profiles.forEach(function(p){ if(p.approved && p.role !== 'admin') ids[p.id] = true; });
+      adminMessages.forEach(function(x){ ids[x.thread_user] = true; });
+      var rows = Object.keys(ids).map(function(uid){
+        var msgs = adminMessages.filter(function(x){ return x.thread_user === uid; });
+        var last = msgs[msgs.length - 1];
+        return { uid:uid, last:last, unread: msgs.filter(msgIsUnreadForMe).length, name: msgThreadName(uid) };
+      });
+      rows.sort(function(a, b){
+        if(!!a.unread !== !!b.unread) return a.unread ? -1 : 1;
+        var ta = a.last ? a.last.created_at : '', tb = b.last ? b.last.created_at : '';
+        if(ta !== tb) return tb.localeCompare(ta);
+        return a.name.localeCompare(b.name, 'ko');
+      });
+      $('msgThreads').innerHTML = rows.length ? rows.map(function(r){
+        var snip = r.last ? ((r.last.from_admin ? '나: ' : '') + r.last.body.replace(/\s+/g, ' ')) : '아직 쪽지가 없어요. 눌러서 먼저 보낼 수 있어요.';
+        return '<button type="button" class="msg-thread" data-uid="'+esc(r.uid)+'">' +
+          '<span class="msg-thread-top"><b>'+esc(r.name)+'</b>' + (r.unread ? '<span class="unread">'+r.unread+'</span>' : '') +
+          (r.last ? '<span class="t">'+esc(fmtMsgTime(r.last.created_at, true))+'</span>' : '') + '</span>' +
+          '<span class="snip">'+esc(snip)+'</span></button>';
+      }).join('') : '<p class="msg-empty">승인된 주선자가 아직 없어요.</p>';
+      return;
+    }
+    $('msgTitle').textContent = isAdmin() ? (msgThreadName(msgThread) + ' 님과 쪽지') : '관리자에게 쪽지';
+    var mine = adminMessages.filter(function(x){ return x.thread_user === msgThread; });
+    var html = '', lastDay = '';
+    if(!mine.length){
+      html = '<p class="msg-empty">' + (isAdmin()
+        ? '아직 주고받은 쪽지가 없어요.<br>아래에 적어 보내면 이 주선자에게 알림이 가요.'
+        : '궁금한 점이나 요청을 관리자에게 보내 주세요.<br>관련 참가자나 매칭을 골라 붙이면 더 빨리 확인할 수 있어요.<br>답이 오면 쪽지 버튼에 숫자가 떠요.') + '</p>';
+    }
+    mine.forEach(function(x){
+      var day = msgDayLabel(x.created_at);
+      if(day !== lastDay){ html += '<div class="msg-day">'+esc(day)+'</div>'; lastDay = day; }
+      var isMine = isAdmin() ? x.from_admin : !x.from_admin;
+      var who = x.from_admin ? (isAdmin() && x.sender && x.sender !== myId() ? '관리자 ' + msgThreadName(x.sender) : '관리자') : msgThreadName(x.thread_user);
+      var att = msgAttachLabel(x);
+      html += '<div class="msg-b '+(isMine ? 'mine' : 'theirs')+'">' +
+        '<span class="meta">'+(isMine ? '' : esc(who) + ' · ')+esc(fmtMsgTime(x.created_at))+(isMine && x.read_at ? ' · 읽음' : '')+'</span>' +
+        '<div class="body">'+esc(x.body)+'</div>' +
+        (att ? '<button type="button" class="msg-att" data-pid="'+esc(x.participant_id || '')+'" data-mid="'+esc(x.match_id || '')+'">'+esc(att)+' ›</button>' : '') +
+      '</div>';
+    });
+    $('msgList').innerHTML = html;
+    fillMsgAttach();
+    var sc = $('msgScroll');
+    sc.scrollTop = sc.scrollHeight;
+    if(mine.some(msgIsUnreadForMe)){
+      supabase.rpc('mark_admin_messages_read', { p_thread: msgThread }).then(function(res){
+        if(res.error) throw res.error;
+        var now = new Date().toISOString();
+        adminMessages.forEach(function(x){ if(x.thread_user === msgThread && msgIsUnreadForMe(x)) x.read_at = now; });
+        updateMsgBadge();
+      }).catch(function(err){ console.error('mark read error', err); });
+    }
+  }
+  function fillMsgAttach(){
+    var sel = $('msgAttach'), prev = sel.value;
+    var ms = members.filter(function(m){ return m.approved !== false || canEditMember(m); }).slice()
+      .sort(function(a, b){ return displayName(a).localeCompare(displayName(b), 'ko', { numeric:true }); });
+    var html = '<option value="">관련 참가자·매칭 붙이기 (선택)</option>';
+    if(ms.length) html += '<optgroup label="참가자">' + ms.map(function(m){
+      return '<option value="p:'+esc(m.id)+'">'+esc(displayName(m) + (m.name && m.codeName ? ' ('+m.codeName+')' : ''))+'</option>';
+    }).join('') + '</optgroup>';
+    if(matches.length) html += '<optgroup label="매칭">' + matches.map(function(x){
+      var a = memberById(x.aId), b = memberById(x.bId);
+      var st = matchBucket(x) === 'closed' ? '안 됨' : ((MATCH_STATUS[x.status] || MATCH_STATUS.proposed).label);
+      return '<option value="m:'+esc(x.id)+'">'+esc((a ? displayName(a) : (x.aName || '참가자')) + ' ↔ ' + (b ? displayName(b) : (x.bName || '참가자')) + ' · ' + st)+'</option>';
+    }).join('') + '</optgroup>';
+    sel.innerHTML = html;
+    if(prev && sel.querySelector('option[value="'+prev+'"]')) sel.value = prev;
+  }
+  function sendMessage(e){
+    e.preventDefault();
+    if(msgSending) return;
+    var text = $('msgText').value.trim();
+    if(!text){ showToast('내용을 적어 주세요'); return; }
+    var att = $('msgAttach').value;
+    msgSending = true;
+    $('msgSend').disabled = true;
+    supabase.rpc('send_admin_message', {
+      p_thread: isAdmin() ? msgThread : null,
+      p_body: text,
+      p_participant: att.indexOf('p:') === 0 ? att.slice(2) : null,
+      p_match: att.indexOf('m:') === 0 ? att.slice(2) : null
+    }).then(function(res){
+      if(res.error) throw res.error;
+      $('msgText').value = '';
+      $('msgAttach').value = '';
+      return refetchMessages();
+    }).catch(function(err){
+      console.error(err);
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '보내지 못했어요. 다시 시도해 주세요');
+    }).then(function(){ msgSending = false; $('msgSend').disabled = false; });
+  }
+  function flashCard(sel){
+    var el = document.querySelector(sel);
+    if(!el) return false;
+    el.scrollIntoView({ behavior:'smooth', block:'center' });
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+    return true;
+  }
+  function openMsgAttachment(pid, mid){
+    if(pid){
+      var m = memberById(pid);
+      if(!m){ showToast('지금은 볼 수 없는 참가자예요'); return; }
+      closeMessages();
+      ['memberStatusFilter','memberGenderFilter','memberMbtiFilter','memberOwnerFilter'].forEach(function(id){ if($(id)) $(id).value = ''; });
+      $('memberAgeMin').value = ''; $('memberAgeMax').value = '';
+      $('memberSearch').value = m.codeName || m.name || '';
+      switchToTab('members');
+      renderMembers();
+      setTimeout(function(){ flashCard('#membersList .card[data-id="'+pid+'"]'); }, 80);
+    } else if(mid){
+      if(!matches.some(function(x){ return x.id === mid; })){ showToast('지금은 볼 수 없는 매칭이에요'); return; }
+      closeMessages();
+      matchSeg = 'all';
+      switchToTab('matches');
+      renderMatches();
+      setTimeout(function(){ flashCard('#matchesList .match-row[data-id="'+mid+'"]'); }, 80);
+    }
+  }
+  function initMessagesUI(){
+    $('btnMessages').addEventListener('click', openMessages);
+    $('msgClose').addEventListener('click', closeMessages);
+    $('msgBack').addEventListener('click', function(){ msgThread = null; renderMessages(); });
+    $('msgThreads').addEventListener('click', function(e){
+      var b = e.target.closest('.msg-thread');
+      if(!b) return;
+      msgThread = b.dataset.uid;
+      renderMessages();
+    });
+    $('msgList').addEventListener('click', function(e){
+      var b = e.target.closest('.msg-att');
+      if(b) openMsgAttachment(b.dataset.pid, b.dataset.mid);
+    });
+    $('msgCompose').addEventListener('submit', sendMessage);
+    $('msgText').addEventListener('keydown', function(e){
+      if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) sendMessage(e);
+    });
+  }
+
   /* ---------------- 안 된 매칭 정리 ---------------- */
   var matchSeg = 'active';
   var closingMatchId = null;
@@ -5108,6 +5383,7 @@
       renderMatches();
     });
     initCloseMatchUI();
+    initMessagesUI();
     $('x-a').addEventListener('change', function(){
       if($('x-a').value && $('x-a').value === $('x-b').value){ $('x-b').value = ''; }
     });
@@ -5146,6 +5422,7 @@
         if(!$('crOverlay').hidden) closeChangeReview();
         if(!$('offerLinkOverlay').hidden) closeOfferLink();
         if(!$('closeOverlay').hidden) closeCloseMatch();
+        if(!$('msgOverlay').hidden) closeMessages();
       }
     });
   }
@@ -5219,6 +5496,7 @@
       .on('postgres_changes', { event:'*', schema:'public', table:'participants' }, function(){ refetchParticipants(); })
       .on('postgres_changes', { event:'*', schema:'public', table:'matches' }, function(){ refetchMatches(); })
       .on('postgres_changes', { event:'*', schema:'public', table:'participant_change_requests' }, function(){ refetchChangeRequests(); })
+      .on('postgres_changes', { event:'*', schema:'public', table:'admin_messages' }, function(){ refetchMessages(); })
       .subscribe(function(status){ rtStatus = status; });
   }
 
@@ -5226,7 +5504,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-15.3';
+  var APP_VERSION = '2026-10-15.4';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
@@ -5255,7 +5533,7 @@
     // 잠들었다 깨어나면 로그인 토큰이 만료됐을 수 있어 먼저 세션을 확인해요
     return supabase.auth.getSession().catch(function(){}).then(function(){
       if(rtStatus !== 'SUBSCRIBED') subscribeRealtime();
-      var jobs = [refetchParticipants(), refetchMatches(), refetchMemberNames(), refetchChangeRequests()];
+      var jobs = [refetchParticipants(), refetchMatches(), refetchMemberNames(), refetchChangeRequests(), refetchMessages()];
       if(isAdmin()) jobs.push(refetchProfiles());
       if(reason === 'resume' || reason === 'pull') jobs.push(checkNewVersion());
       return Promise.all(jobs);
@@ -5319,6 +5597,7 @@
     refetchProfiles();
     refetchMemberNames();
     refetchChangeRequests();
+    refetchMessages();
     subscribeRealtime();
     initAutoRefresh();
     lastRefreshAt = Date.now();
