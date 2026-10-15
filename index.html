@@ -115,6 +115,8 @@
   .auth-note{ font-size:12.5px; color:var(--muted); margin:8px 0 0; line-height:1.5; }
   .reveal-box{ display:flex; flex-direction:column; gap:4px; font-size:13px; background:var(--success-soft); color:var(--ink); border-radius:10px; padding:8px 10px; }
   .reveal-box b{ font-weight:700; }
+  .reveal-box .reveal-title{ font-weight:700; color:var(--success); font-size:12.5px; }
+  .reveal-box .btn{ align-self:flex-start; margin-top:4px; padding:5px 12px; font-size:12.5px; background:var(--surface); }
   .reveal-hint{ font-size:12.5px; color:var(--muted); }
   .decision-box{ display:flex; flex-direction:column; gap:8px; font-size:13px; background:var(--surface-2); border-radius:10px; padding:10px 12px; }
   .decision-title{ font-weight:700; font-size:13px; }
@@ -3729,11 +3731,13 @@
       }
 
       var revealHtml = '';
-      if(revealed && !isAdmin()){
+      if(revealed){
+        // 두 사람 모두 만나보기로 하면 관리자·담당 주선자 모두 이름과 연락처를 볼 수 있어요
         var lines = [aMember, bMember].filter(function(m){ return m && (m.name || m.contact); }).map(function(m){
           return '<div><b>'+esc(m.name || m.codeName)+'</b>'+(m.codeName && m.name ? ' ('+esc(m.codeName)+')' : '')+(m.contact ? ' · '+esc(m.contact) : '')+'</div>';
         });
-        if(lines.length) revealHtml = '<div class="reveal-box">'+lines.join('')+'</div>';
+        if(lines.length) revealHtml = '<div class="reveal-box"><div class="reveal-title">두 분 모두 만나보기로 했어요</div>'+lines.join('') +
+          '<button class="btn" type="button" data-action="copy-contacts" data-id="'+esc(x.id)+'">이름·연락처 복사</button></div>';
       } else if(!isAdmin() && !pendingMine.length){
         var waits = [];
         if(declined) waits = ['상대 측에서 정중히 거절했어요. 다른 분을 찾아보세요.'];
@@ -4563,6 +4567,16 @@
       fallbackCopy(text, done);
     }
   }
+  // 성사된(둘 다 수락) 매칭의 이름·연락처를 카톡으로 보내기 좋게 복사해요
+  function copyMatchContacts(id){
+    var x = matches.filter(function(m){ return m.id === id; })[0];
+    if(!x || !matchRevealed(x)) return;
+    var people = [memberById(x.aId), memberById(x.bId)].filter(Boolean);
+    var lines = people.map(function(m){
+      return '· ' + (m.name || m.codeName || '참가자') + (m.contact ? ' ' + m.contact : '');
+    });
+    copyText('[매칭메이커] 두 분 모두 만나보기로 했어요\n' + lines.join('\n') + '\n서로 편하게 연락해 보세요.');
+  }
   function copyMemberInfo(id){
     var m = memberById(id);
     if(!m) return;
@@ -4950,6 +4964,7 @@
       if(btn.dataset.action === 'decline-match') respondMatch(id, false);
       if(btn.dataset.action === 'unapprove-match') setMatchApproval(id, false);
       if(btn.dataset.action === 'close-match') openCloseMatch(id);
+      if(btn.dataset.action === 'copy-contacts') copyMatchContacts(id);
       if(btn.dataset.action === 'reopen-match') reopenMatch(id, btn);
       if(btn.dataset.action === 'delete-match'){
         var x = matches.filter(function(mm){ return mm.id === id; })[0];
@@ -5211,7 +5226,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-15.2';
+  var APP_VERSION = '2026-10-15.3';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
