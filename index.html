@@ -141,6 +141,16 @@
   .rec-more .card-body{ margin-top:6px; padding:10px 12px; border-radius:var(--radius-sm); background:var(--surface); border:1px solid var(--line); }
   @media (max-width:520px){ .rec-side{ width:100%; justify-content:space-between; } }
   .rec-empty{ color:var(--muted); font-size:13.5px; }
+  /* 매칭 기록 구분 (진행 중 / 성사 / 안 된 매칭) */
+  .seg-group{ display:flex; gap:4px; padding:4px; border-radius:999px; background:var(--surface-2); flex-wrap:wrap; }
+  .seg-btn{ appearance:none; border:none; background:transparent; color:var(--muted); font-family:inherit; font-size:13.5px; font-weight:600; padding:7px 12px; border-radius:999px; cursor:pointer; white-space:nowrap; }
+  .seg-btn[aria-pressed="true"]{ background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .seg-btn .seg-n{ margin-left:4px; font-size:12px; color:var(--muted); font-weight:700; }
+  .close-box{ display:flex; flex-direction:column; gap:4px; font-size:13px; background:var(--surface-2); border-radius:10px; padding:10px 12px; }
+  .close-box .close-top{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .close-box .close-date{ color:var(--muted); font-size:12.5px; }
+  .close-box .close-note{ white-space:pre-wrap; color:var(--ink); }
+  .stale-hint{ font-size:12.5px; color:var(--warn); background:var(--warn-soft); border-radius:8px; padding:6px 10px; }
   /* 참가자 결정 화면 */
   #offerOverlay{ align-items:stretch; padding:0; z-index:60; }
   #offerOverlay .dialog{ max-width:none; width:100%; height:100%; max-height:none; border-radius:0; padding:0; display:flex; flex-direction:column; overflow:hidden; }
@@ -753,6 +763,8 @@
           <dd>매칭 카드에 '참가자 거절'로 표시되고 연락처는 공개되지 않아요. 그 짝은 AI 추천에 다시 나오지 않아요.</dd>
           <dt>상대 주선자가 거절하면요?</dt>
           <dd>그 매칭은 공개되지 않아요. 카드에 '상대측 거절'로 표시되니 다른 분으로 다시 요청해 보세요.</dd>
+          <dt>안 된 매칭은 어디서 보나요?</dt>
+          <dd>매칭 기록의 <span class="guide-ui">안 된 매칭</span>에 따로 모여요. 상대 주선자나 참가자가 거절하면 자동으로 옮겨지고, 직접 <b>안 됨으로 정리</b>를 눌러 이유와 메모를 남길 수도 있어요. 지워지지 않고 참가자 카드의 <b>소개 이력</b>에 남아서 다음 소개 때 참고할 수 있어요. 거절 없이 정리한 매칭은 <b>다시 진행</b>으로 되돌릴 수 있어요. 30일 넘게 변화가 없는 매칭에는 '멈춘 매칭' 표시가 떠요.</dd>
           <dt>승인된 매칭의 사람을 바꿀 수 있나요?</dt>
           <dd>참가자는 바꿀 수 없어요. 상태·날짜·메모는 계속 수정할 수 있어요. 사람을 바꾸려면 새 매칭을 만들어 주세요.</dd>
           <dt>담당이 없는 참가자와 매칭하면요?</dt>
@@ -1114,14 +1126,12 @@
   <!-- ================= MATCHES PANEL ================= -->
   <section id="panel-matches" role="tabpanel" aria-labelledby="tabBtn-matches" style="display:none; flex-direction:column; gap:14px;">
     <div class="toolbar">
-      <select id="matchStatusFilter" class="select-input">
-        <option value="">모든 상태</option>
-        <option value="proposed">제안됨</option>
-        <option value="in_progress">진행중</option>
-        <option value="success">성사</option>
-        <option value="failed">불발</option>
-        <option value="hold">보류</option>
-      </select>
+      <div class="seg-group" id="matchSeg" role="group" aria-label="매칭 기록 보기">
+        <button type="button" class="seg-btn" data-seg="active" aria-pressed="true">진행 중<span class="seg-n" id="segN-active"></span></button>
+        <button type="button" class="seg-btn" data-seg="success" aria-pressed="false">성사<span class="seg-n" id="segN-success"></span></button>
+        <button type="button" class="seg-btn" data-seg="closed" aria-pressed="false">안 된 매칭<span class="seg-n" id="segN-closed"></span></button>
+        <button type="button" class="seg-btn" data-seg="all" aria-pressed="false">전체<span class="seg-n" id="segN-all"></span></button>
+      </div>
       <span style="flex:1"></span>
       <button class="btn btn-primary" id="btnAddMatch" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
@@ -1424,6 +1434,29 @@
   </div>
 </div>
 
+<!-- ================= CLOSE MATCH (안 된 매칭 정리) ================= -->
+<div class="overlay" id="closeOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="closeTitle">
+    <div class="dialog-head">
+      <h2 id="closeTitle">안 된 매칭으로 정리</h2>
+    </div>
+    <p class="helper-text" id="closeSub" style="margin:0 0 10px;"></p>
+    <div class="field">
+      <label>안 된 이유</label>
+      <div class="chip-group" id="closeReason" role="group" aria-label="안 된 이유"></div>
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label for="closeNote">메모 <span class="q-hint">선택 · 최대 200자 · 다음 소개 때 참고해요</span></label>
+      <textarea class="field-input" id="closeNote" maxlength="200" placeholder="예: 서로 일정이 안 맞았어요. 다음엔 가까운 지역으로 찾아보기."></textarea>
+      <span class="intro-count" id="closeNoteCount">0/200</span>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn" id="closeCancel">취소</button>
+      <button type="button" class="btn btn-primary" id="closeOk">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- ================= EDIT LINK (주선자용) ================= -->
 <div class="overlay" id="elOverlay" hidden>
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="elTitle">
@@ -1560,6 +1593,43 @@
     failed:      { label:'불발',    cls:'badge-danger' },
     hold:        { label:'보류',    cls:'badge-info' }
   };
+  // 안 된 매칭: 불발로 정리했거나, 상대 주선자·참가자가 거절한 매칭 (데이터베이스와 같은 기준)
+  var CLOSE_REASON_LABEL = { owner_declined:'주선자 거절', participant_declined:'참가자 거절', after_meeting:'만남 후 안 맞음', no_contact:'연락 끊김', other:'기타' };
+  var STALE_DAYS = 30;
+  function matchDeclinedBy(x){
+    if(x.aConsent === 'declined' || x.bConsent === 'declined') return 'owner_declined';
+    if(x.aDecision === 'declined' || x.bDecision === 'declined') return 'participant_declined';
+    return '';
+  }
+  function matchClosed(x){ return x.status === 'failed' || !!matchDeclinedBy(x); }
+  function matchBucket(x){ return x.status === 'success' ? 'success' : (matchClosed(x) ? 'closed' : 'active'); }
+  function matchCloseReason(x){ return x.closeReason || matchDeclinedBy(x); }
+  function daysSince(iso){
+    if(!iso) return 0;
+    var t = Date.parse(iso);
+    return isNaN(t) ? 0 : Math.floor((Date.now() - t) / 86400000);
+  }
+  function matchStaleDays(x){
+    if(matchBucket(x) !== 'active') return 0;
+    if(x.followUpDate && x.followUpDate >= todayStr()) return 0;
+    var d = daysSince(x.updatedAt || x.createdAt);
+    return d >= STALE_DAYS ? d : 0;
+  }
+  // 참가자별 소개 이력 (내가 볼 수 있는 매칭 기준)
+  function memberHistoryText(m){
+    var mine = matches.filter(function(x){ return x.aId === m.id || x.bId === m.id; });
+    if(!mine.length) return '';
+    var n = { active:0, success:0, closed:0 }, why = {};
+    mine.forEach(function(x){
+      var b = matchBucket(x); n[b]++;
+      if(b === 'closed'){ var r = CLOSE_REASON_LABEL[matchCloseReason(x)] || '사유 미기록'; why[r] = (why[r] || 0) + 1; }
+    });
+    var parts = ['총 ' + mine.length + '회'];
+    if(n.active) parts.push('진행 중 ' + n.active);
+    if(n.success) parts.push('성사 ' + n.success);
+    if(n.closed) parts.push('안 됨 ' + n.closed + ' (' + Object.keys(why).map(function(k){ return k + ' ' + why[k]; }).join(', ') + ')');
+    return parts.join(' · ');
+  }
 
   /* ---------------- 궁합 정보 항목 ---------------- */
   var SIDO_LIST = ['서울','경기','인천','부산','대구','광주','대전','울산','세종','강원','충북','충남','전북','전남','경북','경남','제주','해외'];
@@ -2758,7 +2828,10 @@
       aDecision: row.a_decision || 'none',
       bDecision: row.b_decision || 'none',
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
+      closeReason: row.close_reason || '',
+      closeNote: row.close_note || '',
+      closedAt: row.closed_at || null
     };
   }
   // a_name / b_name 은 데이터베이스가 코드네임으로 채워요
@@ -3064,7 +3137,7 @@
       $('pendingMatchCount').hidden = pm === 0;
     }
     if(matchesLoaded){
-      var ongoing = matches.filter(function(m){ return m.status === 'proposed' || m.status === 'in_progress'; }).length;
+      var ongoing = matches.filter(function(m){ return matchBucket(m) === 'active'; }).length;
       var success = matches.filter(function(m){ return m.status === 'success'; }).length;
       $('statOngoing').textContent = String(ongoing);
       $('statSuccess').textContent = String(success);
@@ -3397,6 +3470,8 @@
     if(m.extraIntro) rows += '<div class="row"><span class="k">더 알려줄 점</span><span class="v">'+esc(m.extraIntro)+'</span></div>';
     if(m.personality) rows += '<div class="row"><span class="k">특징(이전)</span><span class="v">'+esc(m.personality)+'</span></div>';
     if(m.idealType) rows += '<div class="row"><span class="k">이상형(이전)</span><span class="v">'+esc(m.idealType)+'</span></div>';
+    var hist = memberHistoryText(m);
+    if(hist) rows += '<div class="row"><span class="k">소개 이력</span><span class="v">'+esc(hist)+'</span></div>';
     if(m.memo) rows += '<div class="row"><span class="k">메모</span><span class="v">'+esc(m.memo)+'</span></div>';
     if(isAdmin() && !opt.noConsent) rows += '<div class="row"><span class="k">동의</span><span class="v">'+(m.consentAt ? esc(fmtDate(String(m.consentAt).slice(0,10))) + ' 개인정보 동의' + (m.sensitiveConsent ? ' · 종교 동의' : '') : '<span style="color:var(--muted)">신청서 동의 기록 없음</span>')+'</span></div>';
     return rows;
@@ -3553,10 +3628,12 @@
     }
     loadingEl.hidden = true;
 
-    var statusFilter = $('matchStatusFilter').value;
+    var segN = { active:0, success:0, closed:0, all:matches.length };
+    matches.forEach(function(x){ segN[matchBucket(x)]++; });
+    Object.keys(segN).forEach(function(k){ var el = $('segN-' + k); if(el) el.textContent = segN[k] ? String(segN[k]) : ''; });
+    Array.prototype.forEach.call(document.querySelectorAll('#matchSeg .seg-btn'), function(b){ b.setAttribute('aria-pressed', b.dataset.seg === matchSeg ? 'true' : 'false'); });
     var filtered = matches.filter(function(x){
-      if(statusFilter && x.status !== statusFilter) return false;
-      return true;
+      return matchSeg === 'all' || matchBucket(x) === matchSeg;
     });
 
     if(matches.length === 0){
@@ -3567,16 +3644,25 @@
     }
     if(filtered.length === 0){
       emptyEl.hidden = false; listEl.hidden = true;
-      $('matchesEmptyTitle').textContent = '해당 상태의 기록이 없어요';
-      $('matchesEmptyText').textContent = '다른 상태로 필터를 바꿔보세요.';
+      var EMPTY = {
+        active: ['진행 중인 매칭이 없어요', 'AI 추천이나 새 매칭 등록으로 다음 소개를 시작해 보세요.'],
+        success: ['아직 성사된 매칭이 없어요', '커플이 되면 매칭을 수정해서 상태를 성사로 바꿔 주세요.'],
+        closed: ['안 된 매칭이 없어요', '거절되거나 불발로 정리한 매칭이 여기에 모여요.'],
+        all: ['해당 기록이 없어요', '']
+      }[matchSeg] || ['해당 기록이 없어요', ''];
+      $('matchesEmptyTitle').textContent = EMPTY[0];
+      $('matchesEmptyText').textContent = EMPTY[1];
       return;
     }
     emptyEl.hidden = true; listEl.hidden = false;
 
     // 내가 응답해야 하는 요청을 맨 위로
     filtered.sort(function(a, b){
-      var pa = (mySidesPending(a).length || mySidesToSend(a).length) ? 0 : 1;
-      var pb = (mySidesPending(b).length || mySidesToSend(b).length) ? 0 : 1;
+      if(matchSeg === 'closed'){
+        return String(b.closedAt || b.updatedAt || '').localeCompare(String(a.closedAt || a.updatedAt || ''));
+      }
+      var pa = (mySidesPending(a).length || mySidesToSend(a).length) ? 0 : (matchClosed(a) ? 2 : 1);
+      var pb = (mySidesPending(b).length || mySidesToSend(b).length) ? 0 : (matchClosed(b) ? 2 : 1);
       return pa - pb;
     });
 
@@ -3599,6 +3685,8 @@
       var pDeclined = x.aDecision === 'declined' || x.bDecision === 'declined';
       var pendingMine = mySidesPending(x);
       var toSend = mySidesToSend(x);
+      var closed = matchClosed(x);
+      var staleDays = matchStaleDays(x);
 
       var subBits = [];
       if(x.date) subBits.push('소개일 ' + fmtDate(x.date));
@@ -3664,6 +3752,11 @@
       } else if(isAdmin() && x.approved && !revealed && !declined){
         revealHtml = '<div class="reveal-hint">' + (matchReady(x) ? (pDeclined ? '참가자가 거절했어요.' : '승인됨 · 두 참가자의 결정을 기다리는 중이에요.') : '승인됨 · 담당 주선자 수락이 끝나면 참가자에게 링크를 보낼 수 있어요.') + '</div>';
       }
+      if(closed && x.status !== 'success'){
+        // 안 된 매칭: 진행 상태 배지·대기 안내는 빼고, 아래 사유 칸으로 보여줘요
+        statusBadges = '';
+        if(!revealed) revealHtml = '';
+      }
       var decisionHtml = '';
       if(matchReady(x)){
         decisionHtml = '<div class="decision-box"><div class="decision-title">참가자 최종 결정</div>' + ['a','b'].map(function(side){
@@ -3671,7 +3764,7 @@
           var dec = side === 'a' ? x.aDecision : x.bDecision;
           var cls = dec === 'accepted' ? 'badge-success' : (dec === 'declined' ? 'badge-danger' : (dec === 'pending' ? 'badge-warn' : 'badge-neutral'));
           var btn = '';
-          if((dec === 'none' || dec === 'pending') && canSendOffer(x, side) && !pDeclined){
+          if((dec === 'none' || dec === 'pending') && canSendOffer(x, side) && !pDeclined && !closed){
             btn = '<button class="btn '+(dec === 'none' ? 'btn-primary' : '')+'" type="button" data-action="send-offer" data-id="'+esc(x.id)+'" data-side="'+side+'">'+(dec === 'none' ? '결정 링크 보내기' : '링크 다시 만들기')+'</button>';
           }
           return '<div class="decision-row"><span class="who">'+esc(mm ? displayName(mm) : (side === 'a' ? aName : bName))+'</span><span class="badge '+cls+'">'+esc(DECISION_LABEL[dec] || '')+'</span>'+btn+'</div>';
@@ -3679,10 +3772,28 @@
       }
 
       var approveBtns = '';
-      if(isAdmin()){
+      if(isAdmin() && !(closed && x.status !== 'success')){
         approveBtns = !x.approved
           ? '<button class="btn btn-primary" type="button" data-action="approve-match" data-id="'+esc(x.id)+'">매칭 승인</button>'
           : (x.createdBy ? '<button class="btn" type="button" data-action="unapprove-match" data-id="'+esc(x.id)+'">승인 취소</button>' : '');
+      }
+      var closeHtml = '';
+      if(closed && x.status !== 'success'){
+        var rsn = matchCloseReason(x);
+        var when = x.closedAt || x.updatedAt;
+        closeHtml = '<div class="close-box"><div class="close-top">' +
+          '<span class="badge '+(rsn ? 'badge-neutral' : 'badge-warn')+'">'+esc(CLOSE_REASON_LABEL[rsn] || '사유 미기록')+'</span>' +
+          (when ? '<span class="close-date">' + esc(fmtDate(String(when).slice(0,10))) + ' 정리</span>' : '') + '</div>' +
+          (x.closeNote ? '<div class="close-note">'+esc(x.closeNote)+'</div>' : '') + '</div>';
+      }
+      var staleHtml = staleDays ? '<div class="stale-hint">멈춘 매칭 · '+staleDays+'일째 변화가 없어요. 계속할지, 안 됨으로 정리할지 확인해 주세요.</div>' : '';
+      var closeBtns = '';
+      if(canEdit){
+        if(!closed && x.status !== 'success') closeBtns = '<button class="btn" type="button" data-action="close-match" data-id="'+esc(x.id)+'">안 됨으로 정리</button>';
+        else if(closed && x.status !== 'success'){
+          closeBtns = '<button class="btn" type="button" data-action="close-match" data-id="'+esc(x.id)+'">'+(x.closeReason || x.closeNote ? '사유 수정' : '사유 적기')+'</button>';
+          if(!matchDeclinedBy(x)) closeBtns += '<button class="btn" type="button" data-action="reopen-match" data-id="'+esc(x.id)+'">다시 진행</button>';
+        }
       }
       var editBtns = canEdit
         ? ('<button class="btn btn-ghost" type="button" data-action="edit-match" data-id="'+esc(x.id)+'" aria-label="수정">' + EDIT_ICON + '</button>' +
@@ -3696,7 +3807,7 @@
               '<svg class="thread-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M14 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
               '<span>'+esc(bName)+'</span>' + (bExists ? '' : ' <span class="deleted-tag">삭제됨</span>') +
             '</div>' +
-            '<span>' + statusBadges + '<span class="badge '+st.cls+'">'+st.label+'</span></span>' +
+            '<span>' + statusBadges + (closed && x.status !== 'success' ? '<span class="badge badge-danger">안 됨</span>' : '<span class="badge '+st.cls+'">'+st.label+'</span>') + '</span>' +
           '</div>' +
           (x.matchmaker ? '<div class="match-matchmaker"><span class="match-matchmaker-label">주선</span>'+esc(x.matchmaker)+'</div>' : '') +
           (subBits.length ? '<div class="match-sub">'+subBits.map(esc).join(' · ')+'</div>' : '') +
@@ -3704,8 +3815,10 @@
           requestHtml +
           decisionHtml +
           revealHtml +
+          closeHtml +
+          staleHtml +
           (x.memo ? '<div class="match-memo">'+esc(x.memo)+'</div>' : '') +
-          ((approveBtns || editBtns) ? '<div class="card-actions">' + approveBtns + editBtns + '</div>' : '') +
+          ((approveBtns || closeBtns || editBtns) ? '<div class="card-actions">' + approveBtns + closeBtns + editBtns + '</div>' : '') +
         '</div>'
       );
     }).join('');
@@ -3744,7 +3857,7 @@
     return m.ownerId ? m.ownerId === me : x.createdBy === me;
   }
   function mySidesToSend(x){
-    if(!matchReady(x) || isAdmin()) return [];
+    if(!matchReady(x) || isAdmin() || matchClosed(x)) return [];
     return ['a','b'].filter(function(s){ return (s === 'a' ? x.aDecision : x.bDecision) === 'none' && canSendOffer(x, s); });
   }
   var DECISION_LABEL = { none:'링크 아직 안 보냄', pending:'답변 기다리는 중', accepted:'만나볼게요', declined:'이번엔 괜찮아요' };
@@ -3752,7 +3865,7 @@
     // 내가 담당이고 아직 응답하지 않은 쪽 (요청자가 나인 경우는 제외)
     var sides = [];
     var me = myId();
-    if(!me || x.createdBy === me) return sides;
+    if(!me || x.createdBy === me || matchClosed(x)) return sides;
     var a = memberById(x.aId), b = memberById(x.bId);
     if(x.aConsent === 'pending' && a && a.ownerId === me) sides.push('a');
     if(x.bConsent === 'pending' && b && b.ownerId === me) sides.push('b');
@@ -4672,6 +4785,80 @@
     }).finally(function(){ btn.disabled = false; });
   }
 
+  /* ---------------- 안 된 매칭 정리 ---------------- */
+  var matchSeg = 'active';
+  var closingMatchId = null;
+  function openCloseMatch(id){
+    var x = matches.filter(function(m){ return m.id === id; })[0];
+    if(!x) return;
+    closingMatchId = id;
+    var a = memberById(x.aId), b = memberById(x.bId);
+    var pair = (a ? displayName(a) : (x.aName || '참가자')) + ' ↔ ' + (b ? displayName(b) : (x.bName || '참가자'));
+    var already = matchClosed(x);
+    $('closeTitle').textContent = already ? '안 된 이유 기록' : '안 된 매칭으로 정리';
+    $('closeSub').textContent = pair + (already ? '' : ' · 정리하면 "안 된 매칭"으로 옮겨져요. 기록은 지워지지 않아요.');
+    var cur = matchCloseReason(x);
+    $('closeReason').innerHTML = Object.keys(CLOSE_REASON_LABEL).map(function(k){
+      return '<button type="button" class="chip" data-v="'+k+'" aria-pressed="'+(k === cur ? 'true' : 'false')+'">'+esc(CLOSE_REASON_LABEL[k])+'</button>';
+    }).join('');
+    $('closeNote').value = x.closeNote || '';
+    $('closeNoteCount').textContent = $('closeNote').value.length + '/200';
+    $('closeOverlay').hidden = false;
+  }
+  function closeCloseMatch(){ $('closeOverlay').hidden = true; closingMatchId = null; }
+  function saveCloseMatch(){
+    var id = closingMatchId;
+    if(!id) return;
+    var sel = $('closeReason').querySelector('.chip[aria-pressed="true"]');
+    if(!sel){ showToast('안 된 이유를 하나 골라 주세요'); return; }
+    var btn = $('closeOk');
+    btn.disabled = true;
+    supabase.from('matches').update({
+      status: 'failed',
+      close_reason: sel.getAttribute('data-v'),
+      close_note: $('closeNote').value.trim().slice(0, 200) || null
+    }).eq('id', id).select('id').then(function(res){
+      if(res.error) throw res.error;
+      if(!res.data || !res.data.length) throw new Error('이 매칭을 만든 주선자나 관리자만 정리할 수 있어요');
+      showToast('안 된 매칭으로 정리했어요');
+      closeCloseMatch();
+      return refetchMatches();
+    }).catch(function(err){
+      console.error(err);
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '저장하지 못했어요. 다시 시도해 주세요.');
+    }).then(function(){ btn.disabled = false; });
+  }
+  function reopenMatch(id, btn){
+    var x = matches.filter(function(m){ return m.id === id; })[0];
+    if(!x || matchDeclinedBy(x)) return;
+    btn.disabled = true;
+    supabase.from('matches').update({
+      status: (x.aDecision === 'accepted' && x.bDecision === 'accepted') ? 'in_progress' : 'proposed',
+      close_reason: null
+    }).eq('id', id).select('id').then(function(res){
+      if(res.error) throw res.error;
+      if(!res.data || !res.data.length) throw new Error('이 매칭을 만든 주선자나 관리자만 바꿀 수 있어요');
+      showToast('다시 진행 중으로 옮겼어요');
+      return refetchMatches();
+    }).catch(function(err){
+      console.error(err);
+      btn.disabled = false;
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '바꾸지 못했어요. 다시 시도해 주세요.');
+    });
+  }
+  function initCloseMatchUI(){
+    $('closeCancel').addEventListener('click', closeCloseMatch);
+    $('closeOk').addEventListener('click', saveCloseMatch);
+    $('closeReason').addEventListener('click', function(e){
+      var chip = e.target.closest('.chip');
+      if(!chip) return;
+      Array.prototype.forEach.call(this.querySelectorAll('.chip'), function(c){ c.setAttribute('aria-pressed', c === chip ? 'true' : 'false'); });
+    });
+    $('closeNote').addEventListener('input', function(){ $('closeNoteCount').textContent = this.value.length + '/200'; });
+  }
+
   /* ---------------- delete confirm ---------------- */
   function askDelete(kind, id, label, photoPaths){
     pendingDelete = { kind: kind, id: id, photoPaths: photoPaths || [] };
@@ -4762,6 +4949,8 @@
       if(btn.dataset.action === 'accept-match') respondMatch(id, true);
       if(btn.dataset.action === 'decline-match') respondMatch(id, false);
       if(btn.dataset.action === 'unapprove-match') setMatchApproval(id, false);
+      if(btn.dataset.action === 'close-match') openCloseMatch(id);
+      if(btn.dataset.action === 'reopen-match') reopenMatch(id, btn);
       if(btn.dataset.action === 'delete-match'){
         var x = matches.filter(function(mm){ return mm.id === id; })[0];
         var label = x ? ((x.aName||'')+' · '+(x.bName||'')) : '';
@@ -4897,7 +5086,13 @@
     $('matchCancel').addEventListener('click', closeMatchModal);
     $('matchOverlay').addEventListener('click', function(e){ if(e.target === this) closeMatchModal(); });
     $('matchForm').addEventListener('submit', onMatchSubmit);
-    $('matchStatusFilter').addEventListener('change', renderMatches);
+    $('matchSeg').addEventListener('click', function(e){
+      var b = e.target.closest('.seg-btn');
+      if(!b || b.dataset.seg === matchSeg) return;
+      matchSeg = b.dataset.seg;
+      renderMatches();
+    });
+    initCloseMatchUI();
     $('x-a').addEventListener('change', function(){
       if($('x-a').value && $('x-a').value === $('x-b').value){ $('x-b').value = ''; }
     });
@@ -4935,6 +5130,7 @@
         if(!$('elOverlay').hidden) closeEditLinkModal();
         if(!$('crOverlay').hidden) closeChangeReview();
         if(!$('offerLinkOverlay').hidden) closeOfferLink();
+        if(!$('closeOverlay').hidden) closeCloseMatch();
       }
     });
   }
@@ -4987,6 +5183,7 @@
       matchesFailed = false;
       renderMatches();
       renderStats();
+      if(membersLoaded) renderMembers(); // 참가자 카드의 소개 이력
       if($('panel-recommend').style.display === 'flex') renderRecommend();
       // 주선자: 공개 상태가 바뀌면 이름·연락처를 다시 불러와요
       var nowApproved = matches.filter(matchRevealed).map(function(x){ return x.id; }).sort().join(',');
@@ -5014,7 +5211,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-15.1';
+  var APP_VERSION = '2026-10-15.2';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
