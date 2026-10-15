@@ -186,6 +186,13 @@
   .msg-input-row{ display:flex; gap:8px; align-items:flex-end; }
   .msg-input-row textarea{ flex:1; min-height:44px; max-height:140px; resize:none; font-size:15px; }
   .msg-input-row .btn{ flex:none; }
+  .msg-purge{ background:var(--surface); border-bottom:1px solid var(--line); padding:10px 16px; display:flex; flex-direction:column; gap:8px; font-size:13px; }
+  .msg-purge-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .msg-purge-row .k{ color:var(--muted); }
+  .msg-purge select{ width:auto; font-size:13px; padding:6px 10px; }
+  .msg-purge .btn{ padding:6px 12px; font-size:13px; }
+  .msg-purge-confirm{ background:var(--danger-soft, #fdecec); color:var(--ink); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
+  .msg-purge-confirm[hidden]{ display:none; }
   .flash{ animation:flashIn 1.6s ease; }
   @keyframes flashIn{ 0%,40%{ box-shadow:0 0 0 3px var(--accent); } 100%{ box-shadow:0 0 0 0 transparent; } }
   /* 참가자 결정 화면 */
@@ -801,7 +808,7 @@
           <dt>상대 주선자가 거절하면요?</dt>
           <dd>그 매칭은 공개되지 않아요. 카드에 '상대측 거절'로 표시되니 다른 분으로 다시 요청해 보세요.</dd>
           <dt>관리자에게 물어보고 싶은 게 있으면요?</dt>
-          <dd>위쪽 <span class="guide-ui">쪽지</span> 버튼으로 관리자에게 바로 보낼 수 있어요. 궁금한 참가자나 매칭을 골라 함께 붙이면 관리자가 쪽지에서 바로 그 카드로 이동해 확인해요. 답이 오면 쪽지 버튼에 숫자가 뜨고, 알림을 켜 두었다면 휴대폰으로도 알려 드려요.</dd>
+          <dd>위쪽 <span class="guide-ui">쪽지</span> 버튼으로 관리자에게 바로 보낼 수 있어요. 궁금한 참가자나 매칭을 골라 함께 붙이면 관리자가 쪽지에서 바로 그 카드로 이동해 확인해요. 답이 오면 쪽지 버튼에 숫자가 뜨고, 알림을 켜 두었다면 휴대폰으로도 알려 드려요. 쪽지는 계속 보관되고, 관리자가 쪽지 목록 위의 <b>오래된 쪽지 정리</b>로 3개월·6개월·1년 지난 쪽지를 한꺼번에 지울 수 있어요.</dd>
           <dt>안 된 매칭은 어디서 보나요?</dt>
           <dd>매칭 기록의 <span class="guide-ui">안 된 매칭</span>에 따로 모여요. 상대 주선자나 참가자가 거절하면 자동으로 옮겨지고, 직접 <b>안 됨으로 정리</b>를 눌러 이유와 메모를 남길 수도 있어요. 지워지지 않고 참가자 카드의 <b>소개 이력</b>에 남아서 다음 소개 때 참고할 수 있어요. 거절 없이 정리한 매칭은 <b>다시 진행</b>으로 되돌릴 수 있어요. 30일 넘게 변화가 없는 매칭에는 '멈춘 매칭' 표시가 떠요.</dd>
           <dt>승인된 매칭의 사람을 바꿀 수 있나요?</dt>
@@ -4867,12 +4874,14 @@
   var adminMessages = [], messagesLoaded = false, lastMessagesSig = '', msgThread = null, msgSending = false;
   // 처음 한 번만 전부 받고, 그다음부터는 새 쪽지와 새로 읽음 표시된 쪽지만 받아와요 (트래픽 절약)
   // msgCursor는 서버가 준 시각으로만 정해요 (휴대폰 시계가 틀려도 빠뜨리지 않게)
-  var msgCursor = '', msgFetching = null, msgFetchAgain = false;
+  var msgCursor = '', msgFetching = null, msgFetchAgain = false, msgNeedFull = false;
   function refetchMessages(){
     if(!currentUser) return Promise.resolve();
     if(msgFetching){ msgFetchAgain = true; return msgFetching; }
+    var full = !messagesLoaded || msgNeedFull || !msgCursor;
+    msgNeedFull = false;
     var q = supabase.from('admin_messages').select('*');
-    if(messagesLoaded && msgCursor){
+    if(!full){
       // 2분 겹치게 받아서, 거의 동시에 저장된 쪽지도 놓치지 않아요
       var since = new Date(Date.parse(msgCursor) - 120000).toISOString();
       q = q.or('created_at.gte."' + since + '",read_at.gte."' + since + '"');
@@ -4881,6 +4890,12 @@
       if(res.error) throw res.error;
       var rows = res.data || [];
       var changed = !messagesLoaded;
+      if(full){
+        // 전체를 받을 때는 통째로 바꿔요 (정리로 지워진 쪽지도 사라지게)
+        changed = changed || JSON.stringify(rows) !== JSON.stringify(adminMessages);
+        adminMessages = [];
+        msgCursor = '';
+      }
       var byId = {};
       adminMessages.forEach(function(x, i){ byId[x.id] = i; });
       rows.forEach(function(r){
@@ -4968,13 +4983,18 @@
         if(ta !== tb) return tb.localeCompare(ta);
         return a.name.localeCompare(b.name, 'ko');
       });
-      $('msgThreads').innerHTML = rows.length ? rows.map(function(r){
+      var purgeHtml = '<div class="msg-purge">' +
+        '<div class="msg-purge-row"><span class="k">오래된 쪽지 정리</span>' +
+          '<select class="select-input" id="msgPurgeMonths" aria-label="정리할 기간">' + [[3,'3개월'],[6,'6개월'],[12,'1년']].map(function(o){ return '<option value="'+o[0]+'"'+(o[0] === purgeMonths ? ' selected' : '')+'>'+o[1]+' 지난 쪽지</option>'; }).join('') + '</select>' +
+          '<button type="button" class="btn" data-action="purge-check">확인</button></div>' +
+        '<div class="msg-purge-confirm" id="msgPurgeConfirm" hidden></div></div>';
+      $('msgThreads').innerHTML = purgeHtml + (rows.length ? rows.map(function(r){
         var snip = r.last ? ((r.last.from_admin ? '나: ' : '') + r.last.body.replace(/\s+/g, ' ')) : '아직 쪽지가 없어요. 눌러서 먼저 보낼 수 있어요.';
         return '<button type="button" class="msg-thread" data-uid="'+esc(r.uid)+'">' +
           '<span class="msg-thread-top"><b>'+esc(r.name)+'</b>' + (r.unread ? '<span class="unread">'+r.unread+'</span>' : '') +
           (r.last ? '<span class="t">'+esc(fmtMsgTime(r.last.created_at, true))+'</span>' : '') + '</span>' +
           '<span class="snip">'+esc(snip)+'</span></button>';
-      }).join('') : '<p class="msg-empty">승인된 주선자가 아직 없어요.</p>';
+      }).join('') : '<p class="msg-empty">승인된 주선자가 아직 없어요.</p>');
       return;
     }
     $('msgTitle').textContent = isAdmin() ? (msgThreadName(msgThread) + ' 님과 쪽지') : '관리자에게 쪽지';
@@ -5077,11 +5097,52 @@
       setTimeout(function(){ flashCard('#matchesList .match-row[data-id="'+mid+'"]'); }, 80);
     }
   }
+  // 오래된 쪽지 정리: 먼저 몇 통인지 확인하고, 한 번 더 눌러야 지워져요 (되돌릴 수 없어요)
+  var purgeMonths = 6;
+  function purgeMessagesStep(action, btn){
+    var box = $('msgPurgeConfirm');
+    if(action === 'purge-cancel'){ box.hidden = true; box.innerHTML = ''; return; }
+    var label = { 3:'3개월', 6:'6개월', 12:'1년' };
+    if(action === 'purge-check'){
+      purgeMonths = Number($('msgPurgeMonths').value) || 6;
+      btn.disabled = true;
+      supabase.rpc('purge_admin_messages', { p_months: purgeMonths, p_dry_run: true }).then(function(res){
+        if(res.error) throw res.error;
+        var n = res.data || 0;
+        box.hidden = false;
+        box.innerHTML = n
+          ? '<div><b>' + label[purgeMonths] + '</b> 지난 쪽지 <b>' + n + '통</b>을 모든 대화방에서 지워요. 주선자 화면에서도 사라지고 <b>되돌릴 수 없어요.</b></div>' +
+            '<div class="msg-purge-row"><button type="button" class="btn btn-danger-ghost" data-action="purge-run">' + n + '통 삭제</button><button type="button" class="btn" data-action="purge-cancel">취소</button></div>'
+          : '<div>' + label[purgeMonths] + ' 지난 쪽지가 없어요.</div><div class="msg-purge-row"><button type="button" class="btn" data-action="purge-cancel">닫기</button></div>';
+      }).catch(function(err){
+        console.error(err);
+        var msg = (err && err.message) || '';
+        showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '확인하지 못했어요. 다시 시도해 주세요');
+      }).then(function(){ btn.disabled = false; });
+      return;
+    }
+    if(action === 'purge-run'){
+      btn.disabled = true;
+      supabase.rpc('purge_admin_messages', { p_months: purgeMonths, p_dry_run: false }).then(function(res){
+        if(res.error) throw res.error;
+        showToast((res.data || 0) + '통을 정리했어요');
+        msgNeedFull = true;
+        return refetchMessages();
+      }).then(function(){ if(!$('msgOverlay').hidden) renderMessages(); }).catch(function(err){
+        console.error(err);
+        btn.disabled = false;
+        var msg = (err && err.message) || '';
+        showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '정리하지 못했어요. 다시 시도해 주세요');
+      });
+    }
+  }
   function initMessagesUI(){
     $('btnMessages').addEventListener('click', openMessages);
     $('msgClose').addEventListener('click', closeMessages);
     $('msgBack').addEventListener('click', function(){ msgThread = null; renderMessages(); });
     $('msgThreads').addEventListener('click', function(e){
+      var pb = e.target.closest('button[data-action^="purge-"]');
+      if(pb){ purgeMessagesStep(pb.dataset.action, pb); return; }
       var b = e.target.closest('.msg-thread');
       if(!b) return;
       msgThread = b.dataset.uid;
@@ -5519,7 +5580,7 @@
       .on('postgres_changes', { event:'*', schema:'public', table:'participants' }, function(){ refetchParticipants(); })
       .on('postgres_changes', { event:'*', schema:'public', table:'matches' }, function(){ refetchMatches(); })
       .on('postgres_changes', { event:'*', schema:'public', table:'participant_change_requests' }, function(){ refetchChangeRequests(); })
-      .on('postgres_changes', { event:'*', schema:'public', table:'admin_messages' }, function(){ refetchMessages(); })
+      .on('postgres_changes', { event:'*', schema:'public', table:'admin_messages' }, function(p){ if(p && p.eventType === 'DELETE') msgNeedFull = true; refetchMessages(); })
       .subscribe(function(status){ rtStatus = status; });
   }
 
@@ -5527,7 +5588,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-15.5';
+  var APP_VERSION = '2026-10-15.6';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
@@ -5556,6 +5617,7 @@
     // 잠들었다 깨어나면 로그인 토큰이 만료됐을 수 있어 먼저 세션을 확인해요
     return supabase.auth.getSession().catch(function(){}).then(function(){
       if(rtStatus !== 'SUBSCRIBED') subscribeRealtime();
+      if(reason === 'resume' || reason === 'pull') msgNeedFull = true;
       var jobs = [refetchParticipants(), refetchMatches(), refetchMemberNames(), refetchChangeRequests(), refetchMessages()];
       if(isAdmin()) jobs.push(refetchProfiles());
       if(reason === 'resume' || reason === 'pull') jobs.push(checkNewVersion());
