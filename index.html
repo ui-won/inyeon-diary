@@ -314,6 +314,23 @@
   .banner{ display:flex; gap:10px; align-items:flex-start; background:var(--warn-soft); color:var(--warn); border:1px solid var(--warn-soft); border-radius:var(--radius-sm); padding:12px 14px; font-size:13.5px; }
   .banner svg{ width:18px; height:18px; flex:none; margin-top:1px; }
   .banner[hidden]{ display:none; }
+  .nudge{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:var(--accent-soft); color:var(--ink); border-radius:var(--radius-sm); padding:12px 14px; font-size:13.5px; line-height:1.5; }
+  .nudge[hidden]{ display:none; }
+  .nudge .nudge-text{ flex:1 1 220px; }
+  .nudge .nudge-text b{ color:var(--accent); }
+  .nudge .btn{ padding:6px 12px; font-size:13px; }
+  #fillOverlay .dialog{ max-width:560px; }
+  .fill-list{ display:flex; flex-direction:column; gap:8px; margin:10px 0; }
+  .fill-row{ display:flex; flex-direction:column; gap:6px; border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  .fill-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .fill-top input[type=checkbox]{ width:18px; height:18px; accent-color:var(--accent); flex:none; }
+  .fill-top b{ font-size:14.5px; }
+  .fill-row .fill-state{ font-size:12.5px; color:var(--muted); }
+  .fill-row .fill-link{ font-size:12.5px; word-break:break-all; background:var(--surface-2); border-radius:8px; padding:6px 8px; }
+  .fill-row .fill-actions{ display:flex; gap:8px; }
+  .fill-row .fill-actions .btn{ padding:6px 12px; font-size:13px; }
+  .fill-row.is-done{ border-color:var(--success); }
+  .acct-push{ font-size:12px; }
 
   .overlay{ position:fixed; inset:0; background:rgba(20,14,18,.45); display:flex; align-items:flex-end; justify-content:center; padding:0; z-index:50; }
   .overlay[hidden]{ display:none; }
@@ -807,6 +824,8 @@
           <dd>매칭 카드에 '참가자 거절'로 표시되고 연락처는 공개되지 않아요. 그 짝은 AI 추천에 다시 나오지 않아요.</dd>
           <dt>상대 주선자가 거절하면요?</dt>
           <dd>그 매칭은 공개되지 않아요. 카드에 '상대측 거절'로 표시되니 다른 분으로 다시 요청해 보세요.</dd>
+          <dt>참가자 상태는 언제 바뀌나요?</dt>
+          <dd>매칭에 따라 자동으로 바뀌어요. 두 사람이 모두 '만나볼게요'를 누르면 <span class="guide-ui">소개 진행중</span>, 안 된 매칭으로 정리되면 다시 <span class="guide-ui">소개 가능</span>, 매칭을 성사로 바꾸면 <span class="guide-ui">매칭 완료</span>가 돼요. 소개 진행중·매칭 완료인 사람은 AI 추천에 나오지 않아요. 잠깐 소개를 쉬고 싶은 참가자는 직접 <b>보류</b>로 바꿔 두면 자동으로 바뀌지 않아요. 커플이 헤어졌다면 상태를 직접 소개 가능으로 바꿔 주세요.</dd>
           <dt>관리자에게 물어보고 싶은 게 있으면요?</dt>
           <dd>위쪽 <span class="guide-ui">쪽지</span> 버튼으로 관리자에게 바로 보낼 수 있어요. 궁금한 참가자나 매칭을 골라 함께 붙이면 관리자가 쪽지에서 바로 그 카드로 이동해 확인해요. 답이 오면 쪽지 버튼에 숫자가 뜨고, 알림을 켜 두었다면 휴대폰으로도 알려 드려요. 쪽지는 계속 보관되고, 관리자가 쪽지 목록 위의 <b>오래된 쪽지 정리</b>로 3개월·6개월·1년 지난 쪽지를 한꺼번에 지울 수 있어요.</dd>
           <dt>안 된 매칭은 어디서 보나요?</dt>
@@ -1003,6 +1022,11 @@
     </div>
   </header>
 
+  <div id="pushNudge" class="nudge" hidden>
+    <span class="nudge-text">알림이 꺼져 있어요. 켜 두면 <b>매칭 요청·참가자 결정·쪽지</b>를 앱을 열지 않아도 바로 받아요.</span>
+    <button type="button" class="btn btn-primary" id="pushNudgeOn">알림 켜기</button>
+    <button type="button" class="btn btn-ghost" id="pushNudgeLater">나중에</button>
+  </div>
   <div id="dbBanner" class="banner" hidden>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span>서버에 연결하지 못했어요. 인터넷 연결을 확인하거나 잠시 후 새로고침 해주세요.</span>
@@ -1018,6 +1042,10 @@
 
   <!-- ================= MEMBERS PANEL ================= -->
   <section id="panel-members" role="tabpanel" aria-labelledby="tabBtn-members" style="display:flex; flex-direction:column; gap:14px;">
+    <div id="fillNudge" class="nudge" hidden>
+      <span class="nudge-text" id="fillNudgeText"></span>
+      <button type="button" class="btn btn-primary" id="fillNudgeOpen">보완 요청 보내기</button>
+    </div>
     <div class="toolbar">
       <div class="search">
         <input id="memberSearch" class="field-input" type="search" placeholder="이름·코드로 검색">
@@ -1477,6 +1505,24 @@
         <button type="button" class="btn" id="tempPwCopy">복사</button>
         <button type="button" class="btn btn-primary" id="tempPwClose">닫기</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= FILL (정보 보완 요청 한 번에) ================= -->
+<div class="overlay" id="fillOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="fillTitle">
+    <div class="dialog-head">
+      <h2 id="fillTitle">정보 보완 요청</h2>
+      <button class="btn btn-ghost" type="button" id="fillClose" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <p class="helper-text" id="fillSub" style="margin:0;"></p>
+    <div class="fill-list" id="fillList"></div>
+    <div class="dialog-actions">
+      <button type="button" class="btn" id="fillCancel">닫기</button>
+      <button type="button" class="btn btn-primary" id="fillMake">링크 만들기</button>
     </div>
   </div>
 </div>
@@ -2665,6 +2711,7 @@
     items.push('매칭이 승인돼 결정 링크를 보낼 차례일 때');
     items.push('참가자가 결정 링크에서 수락하거나 거절했을 때');
     items.push('참가자가 수정 링크로 정보를 고쳐 보냈을 때');
+    items.push(isAdmin() ? '주선자가 쪽지를 보냈을 때' : '관리자가 쪽지에 답했을 때');
     return items;
   }
   function updateNotifyBtn(){
@@ -2672,9 +2719,20 @@
     if(!btn) return;
     currentPushSubscription().then(function(sub){
       var on = !!sub && pushSupported() && Notification.permission === 'granted';
+      updatePushNudge(on);
       btn.classList.toggle('is-on', on);
       btn.innerHTML = on ? '알림 켜짐' : '알림 켜기<span class="notify-dot" aria-hidden="true"></span>';
     });
+  }
+  // 알림을 안 켠 주선자에게 위쪽에 안내를 보여줘요 ('나중에'를 누르면 3일 동안 숨겨요)
+  function pushNudgeKey(){ return 'mm_push_nudge_' + (currentUser ? currentUser.id : ''); }
+  function updatePushNudge(on){
+    var el = $('pushNudge');
+    if(!el) return;
+    var snoozed = false;
+    try{ var t = Number(localStorage.getItem(pushNudgeKey()) || 0); snoozed = t && (Date.now() - t) < 3 * 86400000; }catch(e){}
+    var possible = pushSupported() || isIOSDevice();
+    el.hidden = !!on || snoozed || !possible || !currentUser;
   }
   function setNotifyActions(html){
     $('notifyActions').innerHTML = html + '<button type="button" class="btn" id="notifyClose">닫기</button>';
@@ -3559,6 +3617,7 @@
     return avatarHtml;
   }
   function renderMembers(){
+    renderFillNudge();
     var listEl = $('membersList');
     var loadingEl = $('membersLoading');
     var emptyEl = $('membersEmpty');
@@ -3989,9 +4048,22 @@
       profilesLoaded = true;
       renderAccounts();
       renderMatches();
+      return refetchPushStatus();
     }).catch(function(err){
       console.error('profiles fetch error', err);
     });
+  }
+  var pushStatus = {}, pushStatusLoaded = false;
+  function refetchPushStatus(){
+    if(!isAdmin()) return Promise.resolve();
+    return supabase.rpc('push_status_list').then(function(res){
+      if(res.error) throw res.error;
+      var map = {};
+      (res.data || []).forEach(function(r){ map[r.user_id] = r; });
+      var changed = !pushStatusLoaded || JSON.stringify(map) !== JSON.stringify(pushStatus);
+      pushStatus = map; pushStatusLoaded = true;
+      if(changed) renderAccounts();
+    }).catch(function(err){ console.error('push status error', err); });
   }
   function renderAccounts(){
     if(!isAdmin()) return;
@@ -4005,12 +4077,21 @@
       if(a.approved !== b.approved) return a.approved ? 1 : -1;
       return (b.created_at || '').localeCompare(a.created_at || '');
     });
-    listEl.innerHTML = others.map(function(p){
+    var approvedMM = others.filter(function(p){ return p.approved; });
+    var pushOn = approvedMM.filter(function(p){ return pushStatus[p.id]; }).length;
+    var summary = pushStatusLoaded && approvedMM.length
+      ? '<p class="helper-text" style="margin:0;">알림 켠 주선자 <b>' + pushOn + '</b> / ' + approvedMM.length + '명 · 알림이 꺼진 주선자는 앱을 열 때 켜 달라는 안내가 떠요.</p>'
+      : '';
+    listEl.innerHTML = summary + others.map(function(p){
       var roleLabel = ROLE_LABEL[p.role] || p.role;
       var status = p.approved
         ? '<span class="badge badge-success">'+esc(roleLabel)+' · 승인됨</span>'
         : '<span class="badge badge-warn">승인 대기</span>';
       var joined = p.created_at ? fmtDate(String(p.created_at).slice(0,10)) + ' 가입' : '';
+      var ps = pushStatus[p.id];
+      var pushBadge = !pushStatusLoaded || !p.approved ? '' : (ps
+        ? '<span class="badge badge-success acct-push">알림 켬' + (ps.devices > 1 ? ' · 기기 ' + ps.devices + '대' : '') + '</span>'
+        : '<span class="badge badge-neutral acct-push">알림 꺼짐</span>');
       var actions = p.approved
         ? '<button class="btn" type="button" data-action="unapprove-account" data-id="'+esc(p.id)+'">승인 취소</button>'
         : '<button class="btn btn-primary" type="button" data-action="approve-account" data-id="'+esc(p.id)+'">승인</button>';
@@ -4022,7 +4103,7 @@
             '<div class="account-name">'+esc(p.display_name || '(이름 없음)')+'</div>' +
             '<div class="account-email">'+esc(loginEmailToName(p.email) ? ('로그인 이름: ' + loginEmailToName(p.email)) : (p.email || ''))+(joined ? ' · '+esc(joined) : '')+'</div>' +
           '</div>' +
-          status +
+          '<span style="display:flex; gap:6px; flex-wrap:wrap;">' + status + pushBadge + '</span>' +
           '<div class="card-actions" style="margin:0;">'+actions+'</div>' +
         '</div>'
       );
@@ -4391,6 +4472,127 @@
       var msg = (err && err.message) || '';
       showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '링크를 만들지 못했어요. 다시 시도해 주세요');
     }).then(function(){ btn.disabled = false; });
+  }
+
+  /* ---------------- 정보 보완 요청 한 번에 ---------------- */
+  function memberMissing(m){
+    var miss = [];
+    if(!(m.traitTags && m.traitTags.length) && !(m.attractTags && m.attractTags.length)) miss.push('소개 문항');
+    if(m.prefAgeMin == null && m.prefAgeMax == null) miss.push('원하는 나이');
+    if(!m.regionSido) miss.push('지역');
+    return miss;
+  }
+  function fillCandidates(){
+    return members.filter(function(m){ return m.approved !== false && canEditMember(m) && memberMissing(m).length; })
+      .sort(function(a, b){ return displayName(a).localeCompare(displayName(b), 'ko', { numeric:true }); });
+  }
+  function renderFillNudge(){
+    var el = $('fillNudge');
+    if(!el) return;
+    var list = membersLoaded ? fillCandidates() : [];
+    el.hidden = !list.length;
+    if(list.length){
+      var noIntro = list.filter(function(m){ return memberMissing(m).indexOf('소개 문항') >= 0; }).length;
+      $('fillNudgeText').innerHTML = (isAdmin() ? '정보가 부족한 참가자' : '정보가 부족한 내 참가자') + ' <b>' + list.length + '명</b>' +
+        (noIntro ? ' (소개 문항 미작성 ' + noIntro + '명)' : '') + ' · 채워 주면 AI 궁합 추천이 훨씬 정확해져요.';
+    }
+  }
+  var fillLinks = {}, fillMade = {}, fillBusy = false;
+  function fillStateText(m){
+    if(changeRequests[m.id]) return '참가자가 고쳐 보냄 · 확인을 기다려요';
+    var l = fillLinks[m.id];
+    if(!l) return '';
+    var now = Date.now();
+    if(l.used_at) return fmtDate(String(l.used_at).slice(0,10)) + ' 제출함';
+    if(Date.parse(l.expires_at) > now) return fmtDate(String(l.created_at).slice(0,10)) + ' 링크 보냄 · ' + fmtDate(String(l.expires_at).slice(0,10)) + '까지 유효';
+    return fmtDate(String(l.created_at).slice(0,10)) + ' 보낸 링크 기간 끝남';
+  }
+  function fillLinkActive(m){
+    var l = fillLinks[m.id];
+    return !!changeRequests[m.id] || !!(l && !l.used_at && Date.parse(l.expires_at) > Date.now());
+  }
+  function fillMessage(m, url){
+    var until = new Date(Date.now() + 7 * 86400000);
+    var miss = memberMissing(m);
+    return '[매칭메이커] 소개 정보 보완 안내\n더 잘 맞는 분을 소개해 드리려고 해요. 아래 링크에서 비어 있는 정보(' + miss.join(', ') + ')를 채워 주세요. 1~2분이면 돼요.\n' + url +
+      '\n· ' + (until.getMonth() + 1) + '월 ' + until.getDate() + '일까지, 한 번만 제출할 수 있어요.\n· 보내 주시면 제가 확인한 뒤 반영할게요.';
+  }
+  function renderFill(){
+    var list = fillCandidates();
+    var made = Object.keys(fillMade).length;
+    $('fillSub').innerHTML = made
+      ? '링크를 만들었어요. 참가자마다 <b>메시지 복사</b>를 눌러 본인에게 카톡으로 보내 주세요. 링크는 사람마다 달라요.'
+      : '소개 문항·원하는 나이·지역이 비어 있는 참가자예요. 고른 사람마다 본인용 수정 링크(7일·1회)를 만들어요. 이미 보낸 링크가 살아 있는 사람은 기본으로 빠져 있어요. 새로 만들면 예전 링크는 끝나요.';
+    $('fillList').innerHTML = list.length ? list.map(function(m){
+      var done = fillMade[m.id];
+      var state = fillStateText(m);
+      return '<div class="fill-row'+(done ? ' is-done' : '')+'" data-id="'+esc(m.id)+'">' +
+        '<div class="fill-top">' + (done ? '' : '<input type="checkbox" data-id="'+esc(m.id)+'"'+(fillLinkActive(m) ? '' : ' checked')+' aria-label="'+esc(displayName(m))+' 선택">') +
+          '<b>'+esc(displayName(m))+'</b>' + (m.name && m.codeName ? '<span class="fill-state">'+esc(m.codeName)+'</span>' : '') +
+          memberMissing(m).map(function(x){ return '<span class="badge badge-warn">'+esc(x)+' 없음</span>'; }).join('') + '</div>' +
+        (state && !done ? '<div class="fill-state">'+esc(state)+'</div>' : '') +
+        (done ? '<div class="fill-link">'+esc(done.url)+'</div><div class="fill-actions"><button type="button" class="btn btn-primary" data-copy="'+esc(m.id)+'">'+(done.copied ? '다시 복사' : '메시지 복사')+'</button>'+(done.copied ? '<span class="fill-state">복사함 ✓</span>' : '')+'</div>' : '') +
+      '</div>';
+    }).join('') : '<p class="msg-empty">정보가 부족한 참가자가 없어요.</p>';
+    var sel = $('fillList').querySelectorAll('input[type=checkbox]:checked').length;
+    $('fillMake').hidden = !list.some(function(m){ return !fillMade[m.id]; });
+    $('fillMake').textContent = sel ? sel + '명 링크 만들기' : '링크 만들기';
+    $('fillMake').disabled = !sel || fillBusy;
+  }
+  function openFill(){
+    fillMade = {};
+    $('fillOverlay').hidden = false;
+    renderFill();
+    supabase.rpc('edit_link_status').then(function(res){
+      if(res.error) throw res.error;
+      var map = {};
+      (res.data || []).forEach(function(r){ map[r.participant_id] = r; });
+      fillLinks = map;
+      if(!$('fillOverlay').hidden && !Object.keys(fillMade).length) renderFill();
+    }).catch(function(err){ console.error('edit link status error', err); });
+  }
+  function closeFill(){ $('fillOverlay').hidden = true; }
+  function makeFillLinks(){
+    var ids = Array.prototype.map.call($('fillList').querySelectorAll('input[type=checkbox]:checked'), function(c){ return c.dataset.id; });
+    if(!ids.length || fillBusy) return;
+    fillBusy = true;
+    $('fillMake').disabled = true;
+    $('fillMake').textContent = '만드는 중…';
+    var fails = 0;
+    ids.reduce(function(p, id){
+      return p.then(function(){
+        return supabase.rpc('create_edit_link', { p_participant: id }).then(function(res){
+          if(res.error) throw res.error;
+          var m = memberById(id);
+          var url = location.origin + location.pathname + '?edit=' + res.data;
+          fillMade[id] = { url:url, msg: m ? fillMessage(m, url) : url, copied:false };
+        }).catch(function(err){ console.error(err); fails++; });
+      });
+    }, Promise.resolve()).then(function(){
+      fillBusy = false;
+      renderFill();
+      showToast(fails ? (ids.length - fails) + '명 링크를 만들었어요 · ' + fails + '명은 실패했어요' : ids.length + '명 링크를 만들었어요. 한 명씩 복사해서 보내 주세요');
+    });
+  }
+  function initFillUI(){
+    $('fillNudgeOpen').addEventListener('click', openFill);
+    $('fillClose').addEventListener('click', closeFill);
+    $('fillCancel').addEventListener('click', closeFill);
+    $('fillMake').addEventListener('click', makeFillLinks);
+    $('fillList').addEventListener('change', function(){
+      var sel = $('fillList').querySelectorAll('input[type=checkbox]:checked').length;
+      $('fillMake').textContent = sel ? sel + '명 링크 만들기' : '링크 만들기';
+      $('fillMake').disabled = !sel || fillBusy;
+    });
+    $('fillList').addEventListener('click', function(e){
+      var b = e.target.closest('button[data-copy]');
+      if(!b) return;
+      var d = fillMade[b.dataset.copy];
+      if(!d) return;
+      copyText(d.msg);
+      d.copied = true;
+      renderFill();
+    });
   }
 
   /* 주선자: 변경 요청 확인 */
@@ -5353,6 +5555,12 @@
     $('btnCopyRefLink').addEventListener('click', copyMyRefLink);
     $('btnGuide').addEventListener('click', openGuide);
     $('btnNotify').addEventListener('click', openNotify);
+    $('pushNudgeOn').addEventListener('click', openNotify);
+    $('pushNudgeLater').addEventListener('click', function(){
+      try{ localStorage.setItem(pushNudgeKey(), String(Date.now())); }catch(e){}
+      $('pushNudge').hidden = true;
+    });
+    initFillUI();
     $('notifyClose').addEventListener('click', closeNotify);
     $('notifyOverlay').addEventListener('click', function(e){ if(e.target === this) closeNotify(); });
     $('notifyActions').addEventListener('click', function(e){
@@ -5507,6 +5715,7 @@
         if(!$('offerLinkOverlay').hidden) closeOfferLink();
         if(!$('closeOverlay').hidden) closeCloseMatch();
         if(!$('msgOverlay').hidden) closeMessages();
+        if(!$('fillOverlay').hidden) closeFill();
       }
     });
   }
@@ -5588,7 +5797,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-15.6';
+  var APP_VERSION = '2026-10-15.7';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
