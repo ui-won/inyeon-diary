@@ -320,6 +320,7 @@
   .nudge .nudge-text b{ color:var(--accent); }
   .nudge .btn{ padding:6px 12px; font-size:13px; }
   #fillOverlay .dialog{ max-width:560px; }
+  #fillOverlay .dialog-actions{ flex-wrap:wrap; justify-content:flex-end; }
   .fill-list{ display:flex; flex-direction:column; gap:8px; margin:10px 0; }
   .fill-row{ display:flex; flex-direction:column; gap:6px; border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
   .fill-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -1522,7 +1523,8 @@
     <div class="fill-list" id="fillList"></div>
     <div class="dialog-actions">
       <button type="button" class="btn" id="fillCancel">닫기</button>
-      <button type="button" class="btn btn-primary" id="fillMake">링크 만들기</button>
+      <button type="button" class="btn" id="fillMake">링크 만들기</button>
+      <button type="button" class="btn btn-primary" id="fillAsk" hidden>담당 주선자에게 쪽지</button>
     </div>
   </div>
 </div>
@@ -4497,9 +4499,25 @@
         (noIntro ? ' (소개 문항 미작성 ' + noIntro + '명)' : '') + ' · 채워 주면 AI 궁합 추천이 훨씬 정확해져요.';
     }
   }
-  var fillLinks = {}, fillMade = {}, fillBusy = false;
+  var fillLinks = {}, fillMade = {}, fillBusy = false, fillAsked = {};
+  var FILL_ASK_TAG = '[정보 보완 부탁]';
+  // 관리자가 이 주선자에게 최근 보완 부탁 쪽지를 보낸 때 (쪽지 기록에서 찾아요)
+  // 쪽지 본문에 [코드명]으로 적어 두어서, 참가자별로 언제 부탁했는지 찾을 수 있어요
+  function fillAskedAt(m){
+    var owner = fillAskTarget(m);
+    if(!owner || !m.codeName) return '';
+    var key = '[' + m.codeName + ']', last = '';
+    adminMessages.forEach(function(x){
+      if(x.thread_user === owner && x.from_admin && x.body.indexOf(FILL_ASK_TAG) === 0 && x.body.indexOf(key) >= 0 && x.created_at > last) last = x.created_at;
+    });
+    return last;
+  }
+  function fillAskTarget(m){ return isAdmin() && m.ownerId && m.ownerId !== myId() ? m.ownerId : null; }
   function fillStateText(m){
     if(changeRequests[m.id]) return '참가자가 고쳐 보냄 · 확인을 기다려요';
+    if(fillAsked[m.id]) return ownerName(m.ownerId) + ' 님께 쪽지로 부탁함';
+    var at = fillAskedAt(m);
+    if(at) return fmtDate(String(at).slice(0,10)) + ' ' + ownerName(m.ownerId) + ' 님께 쪽지로 부탁함';
     var l = fillLinks[m.id];
     if(!l) return '';
     var now = Date.now();
@@ -4509,7 +4527,10 @@
   }
   function fillLinkActive(m){
     var l = fillLinks[m.id];
-    return !!changeRequests[m.id] || !!(l && !l.used_at && Date.parse(l.expires_at) > Date.now());
+    if(changeRequests[m.id] || (l && !l.used_at && Date.parse(l.expires_at) > Date.now())) return true;
+    // 3일 안에 담당 주선자에게 이미 부탁했으면 기본으로 빼요
+    var at = fillAskedAt(m);
+    return !!(at && Date.now() - Date.parse(at) < 3 * 86400000);
   }
   function fillMessage(m, url){
     var until = new Date(Date.now() + 7 * 86400000);
@@ -4522,25 +4543,80 @@
     var made = Object.keys(fillMade).length;
     $('fillSub').innerHTML = made
       ? '링크를 만들었어요. 참가자마다 <b>메시지 복사</b>를 눌러 본인에게 카톡으로 보내 주세요. 링크는 사람마다 달라요.'
-      : '소개 문항·원하는 나이·지역이 비어 있는 참가자예요. 고른 사람마다 본인용 수정 링크(7일·1회)를 만들어요. 이미 보낸 링크가 살아 있는 사람은 기본으로 빠져 있어요. 새로 만들면 예전 링크는 끝나요.';
+      : isAdmin()
+        ? '소개 문항·원하는 나이·지역이 비어 있는 참가자예요. <b>담당 주선자에게 쪽지</b>를 누르면 고른 참가자를 담당별로 묶어 주선자마다 쪽지 한 통으로 부탁해요. 담당이 없거나 내 담당인 참가자는 <b>직접 링크</b>로 만들어 보내 주세요. 최근 링크를 보냈거나 3일 안에 부탁한 사람은 기본으로 빠져 있어요.'
+        : '소개 문항·원하는 나이·지역이 비어 있는 참가자예요. 고른 사람마다 본인용 수정 링크(7일·1회)를 만들어요. 이미 보낸 링크가 살아 있는 사람은 기본으로 빠져 있어요. 새로 만들면 예전 링크는 끝나요.';
     $('fillList').innerHTML = list.length ? list.map(function(m){
       var done = fillMade[m.id];
       var state = fillStateText(m);
       return '<div class="fill-row'+(done ? ' is-done' : '')+'" data-id="'+esc(m.id)+'">' +
-        '<div class="fill-top">' + (done ? '' : '<input type="checkbox" data-id="'+esc(m.id)+'"'+(fillLinkActive(m) ? '' : ' checked')+' aria-label="'+esc(displayName(m))+' 선택">') +
+        '<div class="fill-top">' + (done || fillAsked[m.id] ? '' : '<input type="checkbox" data-id="'+esc(m.id)+'"'+(fillLinkActive(m) ? '' : ' checked')+' aria-label="'+esc(displayName(m))+' 선택">') +
           '<b>'+esc(displayName(m))+'</b>' + (m.name && m.codeName ? '<span class="fill-state">'+esc(m.codeName)+'</span>' : '') +
+          (isAdmin() ? '<span class="fill-state">· 담당 ' + esc(m.ownerId ? ownerName(m.ownerId) : '없음') + '</span>' : '') +
           memberMissing(m).map(function(x){ return '<span class="badge badge-warn">'+esc(x)+' 없음</span>'; }).join('') + '</div>' +
         (state && !done ? '<div class="fill-state">'+esc(state)+'</div>' : '') +
         (done ? '<div class="fill-link">'+esc(done.url)+'</div><div class="fill-actions"><button type="button" class="btn btn-primary" data-copy="'+esc(m.id)+'">'+(done.copied ? '다시 복사' : '메시지 복사')+'</button>'+(done.copied ? '<span class="fill-state">복사함 ✓</span>' : '')+'</div>' : '') +
       '</div>';
     }).join('') : '<p class="msg-empty">정보가 부족한 참가자가 없어요.</p>';
-    var sel = $('fillList').querySelectorAll('input[type=checkbox]:checked').length;
     $('fillMake').hidden = !list.some(function(m){ return !fillMade[m.id]; });
-    $('fillMake').textContent = sel ? sel + '명 링크 만들기' : '링크 만들기';
-    $('fillMake').disabled = !sel || fillBusy;
+    updateFillButtons();
+  }
+  function fillSelected(){
+    return Array.prototype.map.call($('fillList').querySelectorAll('input[type=checkbox]:checked'), function(c){ return memberById(c.dataset.id); }).filter(Boolean);
+  }
+  function updateFillButtons(){
+    var sel = fillSelected();
+    var askable = sel.filter(fillAskTarget);
+    var owners = {};
+    askable.forEach(function(m){ owners[m.ownerId] = true; });
+    var nOwners = Object.keys(owners).length;
+    $('fillAsk').hidden = !isAdmin();
+    $('fillAsk').textContent = askable.length ? '주선자 ' + nOwners + '명에게 쪽지' : '담당 주선자에게 쪽지';
+    $('fillAsk').disabled = !askable.length || fillBusy;
+    var direct = isAdmin() ? sel.length - askable.length : sel.length;
+    $('fillMake').textContent = isAdmin()
+      ? (direct ? '직접 링크 ' + direct + '명' : '직접 링크')
+      : (sel.length ? sel.length + '명 링크 만들기' : '링크 만들기');
+    $('fillMake').disabled = (isAdmin() ? !direct : !sel.length) || fillBusy;
+    $('fillMake').className = isAdmin() ? 'btn' : 'btn btn-primary';
+  }
+  // 관리자: 고른 참가자를 담당 주선자별로 묶어 쪽지 한 통씩 보내요
+  function askOwnersByMessage(){
+    if(fillBusy) return;
+    var byOwner = {};
+    fillSelected().filter(fillAskTarget).forEach(function(m){ (byOwner[m.ownerId] = byOwner[m.ownerId] || []).push(m); });
+    var owners = Object.keys(byOwner);
+    if(!owners.length) return;
+    fillBusy = true; updateFillButtons();
+    $('fillAsk').textContent = '보내는 중…';
+    var ok = 0, fails = 0;
+    owners.reduce(function(p, ownerId){
+      return p.then(function(){
+        var ms = byOwner[ownerId];
+        var lines = ms.map(function(m){
+          var nm = (m.name ? m.name + ' ' : '') + (m.codeName ? '[' + m.codeName + ']' : '');
+          return '· ' + nm + ' — ' + memberMissing(m).join(', ');
+        });
+        var body = FILL_ASK_TAG + ' 담당 참가자 ' + ms.length + '명의 정보가 비어 있어요. AI 궁합 추천이 정확해지도록 보완 요청을 보내 주세요.\n' +
+          lines.join('\n') + '\n\n참가자 관리 맨 위 \'보완 요청 보내기\'를 누르면 링크와 카톡 문구를 한 번에 만들 수 있어요.';
+        if(body.length > 1000) body = body.slice(0, 990) + '\n…';
+        return supabase.rpc('send_admin_message', {
+          p_thread: ownerId, p_body: body,
+          p_participant: ms.length === 1 ? ms[0].id : null, p_match: null
+        }).then(function(res){
+          if(res.error) throw res.error;
+          ok++;
+          ms.forEach(function(m){ fillAsked[m.id] = true; });
+        }).catch(function(err){ console.error(err); fails++; });
+      });
+    }, Promise.resolve()).then(function(){
+      fillBusy = false;
+      showToast(fails ? '주선자 ' + ok + '명에게 보냈어요 · ' + fails + '명은 실패했어요' : '주선자 ' + ok + '명에게 쪽지로 부탁했어요');
+      return refetchMessages();
+    }).then(function(){ if(!$('fillOverlay').hidden) renderFill(); });
   }
   function openFill(){
-    fillMade = {};
+    fillMade = {}; fillAsked = {};
     $('fillOverlay').hidden = false;
     renderFill();
     supabase.rpc('edit_link_status').then(function(res){
@@ -4553,7 +4629,7 @@
   }
   function closeFill(){ $('fillOverlay').hidden = true; }
   function makeFillLinks(){
-    var ids = Array.prototype.map.call($('fillList').querySelectorAll('input[type=checkbox]:checked'), function(c){ return c.dataset.id; });
+    var ids = fillSelected().filter(function(m){ return !fillAskTarget(m); }).map(function(m){ return m.id; });
     if(!ids.length || fillBusy) return;
     fillBusy = true;
     $('fillMake').disabled = true;
@@ -4579,11 +4655,8 @@
     $('fillClose').addEventListener('click', closeFill);
     $('fillCancel').addEventListener('click', closeFill);
     $('fillMake').addEventListener('click', makeFillLinks);
-    $('fillList').addEventListener('change', function(){
-      var sel = $('fillList').querySelectorAll('input[type=checkbox]:checked').length;
-      $('fillMake').textContent = sel ? sel + '명 링크 만들기' : '링크 만들기';
-      $('fillMake').disabled = !sel || fillBusy;
-    });
+    $('fillAsk').addEventListener('click', askOwnersByMessage);
+    $('fillList').addEventListener('change', updateFillButtons);
     $('fillList').addEventListener('click', function(e){
       var b = e.target.closest('button[data-copy]');
       if(!b) return;
@@ -5797,7 +5870,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-15.7';
+  var APP_VERSION = '2026-10-15.8';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
