@@ -4865,18 +4865,41 @@
 
   /* ---------------- 쪽지 (주선자 ↔ 관리자) ---------------- */
   var adminMessages = [], messagesLoaded = false, lastMessagesSig = '', msgThread = null, msgSending = false;
+  // 처음 한 번만 전부 받고, 그다음부터는 새 쪽지와 새로 읽음 표시된 쪽지만 받아와요 (트래픽 절약)
+  // msgCursor는 서버가 준 시각으로만 정해요 (휴대폰 시계가 틀려도 빠뜨리지 않게)
+  var msgCursor = '', msgFetching = null, msgFetchAgain = false;
   function refetchMessages(){
     if(!currentUser) return Promise.resolve();
-    return supabase.from('admin_messages').select('*').order('created_at', { ascending:true }).then(function(res){
+    if(msgFetching){ msgFetchAgain = true; return msgFetching; }
+    var q = supabase.from('admin_messages').select('*');
+    if(messagesLoaded && msgCursor){
+      // 2분 겹치게 받아서, 거의 동시에 저장된 쪽지도 놓치지 않아요
+      var since = new Date(Date.parse(msgCursor) - 120000).toISOString();
+      q = q.or('created_at.gte."' + since + '",read_at.gte."' + since + '"');
+    }
+    msgFetching = q.order('created_at', { ascending:true }).then(function(res){
       if(res.error) throw res.error;
-      var sig = JSON.stringify(res.data || []);
+      var rows = res.data || [];
+      var changed = !messagesLoaded;
+      var byId = {};
+      adminMessages.forEach(function(x, i){ byId[x.id] = i; });
+      rows.forEach(function(r){
+        if(r.created_at > msgCursor) msgCursor = r.created_at;
+        if(r.read_at && r.read_at > msgCursor) msgCursor = r.read_at;
+        var i = byId[r.id];
+        if(i === undefined){ adminMessages.push(r); changed = true; }
+        else if(JSON.stringify(adminMessages[i]) !== JSON.stringify(r)){ adminMessages[i] = r; changed = true; }
+      });
       messagesLoaded = true;
-      if(sig === lastMessagesSig) return;
-      lastMessagesSig = sig;
-      adminMessages = res.data || [];
+      if(!changed) return;
+      adminMessages.sort(function(a, b){ return a.created_at < b.created_at ? -1 : (a.created_at > b.created_at ? 1 : 0); });
       updateMsgBadge();
       if(!$('msgOverlay').hidden) renderMessages();
-    }).catch(function(err){ console.error('messages fetch error', err); });
+    }).catch(function(err){ console.error('messages fetch error', err); }).then(function(){
+      msgFetching = null;
+      if(msgFetchAgain){ msgFetchAgain = false; return refetchMessages(); }
+    });
+    return msgFetching;
   }
   function msgIsUnreadForMe(x){ return !x.read_at && (isAdmin() ? !x.from_admin : x.from_admin); }
   function updateMsgBadge(){
@@ -5504,7 +5527,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-15.4';
+  var APP_VERSION = '2026-10-15.5';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
