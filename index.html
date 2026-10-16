@@ -196,10 +196,27 @@
   .flash{ animation:flashIn 1.6s ease; }
   @keyframes flashIn{ 0%,40%{ box-shadow:0 0 0 3px var(--accent); } 100%{ box-shadow:0 0 0 0 transparent; } }
   /* 참가자 결정 화면 */
-  #offerOverlay{ align-items:stretch; padding:0; z-index:60; }
-  #offerOverlay .dialog{ max-width:none; width:100%; height:100%; max-height:none; border-radius:0; padding:0; display:flex; flex-direction:column; overflow:hidden; }
-  #offerOverlay .dialog-head{ margin:0; padding:18px 20px 14px; border-bottom:1px solid var(--line); }
-  #offerOverlay .dialog-head h2{ font-size:24px; }
+  #offerOverlay, #svOverlay{ align-items:stretch; padding:0; z-index:60; }
+  #offerOverlay .dialog, #svOverlay .dialog{ max-width:none; width:100%; height:100%; max-height:none; border-radius:0; padding:0; display:flex; flex-direction:column; overflow:hidden; }
+  #offerOverlay .dialog-head, #svOverlay .dialog-head{ margin:0; padding:18px 20px 14px; border-bottom:1px solid var(--line); }
+  #offerOverlay .dialog-head h2, #svOverlay .dialog-head h2{ font-size:24px; }
+  .sv-q{ display:flex; flex-direction:column; gap:8px; }
+  .sv-q > b{ font-size:16px; }
+  .sv-q .q-hint{ font-size:13px; }
+  .sv-q[hidden]{ display:none; }
+  .sv-q .chip{ font-size:15px; padding:9px 15px; }
+  .sv-q textarea{ min-height:80px; font-size:15px; }
+  #svmOverlay .dialog{ max-width:640px; }
+  #svmOverlay .dialog-actions{ flex-wrap:wrap; justify-content:flex-end; }
+  .svm-sum{ display:flex; flex-direction:column; gap:10px; margin:8px 0 14px; }
+  .svm-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .svm-table th, .svm-table td{ padding:6px 6px; border-bottom:1px solid var(--line); text-align:left; }
+  .svm-table th{ color:var(--muted); font-weight:600; }
+  .svm-table td.n{ text-align:right; font-variant-numeric:tabular-nums; width:52px; }
+  .svm-table tr.grp td{ font-weight:700; color:var(--ink); padding-top:12px; border-bottom:none; }
+  .svm-notes{ display:flex; flex-direction:column; gap:6px; font-size:13px; }
+  .svm-notes div{ background:var(--surface-2); border-radius:8px; padding:6px 10px; white-space:pre-wrap; }
+  .svm-h{ font-weight:800; font-size:14px; margin:4px 0 0; }
   .offer-scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
   .offer-body{ width:100%; max-width:640px; margin:0 auto; padding:20px; display:flex; flex-direction:column; gap:18px; font-size:16px; line-height:1.6; }
   .offer-note{ padding:14px 16px; border-radius:var(--radius-sm); background:var(--accent-soft); font-size:16px; }
@@ -827,6 +844,8 @@
           <dd>그 매칭은 공개되지 않아요. 카드에 '상대측 거절'로 표시되니 다른 분으로 다시 요청해 보세요.</dd>
           <dt>참가자 상태는 언제 바뀌나요?</dt>
           <dd>매칭에 따라 자동으로 바뀌어요. 두 사람이 모두 '만나볼게요'를 누르면 <span class="guide-ui">소개 진행중</span>, 안 된 매칭으로 정리되면 다시 <span class="guide-ui">소개 가능</span>, 매칭을 성사로 바꾸면 <span class="guide-ui">매칭 완료</span>가 돼요. 소개 진행중·매칭 완료인 사람은 AI 추천에 나오지 않아요. 잠깐 소개를 쉬고 싶은 참가자는 직접 <b>보류</b>로 바꿔 두면 자동으로 바뀌지 않아요. 커플이 헤어졌다면 상태를 직접 소개 가능으로 바꿔 주세요.</dd>
+          <dt>로테이션 소개팅 설문은 어떻게 보내요?</dt>
+          <dd>참가자 관리 위쪽 <span class="guide-ui">로테이션 소개팅 설문</span>의 <b>설문 보기</b>에서 내 참가자를 골라 링크를 만들고, 한 명씩 <b>메시지 복사</b>로 카톡에 보내 주세요. 링크는 14일 동안 쓸 수 있고, 같은 사람에게 다시 만들면 같은 링크가 나와요. 참가자는 로그인 없이 1분 안에 답하고 다시 열어 고칠 수 있어요. 응답 결과는 성별로 나뉘어 같은 화면에 보여요.</dd>
           <dt>관리자에게 물어보고 싶은 게 있으면요?</dt>
           <dd>위쪽 <span class="guide-ui">쪽지</span> 버튼으로 관리자에게 바로 보낼 수 있어요. 궁금한 참가자나 매칭을 골라 함께 붙이면 관리자가 쪽지에서 바로 그 카드로 이동해 확인해요. 답이 오면 쪽지 버튼에 숫자가 뜨고, 알림을 켜 두었다면 휴대폰으로도 알려 드려요. 쪽지는 계속 보관되고, 관리자가 쪽지 목록 위의 <b>오래된 쪽지 정리</b>로 3개월·6개월·1년 지난 쪽지를 한꺼번에 지울 수 있어요.</dd>
           <dt>안 된 매칭은 어디서 보나요?</dt>
@@ -1046,6 +1065,10 @@
     <div id="fillNudge" class="nudge" hidden>
       <span class="nudge-text" id="fillNudgeText"></span>
       <button type="button" class="btn btn-primary" id="fillNudgeOpen">보완 요청 보내기</button>
+    </div>
+    <div id="svNudge" class="nudge" hidden>
+      <span class="nudge-text" id="svNudgeText"></span>
+      <button type="button" class="btn btn-primary" id="svNudgeOpen">설문 보기</button>
     </div>
     <div class="toolbar">
       <div class="search">
@@ -1506,6 +1529,42 @@
         <button type="button" class="btn" id="tempPwCopy">복사</button>
         <button type="button" class="btn btn-primary" id="tempPwClose">닫기</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SURVEY (참가자용 로테이션 설문, 로그인 없음) ================= -->
+<div class="overlay" id="svOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="svTitle">
+    <div class="dialog-head">
+      <h2 id="svTitle">로테이션 소개팅 설문</h2>
+    </div>
+    <div class="offer-scroll">
+      <div class="offer-body" id="svBody"><p class="helper-text">불러오는 중…</p></div>
+    </div>
+    <div class="offer-actions" id="svActions" hidden>
+      <button type="button" class="btn btn-primary" id="svSubmit">보내기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SURVEY MANAGE (주선자·관리자) ================= -->
+<div class="overlay" id="svmOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="svmTitle">
+    <div class="dialog-head">
+      <h2 id="svmTitle">로테이션 소개팅 설문</h2>
+      <button class="btn btn-ghost" type="button" id="svmClose" aria-label="닫기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="svmSummary" class="svm-sum"></div>
+    <p class="svm-h">참가자별 보내기</p>
+    <p class="helper-text" id="svmSub" style="margin:4px 0 0;"></p>
+    <div class="fill-list" id="svmList"></div>
+    <div class="dialog-actions">
+      <button type="button" class="btn" id="svmCancel">닫기</button>
+      <button type="button" class="btn" id="svmMake">링크 만들기</button>
+      <button type="button" class="btn btn-primary" id="svmAsk" hidden>담당 주선자에게 쪽지</button>
     </div>
   </div>
 </div>
@@ -2111,6 +2170,13 @@
 
   function initAuth(){
     try{ localStorage.removeItem('idiary_unlocked'); localStorage.removeItem('mm_role'); }catch(e){}
+    var surveyParam = null;
+    try{ surveyParam = new URLSearchParams(location.search).get('survey'); }catch(e){}
+    if(surveyParam){
+      // 로테이션 소개팅 설문: 로그인 없이 이 참가자 설문만 보여줘요
+      initSurveyView(String(surveyParam).toLowerCase().replace(/[^0-9a-f]/g, '').slice(0, 32));
+      return;
+    }
     var offerParam = null;
     try{ offerParam = new URLSearchParams(location.search).get('offer'); }catch(e){}
     if(offerParam){
@@ -3620,6 +3686,7 @@
   }
   function renderMembers(){
     renderFillNudge();
+    renderSurveyNudge();
     var listEl = $('membersList');
     var loadingEl = $('membersLoading');
     var emptyEl = $('membersEmpty');
@@ -4474,6 +4541,296 @@
       var msg = (err && err.message) || '';
       showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '링크를 만들지 못했어요. 다시 시도해 주세요');
     }).then(function(){ btn.disabled = false; });
+  }
+
+  /* ---------------- 로테이션 소개팅 설문 ---------------- */
+  var SURVEY_KEY = 'rotation-1';
+  var SV = {
+    intent: { yes:'꼭 하고 싶어요', maybe:'조건이 맞으면 할게요', no:'아직은 1:1 소개가 좋아요' },
+    size: { '4':'4:4 소규모', '6':'6:6', any:'상관없어요' },
+    times: { weekday_eve:'평일 저녁', sat_day:'토요일 낮', sat_eve:'토요일 저녁', sun_day:'일요일 낮' },
+    areas: { gangnam:'강남', hongdae:'홍대·합정', seongsu:'성수·건대', gyeonggi_south:'수원·판교 등 경기 남부', any:'상관없어요' },
+    vibe: { cafe:'카페', meal:'식사', wine:'와인바·가벼운 술' },
+    fee: { u2:'2만원 이하', '2to4':'2~4만원', '4plus':'4만원 이상도 괜찮아요' }
+  };
+  var SV_QS = [
+    ['intent', '로테이션 소개팅에 참여할 의향이 있나요?', '1개', 1],
+    ['size', '원하는 규모는요?', '1개', 1],
+    ['times', '가능한 시간을 모두 골라 주세요', '여러 개', 9],
+    ['areas', '편한 지역을 모두 골라 주세요', '여러 개', 9],
+    ['vibe', '어떤 분위기가 좋아요?', '여러 개', 9],
+    ['fee', '적당한 참가비는요?', '1개', 1]
+  ];
+  // --- 참가자 화면 (?survey=)
+  var svToken = null;
+  function initSurveyView(token){
+    svToken = token;
+    $('lockOverlay').hidden = true;
+    $('svOverlay').hidden = false;
+    $('svSubmit').addEventListener('click', submitSurvey);
+    supabase.rpc('survey_get', { p_token: token }).then(function(res){
+      if(res.error) throw res.error;
+      renderSurveyForm(res.data || {});
+    }).catch(function(err){
+      console.error(err);
+      var msg = (err && err.message) || '';
+      $('svBody').innerHTML = '<div class="offer-result">' + esc(/[가-힣]/.test(msg) && msg.length < 80 ? msg : '설문을 열지 못했어요. 담당 주선자에게 문의해 주세요.') + '</div>';
+    });
+  }
+  function renderSurveyForm(d){
+    var a = d.answers || {};
+    var until = d.expires_at ? new Date(d.expires_at) : null;
+    var html = '<div class="offer-note"><b>로테이션 소개팅이란?</b>여러 분이 한자리에 모여 짧게 1:1로 돌아가며 대화하는 소개팅이에요. 참여 의향만 알려 주시면, 일정이 정해질 때 담당 주선자가 다시 연락드려요. 1분이면 끝나요.</div>';
+    if(d.answers) html += '<p class="helper-text" style="margin:0;">이전에 답한 내용이에요. 고쳐서 다시 보낼 수 있어요.</p>';
+    SV_QS.forEach(function(q){
+      var key = q[0], map = SV[key], cur = a[key];
+      var vals = Array.isArray(cur) ? cur : (cur ? [cur] : []);
+      html += '<div class="sv-q" data-q="'+key+'"'+(key !== 'intent' && a.intent === 'no' ? ' hidden' : '')+'><b>'+esc(q[1])+' <span class="q-hint">'+esc(q[2])+'</span></b>' +
+        '<div class="chip-group" data-max="'+q[3]+'">' + Object.keys(map).map(function(k){
+          return '<button type="button" class="chip" data-v="'+esc(k)+'" aria-pressed="'+(vals.indexOf(k) >= 0 ? 'true' : 'false')+'">'+esc(map[k])+'</button>';
+        }).join('') + '</div></div>';
+    });
+    html += '<div class="sv-q" data-q="note"'+(a.intent === 'no' ? ' hidden' : '')+'><b>하고 싶은 말이 있으면 적어 주세요 <span class="q-hint">선택 · 200자</span></b>' +
+      '<textarea class="field-input" id="svNote" maxlength="200" placeholder="예: 비슷한 나이대끼리 하면 좋겠어요">'+esc(a.note || '')+'</textarea></div>';
+    if(until) html += '<p class="helper-text" style="margin:0;">' + (until.getMonth()+1) + '월 ' + until.getDate() + '일까지 답하거나 고칠 수 있어요. 답한 내용은 담당 주선자와 관리자만 봐요.</p>';
+    $('svBody').innerHTML = html;
+    $('svActions').hidden = false;
+    $('svBody').addEventListener('click', function(e){
+      var chip = e.target.closest('.chip');
+      if(!chip) return;
+      var grp = chip.parentNode, max = Number(grp.getAttribute('data-max')) || 1;
+      var on = chip.getAttribute('aria-pressed') === 'true';
+      if(max === 1){ Array.prototype.forEach.call(grp.querySelectorAll('.chip'), function(c){ c.setAttribute('aria-pressed', 'false'); }); }
+      chip.setAttribute('aria-pressed', on && max !== 1 ? 'false' : 'true');
+      if(chip.closest('.sv-q').getAttribute('data-q') === 'intent'){
+        var no = chip.getAttribute('data-v') === 'no';
+        Array.prototype.forEach.call($('svBody').querySelectorAll('.sv-q'), function(q){ if(q.getAttribute('data-q') !== 'intent') q.hidden = no; });
+      }
+    });
+  }
+  function svPicked(key){
+    var el = $('svBody').querySelector('.sv-q[data-q="'+key+'"] .chip-group');
+    return el ? Array.prototype.map.call(el.querySelectorAll('.chip[aria-pressed="true"]'), function(c){ return c.getAttribute('data-v'); }) : [];
+  }
+  function submitSurvey(){
+    var intent = svPicked('intent')[0];
+    if(!intent){ showToast('참여 의향을 골라 주세요'); return; }
+    var ans = { intent: intent, size: svPicked('size')[0] || null, times: svPicked('times'), areas: svPicked('areas'), vibe: svPicked('vibe'), fee: svPicked('fee')[0] || null, note: ($('svNote') ? $('svNote').value.trim() : '') };
+    var btn = $('svSubmit');
+    btn.disabled = true; btn.textContent = '보내는 중…';
+    supabase.rpc('survey_submit', { p_token: svToken, p_answers: ans }).then(function(res){
+      if(res.error) throw res.error;
+      $('svActions').hidden = true;
+      $('svBody').innerHTML = '<div class="offer-result"><span class="big">🙌</span>답해 주셔서 고마워요!<br>' +
+        (intent === 'no' ? '지금처럼 1:1 소개로 계속 찾아볼게요.' : '일정이 정해지면 담당 주선자가 연락드릴게요.') +
+        '<br><span class="helper-text">이 링크를 다시 열면 답을 고칠 수 있어요.</span></div>';
+    }).catch(function(err){
+      console.error(err);
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '보내지 못했어요. 다시 시도해 주세요');
+      btn.disabled = false; btn.textContent = '보내기';
+    });
+  }
+
+  // --- 주선자·관리자 화면
+  var svStatus = {}, svLoaded = false, svMade = {}, svAsked = {}, svBusy = false;
+  var SV_ASK_TAG = '[설문 부탁]';
+  function refetchSurveyStatus(){
+    if(!currentUser) return Promise.resolve();
+    return supabase.rpc('survey_status', { p_survey: SURVEY_KEY }).then(function(res){
+      if(res.error) throw res.error;
+      var map = {};
+      (res.data || []).forEach(function(r){ map[r.participant_id] = r; });
+      svStatus = map; svLoaded = true;
+      renderSurveyNudge();
+      if(!$('svmOverlay').hidden) renderSurveyManage();
+    }).catch(function(err){ console.error('survey status error', err); });
+  }
+  function svTargets(){
+    return members.filter(function(m){ return m.approved !== false && canEditMember(m); })
+      .sort(function(a, b){ return displayName(a).localeCompare(displayName(b), 'ko', { numeric:true }); });
+  }
+  function svAnswered(m){ var r = svStatus[m.id]; return r && r.answers ? r : null; }
+  function renderSurveyNudge(){
+    var el = $('svNudge');
+    if(!el) return;
+    var list = membersLoaded ? svTargets() : [];
+    el.hidden = !list.length;
+    if(!list.length) return;
+    var ans = list.filter(svAnswered);
+    var yes = ans.filter(function(m){ var a = svAnswered(m).answers; return a.intent === 'yes' || a.intent === 'maybe'; }).length;
+    $('svNudgeText').innerHTML = '<b>로테이션 소개팅 설문</b> · ' + (isAdmin() ? '' : '내 담당 ') + '응답 ' + ans.length + ' / ' + list.length + '명' + (ans.length ? ' · 참여 의향 ' + yes + '명' : '');
+  }
+  function svAskTarget(m){ return isAdmin() && m.ownerId && m.ownerId !== myId() ? m.ownerId : null; }
+  function svAskedAt(m){
+    var owner = svAskTarget(m);
+    if(!owner || !m.codeName) return '';
+    var key = '[' + m.codeName + ']', last = '';
+    adminMessages.forEach(function(x){
+      if(x.thread_user === owner && x.from_admin && x.body.indexOf(SV_ASK_TAG) === 0 && x.body.indexOf(key) >= 0 && x.created_at > last) last = x.created_at;
+    });
+    return last;
+  }
+  function svLinkActive(m){ var r = svStatus[m.id]; return !!(r && r.link_expires_at && Date.parse(r.link_expires_at) > Date.now()); }
+  function svDefaultChecked(m){
+    if(svAnswered(m) || svLinkActive(m)) return false;
+    var at = svAskedAt(m);
+    return !(at && Date.now() - Date.parse(at) < 3 * 86400000);
+  }
+  function svStateText(m){
+    var r = svAnswered(m);
+    if(r) return '응답함 · ' + (SV.intent[r.answers.intent] || '') + ' (' + fmtDate(String(r.answered_at).slice(0,10)) + ')';
+    if(svAsked[m.id]) return ownerName(m.ownerId) + ' 님께 쪽지로 부탁함';
+    var st = svStatus[m.id];
+    if(st && st.link_created_at) return fmtDate(String(st.link_created_at).slice(0,10)) + ' 링크 보냄 · ' + (Date.parse(st.link_expires_at) > Date.now() ? fmtDate(String(st.link_expires_at).slice(0,10)) + '까지 유효' : '기간 끝남');
+    var at = svAskedAt(m);
+    if(at) return fmtDate(String(at).slice(0,10)) + ' ' + ownerName(m.ownerId) + ' 님께 쪽지로 부탁함';
+    return '아직 안 보냄';
+  }
+  function svCount(list, key, val){
+    return list.filter(function(m){ var a = svAnswered(m).answers; var v = a[key]; return Array.isArray(v) ? v.indexOf(val) >= 0 : v === val; });
+  }
+  function svGenderCells(list){
+    var f = list.filter(function(m){ return m.gender === 'female'; }).length, mm = list.filter(function(m){ return m.gender === 'male'; }).length;
+    return '<td class="n">'+f+'</td><td class="n">'+mm+'</td>';
+  }
+  function renderSurveyManage(){
+    var list = svTargets();
+    var ans = list.filter(svAnswered);
+    var willing = ans.filter(function(m){ var i = svAnswered(m).answers.intent; return i === 'yes' || i === 'maybe'; });
+    var sum = '';
+    if(!svLoaded){ sum = '<p class="helper-text" style="margin:0;">불러오는 중…</p>'; }
+    else if(!ans.length){ sum = '<p class="helper-text" style="margin:0;">아직 응답이 없어요. 아래에서 참가자에게 설문 링크를 보내 주세요.</p>'; }
+    else {
+      sum += '<p style="margin:0; font-size:14px;"><b>응답 ' + ans.length + ' / ' + list.length + '명</b> · 참여 의향 ' + willing.length + '명 (여 ' + willing.filter(function(m){ return m.gender === 'female'; }).length + ' · 남 ' + willing.filter(function(m){ return m.gender === 'male'; }).length + ')</p>';
+      var t = '<table class="svm-table"><thead><tr><th></th><th class="n">여</th><th class="n">남</th></tr></thead><tbody>';
+      t += '<tr class="grp"><td colspan="3">참여 의향 (응답한 전원)</td></tr>';
+      Object.keys(SV.intent).forEach(function(k){ t += '<tr><td>'+esc(SV.intent[k])+'</td>'+svGenderCells(svCount(ans, 'intent', k))+'</tr>'; });
+      [['times','가능한 시간'],['size','규모'],['areas','지역'],['vibe','분위기'],['fee','참가비']].forEach(function(g){
+        t += '<tr class="grp"><td colspan="3">'+esc(g[1])+' (참여 의향 있는 사람)</td></tr>';
+        Object.keys(SV[g[0]]).forEach(function(k){ t += '<tr><td>'+esc(SV[g[0]][k])+'</td>'+svGenderCells(svCount(willing, g[0], k))+'</tr>'; });
+      });
+      t += '</tbody></table>';
+      sum += t;
+      var notes = ans.filter(function(m){ return svAnswered(m).answers.note; });
+      if(notes.length) sum += '<p class="svm-h">하고 싶은 말</p><div class="svm-notes">' + notes.map(function(m){
+        return '<div><b>'+esc(displayName(m))+'</b> · '+esc(svAnswered(m).answers.note)+'</div>';
+      }).join('') + '</div>';
+    }
+    $('svmSummary').innerHTML = sum;
+    var made = Object.keys(svMade).length;
+    $('svmSub').innerHTML = made
+      ? '링크를 만들었어요. 참가자마다 <b>메시지 복사</b>를 눌러 본인에게 카톡으로 보내 주세요.'
+      : (isAdmin()
+        ? '<b>담당 주선자에게 쪽지</b>를 누르면 고른 참가자를 담당별로 묶어 주선자마다 쪽지 한 통으로 부탁해요. 담당이 없거나 내 담당인 참가자는 <b>직접 링크</b>로 보내 주세요.'
+        : '고른 참가자마다 개인 설문 링크(14일)를 만들어요. 이미 보낸 링크는 그대로 다시 쓰여서 끊기지 않아요.') + ' 응답했거나 이미 링크를 받은 사람은 기본으로 빠져 있어요.';
+    $('svmList').innerHTML = list.length ? list.map(function(m){
+      var done = svMade[m.id];
+      var answered = svAnswered(m);
+      return '<div class="fill-row'+(done || answered ? ' is-done' : '')+'" data-id="'+esc(m.id)+'">' +
+        '<div class="fill-top">' + (done || svAsked[m.id] ? '' : '<input type="checkbox" data-id="'+esc(m.id)+'"'+(svDefaultChecked(m) ? ' checked' : '')+' aria-label="'+esc(displayName(m))+' 선택">') +
+          '<b>'+esc(displayName(m))+'</b>' + (m.name && m.codeName ? '<span class="fill-state">'+esc(m.codeName)+'</span>' : '') +
+          '<span class="fill-state">· ' + esc(GENDER_LABEL[m.gender] || '') + (isAdmin() ? ' · 담당 ' + esc(m.ownerId ? ownerName(m.ownerId) : '없음') : '') + '</span></div>' +
+        (!done ? '<div class="fill-state">'+esc(svStateText(m))+'</div>' : '') +
+        (done ? '<div class="fill-link">'+esc(done.url)+'</div><div class="fill-actions"><button type="button" class="btn btn-primary" data-svcopy="'+esc(m.id)+'">'+(done.copied ? '다시 복사' : '메시지 복사')+'</button>'+(done.copied ? '<span class="fill-state">복사함 ✓</span>' : '')+'</div>' : '') +
+      '</div>';
+    }).join('') : '<p class="msg-empty">설문을 보낼 참가자가 없어요.</p>';
+    updateSvButtons();
+  }
+  function svSelected(){
+    return Array.prototype.map.call($('svmList').querySelectorAll('input[type=checkbox]:checked'), function(c){ return memberById(c.dataset.id); }).filter(Boolean);
+  }
+  function updateSvButtons(){
+    var sel = svSelected();
+    var askable = sel.filter(svAskTarget);
+    var owners = {};
+    askable.forEach(function(m){ owners[m.ownerId] = true; });
+    $('svmAsk').hidden = !isAdmin();
+    $('svmAsk').textContent = askable.length ? '주선자 ' + Object.keys(owners).length + '명에게 쪽지' : '담당 주선자에게 쪽지';
+    $('svmAsk').disabled = !askable.length || svBusy;
+    var direct = isAdmin() ? sel.length - askable.length : sel.length;
+    $('svmMake').textContent = isAdmin() ? (direct ? '직접 링크 ' + direct + '명' : '직접 링크') : (sel.length ? sel.length + '명 링크 만들기' : '링크 만들기');
+    $('svmMake').disabled = (isAdmin() ? !direct : !sel.length) || svBusy;
+    $('svmMake').className = isAdmin() ? 'btn' : 'btn btn-primary';
+  }
+  function svMessage(url, expiresAt){
+    var until = expiresAt ? new Date(expiresAt) : new Date(Date.now() + 14 * 86400000);
+    return '[매칭메이커] 로테이션 소개팅 설문\n여러 분이 한자리에 모여 돌아가며 대화하는 소개팅을 준비하고 있어요. 참여 의향과 편한 시간·지역만 알려 주세요. 1분이면 돼요.\n' + url +
+      '\n· ' + (until.getMonth() + 1) + '월 ' + until.getDate() + '일까지 답할 수 있고, 다시 열면 고칠 수 있어요.';
+  }
+  function makeSurveyLinks(){
+    var ms = svSelected().filter(function(m){ return !svAskTarget(m); });
+    if(!ms.length || svBusy) return;
+    svBusy = true; updateSvButtons();
+    $('svmMake').textContent = '만드는 중…';
+    var fails = 0;
+    ms.reduce(function(p, m){
+      return p.then(function(){
+        return supabase.rpc('create_survey_link', { p_survey: SURVEY_KEY, p_participant: m.id }).then(function(res){
+          if(res.error) throw res.error;
+          svMade[m.id] = { url: location.origin + location.pathname + '?survey=' + res.data, copied:false };
+        }).catch(function(err){ console.error(err); fails++; });
+      });
+    }, Promise.resolve()).then(function(){
+      return refetchSurveyStatus();
+    }).then(function(){
+      Object.keys(svMade).forEach(function(id){ var st = svStatus[id]; svMade[id].msg = svMessage(svMade[id].url, st && st.link_expires_at); });
+      svBusy = false;
+      renderSurveyManage();
+      showToast(fails ? (ms.length - fails) + '명 링크를 만들었어요 · ' + fails + '명은 실패했어요' : ms.length + '명 링크를 만들었어요. 한 명씩 복사해서 보내 주세요');
+    });
+  }
+  function askOwnersSurvey(){
+    if(svBusy) return;
+    var byOwner = {};
+    svSelected().filter(svAskTarget).forEach(function(m){ (byOwner[m.ownerId] = byOwner[m.ownerId] || []).push(m); });
+    var owners = Object.keys(byOwner);
+    if(!owners.length) return;
+    svBusy = true; updateSvButtons();
+    $('svmAsk').textContent = '보내는 중…';
+    var ok = 0, fails = 0;
+    owners.reduce(function(p, ownerId){
+      return p.then(function(){
+        var ms = byOwner[ownerId];
+        var lines = ms.map(function(m){ return '· ' + (m.name ? m.name + ' ' : '') + (m.codeName ? '[' + m.codeName + ']' : ''); });
+        var body = SV_ASK_TAG + ' 로테이션 소개팅 설문을 진행하고 있어요. 담당 참가자 ' + ms.length + '명에게 설문 링크를 보내 주세요.\n' +
+          lines.join('\n') + '\n\n참가자 관리 위쪽 \'로테이션 소개팅 설문 → 설문 보기\'에서 링크와 카톡 문구를 한 번에 만들 수 있어요.';
+        if(body.length > 1000) body = body.slice(0, 990) + '\n…';
+        return supabase.rpc('send_admin_message', { p_thread: ownerId, p_body: body, p_participant: ms.length === 1 ? ms[0].id : null, p_match: null }).then(function(res){
+          if(res.error) throw res.error;
+          ok++;
+          ms.forEach(function(m){ svAsked[m.id] = true; });
+        }).catch(function(err){ console.error(err); fails++; });
+      });
+    }, Promise.resolve()).then(function(){
+      svBusy = false;
+      showToast(fails ? '주선자 ' + ok + '명에게 보냈어요 · ' + fails + '명은 실패했어요' : '주선자 ' + ok + '명에게 쪽지로 부탁했어요');
+      return refetchMessages();
+    }).then(function(){ if(!$('svmOverlay').hidden) renderSurveyManage(); });
+  }
+  function openSurveyManage(){
+    svMade = {}; svAsked = {};
+    $('svmOverlay').hidden = false;
+    renderSurveyManage();
+    refetchSurveyStatus();
+  }
+  function closeSurveyManage(){ $('svmOverlay').hidden = true; }
+  function initSurveyManageUI(){
+    $('svNudgeOpen').addEventListener('click', openSurveyManage);
+    $('svmClose').addEventListener('click', closeSurveyManage);
+    $('svmCancel').addEventListener('click', closeSurveyManage);
+    $('svmMake').addEventListener('click', makeSurveyLinks);
+    $('svmAsk').addEventListener('click', askOwnersSurvey);
+    $('svmList').addEventListener('change', updateSvButtons);
+    $('svmList').addEventListener('click', function(e){
+      var b = e.target.closest('button[data-svcopy]');
+      if(!b) return;
+      var d = svMade[b.dataset.svcopy];
+      if(!d) return;
+      copyText(d.msg || d.url);
+      d.copied = true;
+      renderSurveyManage();
+    });
   }
 
   /* ---------------- 정보 보완 요청 한 번에 ---------------- */
@@ -5634,6 +5991,7 @@
       $('pushNudge').hidden = true;
     });
     initFillUI();
+    initSurveyManageUI();
     $('notifyClose').addEventListener('click', closeNotify);
     $('notifyOverlay').addEventListener('click', function(e){ if(e.target === this) closeNotify(); });
     $('notifyActions').addEventListener('click', function(e){
@@ -5789,6 +6147,7 @@
         if(!$('closeOverlay').hidden) closeCloseMatch();
         if(!$('msgOverlay').hidden) closeMessages();
         if(!$('fillOverlay').hidden) closeFill();
+        if(!$('svmOverlay').hidden) closeSurveyManage();
       }
     });
   }
@@ -5870,7 +6229,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-15.8';
+  var APP_VERSION = '2026-10-16.1';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
@@ -5899,7 +6258,7 @@
     // 잠들었다 깨어나면 로그인 토큰이 만료됐을 수 있어 먼저 세션을 확인해요
     return supabase.auth.getSession().catch(function(){}).then(function(){
       if(rtStatus !== 'SUBSCRIBED') subscribeRealtime();
-      if(reason === 'resume' || reason === 'pull') msgNeedFull = true;
+      if(reason === 'resume' || reason === 'pull'){ msgNeedFull = true; refetchSurveyStatus(); }
       var jobs = [refetchParticipants(), refetchMatches(), refetchMemberNames(), refetchChangeRequests(), refetchMessages()];
       if(isAdmin()) jobs.push(refetchProfiles());
       if(reason === 'resume' || reason === 'pull') jobs.push(checkNewVersion());
@@ -5965,6 +6324,7 @@
     refetchMemberNames();
     refetchChangeRequests();
     refetchMessages();
+    refetchSurveyStatus();
     subscribeRealtime();
     initAutoRefresh();
     lastRefreshAt = Date.now();
