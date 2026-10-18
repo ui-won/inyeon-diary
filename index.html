@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>매칭메이커</title>
+<meta name="description" content="주선자가 잇는 소개팅. 주선자들이 함께 후보를 찾고, 두 분이 모두 원할 때만 연락처를 이어 드려요.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="매칭메이커">
+<meta property="og:title" content="매칭메이커 · 주선자가 잇는 소개팅">
+<meta property="og:description" content="좋은 인연은 사람이 이어 줘요. 두 분이 모두 원할 때만 연락처를 이어 드려요.">
+<meta property="og:image" content="https://ui-won.github.io/inyeon-diary/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://ui-won.github.io/inyeon-diary/">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -717,6 +727,24 @@
   .offer-photos img{ border-radius:20px; }
   .offer-facts{ background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px 16px; }
   .offer-result .big svg{ width:120px; height:auto; }
+  .sum-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:8px; }
+  .sum-item{ background:var(--surface-2); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:2px; }
+  .sum-item b{ font-family:var(--font-display); font-size:20px; font-variant-numeric:tabular-nums; }
+  .sum-item span{ font-size:12px; color:var(--muted); }
+  .sum-h{ grid-column:1 / -1; font-size:12.5px; font-weight:700; color:var(--muted); margin-top:4px; }
+  .offer-age{ font-size:12px; color:var(--muted); }
+  .offer-age.late{ color:var(--warn); font-weight:700; }
+  .outcome-box{ display:flex; flex-direction:column; gap:8px; padding:10px 12px; border-radius:12px; background:var(--surface-2); }
+  .outcome-box.due{ background:var(--accent-soft); }
+  .outcome-title{ font-size:13px; font-weight:700; }
+  .outcome-title span{ font-weight:500; color:var(--muted); }
+  .outcome-box .chip{ font-size:13px; padding:6px 11px; }
+  .preq-box{ display:flex; flex-direction:column; gap:6px; font-size:13px; background:var(--warn-soft); border-radius:10px; padding:10px 12px; }
+  .preq-box .preq-note{ color:var(--muted); white-space:pre-wrap; }
+  .preq-box .preq-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+  .preq-box .btn{ padding:6px 12px; font-size:13px; }
+  #regRequestBox .req-pane{ display:flex; flex-direction:column; gap:10px; }
+  #regRequestBox .req-btns{ display:flex; gap:8px; flex-wrap:wrap; }
 </style>
 </head>
 <body data-tab="members">
@@ -928,6 +956,10 @@
       <section>
         <h3>자주 묻는 질문</h3>
         <dl class="guide-faq">
+          <dt>참가자가 잠시 쉬고 싶다고 하면요?</dt>
+          <dd>참가자 카드의 <span class="guide-ui">잠시 쉬기</span>(일시정지 모양) 버튼으로 쉬는 마지막 날을 정해요. 그동안은 추천과 새 매칭에서 빠지고, 다음 날 자동으로 '소개 가능'으로 돌아와요. 참가자가 수정 링크에서 직접 쉬기·그만하기를 요청하면 <b>오늘 할 일</b>에 떠요.</dd>
+          <dt>결정 링크에 답이 없거나, 만남 뒤 결과는요?</dt>
+          <dd>링크를 보내고 3일 동안 답이 없으면 알림과 <b>오늘 할 일</b>로 알려 드려요. 연락처가 공개되고 일주일쯤 지나면 매칭 카드에서 <b>만남 결과</b>(아직 안 만났어요 · 만나는 중 · 잘 안 됐어요 · 커플이 됐어요)를 한 번에 골라 주세요. 커플을 고르면 성사로 기록돼요.</dd>
           <dt>참가자가 정보를 고치고 싶다고 하면요?</dt>
           <dd>참가자 카드의 <b>링크 버튼</b>으로 수정 링크를 만들어 카톡으로 보내 주세요. 7일 동안 한 번만 제출할 수 있고, 새로 만들면 이전 링크는 끝나요. 제출되면 카드에 <span class="guide-ui">정보 수정 요청</span>이 뜨고, <span class="guide-ui">변경 확인</span>에서 전·후를 비교해 <b>반영하기</b>를 눌러야 실제로 바뀌어요. 그전까지는 기존 내용 그대로 매칭할 수 있어요. 예전에 쓴 성격·이상형 글은 그대로 보관돼요.</dd>
           <dt>참가자가 '이번엔 괜찮아요'를 누르면요?</dt>
@@ -1100,6 +1132,31 @@
         <label class="consent-check"><input type="checkbox" id="reg-consent"> [필수] 개인정보 수집·이용에 동의해요</label>
         <label class="consent-check"><input type="checkbox" id="reg-adult"> [필수] 만 19세 이상이에요</label>
       </div>
+      <div class="pf-section" id="regRequestBox" hidden>
+        <div class="pf-title">잠시 쉬거나 그만하고 싶으세요? <span>(선택)</span></div>
+        <p class="helper-text" style="margin:0;">정보를 고치지 않아도 이것만 따로 보낼 수 있어요. 담당 주선자가 확인해요.</p>
+        <div class="req-btns">
+          <button type="button" class="chip" id="reqPauseBtn" aria-pressed="false">잠시 쉴래요</button>
+          <button type="button" class="chip" id="reqStopBtn" aria-pressed="false">그만할래요 (정보 삭제)</button>
+        </div>
+        <div class="req-pane" id="reqPausePane" hidden>
+          <div class="chip-group" id="reqPauseChips">
+            <button type="button" class="chip" data-days="14" aria-pressed="false">2주</button>
+            <button type="button" class="chip" data-days="30" aria-pressed="true">1달</button>
+            <button type="button" class="chip" data-days="60" aria-pressed="false">2달</button>
+            <button type="button" class="chip" data-days="90" aria-pressed="false">3달</button>
+          </div>
+          <p class="helper-text" style="margin:0;">쉬는 동안은 새 소개를 하지 않고, 기간이 끝나면 다시 소개해 드려요.</p>
+        </div>
+        <div class="req-pane" id="reqStopPane" hidden>
+          <p class="helper-text" style="margin:0;">소개를 멈추고, 관리자가 이름·연락처·사진 등 내 정보를 지워요. 다시 참가하려면 새로 신청해야 해요.</p>
+        </div>
+        <div class="req-pane" id="reqNotePane" hidden>
+          <textarea class="field-input" id="reqNote" maxlength="200" placeholder="주선자에게 남길 말 (선택)"></textarea>
+          <button type="button" class="btn btn-primary" id="reqSend">요청 보내기</button>
+        </div>
+        <p class="helper-text" id="reqDone" hidden style="margin:0; color:var(--success); font-weight:700;"></p>
+      </div>
       <div class="dialog-actions">
         <button type="button" class="btn" id="regCancel">취소</button>
         <button type="submit" class="btn btn-primary" id="regSubmitBtn">신청하기</button>
@@ -1145,6 +1202,21 @@
 
   <section class="todo-card home-only" id="todoCard" hidden>
     <h2 class="todo-title">오늘 할 일</h2>
+    <div id="preqNudge" class="nudge" hidden>
+      <span class="todo-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13h4l2 3h4l2-3h4"/><path d="M5 5h14l1 8v6H4v-6z"/></svg></span>
+      <span class="nudge-text" id="preqNudgeText"></span>
+      <span class="nudge-btns"><button type="button" class="btn btn-primary" id="preqNudgeOpen">보기</button></span>
+    </div>
+    <div id="replyNudge" class="nudge" hidden>
+      <span class="todo-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+      <span class="nudge-text" id="replyNudgeText"></span>
+      <span class="nudge-btns"><button type="button" class="btn btn-primary" id="replyNudgeOpen">보기</button></span>
+    </div>
+    <div id="outcomeNudge" class="nudge" hidden>
+      <span class="todo-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/></svg></span>
+      <span class="nudge-text" id="outcomeNudgeText"></span>
+      <span class="nudge-btns"><button type="button" class="btn btn-primary" id="outcomeNudgeOpen">고르기</button></span>
+    </div>
     <div id="pushNudge" class="nudge" hidden>
       <span class="todo-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span>
       <span class="nudge-text">알림을 켜면 <b>매칭 요청·결정·쪽지</b>를 바로 받아요</span>
@@ -1367,6 +1439,14 @@
   <!-- ================= ACCOUNTS PANEL (admin) ================= -->
   <section id="panel-accounts" class="admin-only" role="tabpanel" aria-labelledby="tabBtn-accounts" style="display:none; flex-direction:column; gap:14px;">
     <h2 class="page-title">주선자 관리</h2>
+    <div class="card" id="adminSummary" style="padding:14px 16px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+        <b style="font-size:15px;">운영 요약</b>
+        <button class="btn" id="btnExportXlsx" type="button">엑셀로 내려받기</button>
+      </div>
+      <div id="adminSummaryBody" class="sum-grid"></div>
+      <p class="helper-text" style="margin:0;">엑셀 파일에는 참가자 이름·연락처가 들어 있어요. 내려받은 파일은 안전한 곳에 보관하고, 필요 없으면 지워 주세요.</p>
+    </div>
     <div class="toolbar">
       <p class="helper-text" style="margin:0; flex:1;">주선자가 가입하면 여기서 승인해 주세요. 승인된 주선자는 참가자를 코드네임으로만 보고, 두 사람이 모두 만나보기로 한 본인 매칭에서만 이름·연락처를 볼 수 있어요.</p>
       <button class="btn" id="btnRefreshAccounts" type="button">새로고침</button>
@@ -1835,6 +1915,28 @@
     </div>
     <div class="viewer-strip" id="photoViewerStrip"></div>
     <p class="viewer-hint">사진 한 장은 복사 아이콘으로 바로 붙여넣을 수 있어요. 여러 장을 한 번에 복사하는 건 브라우저 제약으로 안 돼서, 여러 장을 보낼 땐 '전체 저장' 후 카톡에서 한 번에 골라 보내보세요.</p>
+  </div>
+</div>
+
+<!-- ================= 잠시 쉬기 ================= -->
+<div class="overlay" id="pauseOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="pauseTitle" style="max-width:420px;">
+    <div class="dialog-head"><h2 id="pauseTitle">잠시 쉬기</h2></div>
+    <p class="helper-text" id="pauseSub" style="margin:0 0 12px;"></p>
+    <div class="chip-group" id="pauseChips">
+      <button type="button" class="chip" data-days="14" aria-pressed="false">2주</button>
+      <button type="button" class="chip" data-days="30" aria-pressed="false">1달</button>
+      <button type="button" class="chip" data-days="60" aria-pressed="false">2달</button>
+      <button type="button" class="chip" data-days="90" aria-pressed="false">3달</button>
+    </div>
+    <div class="field" style="margin-top:12px;"><label for="pauseDate">쉬는 마지막 날</label><input type="date" id="pauseDate" class="field-input"></div>
+    <p class="helper-text" style="margin:8px 0 0;">쉬는 동안은 AI 추천과 새 매칭에서 빠지고, 다음 날 자동으로 '소개 가능'으로 돌아와요.</p>
+    <div class="dialog-actions" style="flex-wrap:wrap;">
+      <button type="button" class="btn btn-ghost" id="pauseEnd" hidden>쉬기 끝내기</button>
+      <span style="flex:1"></span>
+      <button type="button" class="btn" id="pauseCancel">닫기</button>
+      <button type="button" class="btn btn-primary" id="pauseSave">쉬기 시작</button>
+    </div>
   </div>
 </div>
 
@@ -3074,6 +3176,7 @@
       contact: priv && priv.contact ? priv.contact : null,
       revealed: !!priv,
       ownerId: row.owner_id || null,
+      pauseUntil: row.pause_until || null,
       job: row.job,
       mbti: row.mbti,
       referrer: row.referrer,
@@ -3163,7 +3266,10 @@
       updatedAt: row.updated_at,
       closeReason: row.close_reason || '',
       closeNote: row.close_note || '',
-      closedAt: row.closed_at || null
+      closedAt: row.closed_at || null,
+      outcome: row.outcome || '',
+      outcomeAt: row.outcome_at || null,
+      outcomeAskedAt: row.outcome_asked_at || null
     };
   }
   // a_name / b_name 은 데이터베이스가 코드네임으로 채워요
@@ -3479,6 +3585,8 @@
       var success = matches.filter(function(m){ return m.status === 'success'; }).length;
       $('statOngoing').textContent = String(ongoing);
       $('statSuccess').textContent = String(success);
+      renderTodoV18();
+      renderAdminSummary();
       $('greetLine').innerHTML = ongoing ? '지금 <em>' + ongoing + '쌍</em>을 잇고 있어요' : '오늘도 좋은 인연을 이어 봐요';
     } else {
       $('statOngoing').textContent = '–';
@@ -3923,8 +4031,9 @@
             '</div>' +
             (pending ? '<span class="badge badge-warn" style="margin-right:6px;">승인 대기</span>' : '') +
             (changeRequests[m.id] && canEditMember(m) ? '<span class="badge badge-info" style="margin-right:6px;">정보 수정 요청</span>' : '') +
-            '<span class="badge '+st.cls+'">'+st.label+'</span>' +
+            '<span class="badge '+st.cls+'">'+(m.status === 'hold' && m.pauseUntil ? '쉬는 중 ~'+esc(fmtShortDate(m.pauseUntil)) : st.label)+'</span>' +
           '</div>' +
+          preqHtml(m) +
           (rows ? '<div class="card-body">'+rows+'</div>' : '') +
           (changeRequests[m.id] && canEditMember(m)
             ? '<div class="cr-box"><span>참가자가 정보를 고쳐 보냈어요. 확인 후 반영해 주세요.</span><button class="btn btn-primary" type="button" data-action="review-change" data-id="'+esc(m.id)+'">변경 확인</button></div>'
@@ -3939,6 +4048,7 @@
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
               '</button>'
             : '') +
+            (canEditMember(m) && !pending ? '<button class="btn btn-ghost" type="button" data-action="pause-member" data-id="'+esc(m.id)+'" aria-label="잠시 쉬기" title="잠시 쉬기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></svg></button>' : '') +
             '<button class="btn btn-ghost" type="button" data-action="copy-member" data-id="'+esc(m.id)+'" aria-label="카톡 공유용 정보 복사">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" stroke-linecap="round"/></svg>' +
             '</button>' +
@@ -4115,7 +4225,10 @@
           if((dec === 'none' || dec === 'pending') && canSendOffer(x, side) && !pDeclined && !closed){
             btn = '<button class="btn '+(dec === 'none' ? 'btn-primary' : '')+'" type="button" data-action="send-offer" data-id="'+esc(x.id)+'" data-side="'+side+'">'+(dec === 'none' ? '결정 링크 보내기' : '링크 다시 만들기')+'</button>';
           }
-          return '<div class="decision-row"><span class="who">'+esc(mm ? displayName(mm) : (side === 'a' ? aName : bName))+'</span><span class="badge '+cls+'">'+esc(DECISION_LABEL[dec] || '')+'</span>'+btn+'</div>';
+          var ot = (offerTimes[x.id] || {})[side];
+          var age = (dec === 'pending' && ot && ot.sent && !closed) ? daysSince(ot.sent) : -1;
+          var ageHtml = age >= 0 ? '<span class="offer-age'+(age >= 3 ? ' late' : '')+'">'+(age === 0 ? '오늘 보냄' : '보낸 지 '+age+'일')+(age >= 3 ? ' · 답이 없어요' : '')+'</span>' : '';
+          return '<div class="decision-row"><span class="who">'+esc(mm ? displayName(mm) : (side === 'a' ? aName : bName))+'</span><span class="badge '+cls+'">'+esc(DECISION_LABEL[dec] || '')+'</span>'+ageHtml+btn+'</div>';
         }).join('') + '</div>';
       }
 
@@ -4161,6 +4274,7 @@
           requestHtml +
           decisionHtml +
           revealHtml +
+          outcomeHtml(x) +
           closeHtml +
           staleHtml +
           (x.memo ? '<div class="match-memo">'+esc(x.memo)+'</div>' : '') +
@@ -4443,6 +4557,8 @@
       : '신청 내용은 담당 주선자나 관리자가 확인 후 승인해요. 이름과 연락처는 관리자와, 두 분이 모두 만나보기로 한 매칭을 맡은 주선자에게만 공개돼요.';
     $('reg-consent-box').hidden = !!edit;
     $('regTrust').hidden = !!edit;
+    $('regRequestBox').hidden = !edit;
+    if(edit) resetRegRequest();
     $('regSubmitBtn').textContent = edit ? '수정 내용 보내기' : '신청하기';
     $('regCancel').hidden = !!edit;
     if(!edit){
@@ -4609,8 +4725,64 @@
     $('regSuccess').hidden = false;
     $('regOverlay').hidden = false;
   }
+
+  /* 참가자: 수정 링크에서 잠시 쉬기 · 그만하기 요청 */
+  var regReqKind = null, regReqDays = 30;
+  function resetRegRequest(){
+    regReqKind = null; regReqDays = 30;
+    $('reqPauseBtn').setAttribute('aria-pressed', 'false');
+    $('reqStopBtn').setAttribute('aria-pressed', 'false');
+    $('reqPausePane').hidden = true; $('reqStopPane').hidden = true; $('reqNotePane').hidden = true;
+    $('reqDone').hidden = true; $('reqNote').value = ''; $('reqSend').disabled = false;
+    $('reqSend').textContent = '요청 보내기';
+  }
+  function setRegReqKind(kind){
+    regReqKind = regReqKind === kind ? null : kind;
+    $('reqPauseBtn').setAttribute('aria-pressed', regReqKind === 'pause' ? 'true' : 'false');
+    $('reqStopBtn').setAttribute('aria-pressed', regReqKind === 'stop' ? 'true' : 'false');
+    $('reqPausePane').hidden = regReqKind !== 'pause';
+    $('reqStopPane').hidden = regReqKind !== 'stop';
+    $('reqNotePane').hidden = !regReqKind;
+    $('reqSend').dataset.confirm = '';
+    $('reqSend').textContent = regReqKind === 'stop' ? '그만하기 요청 보내기' : '쉬기 요청 보내기';
+  }
+  function sendRegRequest(){
+    if(!regEdit || !regReqKind) return;
+    var btn = $('reqSend');
+    if(regReqKind === 'stop' && btn.dataset.confirm !== '1'){
+      btn.dataset.confirm = '1';
+      btn.textContent = '한 번 더 누르면 보내요';
+      return;
+    }
+    btn.disabled = true;
+    var until = regReqKind === 'pause' ? kstDatePlus(regReqDays) : null;
+    Promise.resolve(supabase.rpc('participant_request', { p_token: regEdit.token, p_kind: regReqKind, p_until: until, p_note: $('reqNote').value.trim() || null })).then(function(res){
+      if(res.error) throw res.error;
+      $('reqPausePane').hidden = true; $('reqStopPane').hidden = true; $('reqNotePane').hidden = true;
+      $('reqDone').textContent = regReqKind === 'pause'
+        ? fmtShortDate(until) + '까지 쉬고 싶다고 전했어요. 담당 주선자가 확인해요.'
+        : '그만하기 요청을 전했어요. 담당 주선자와 관리자가 확인한 뒤 정보를 지워요.';
+      $('reqDone').hidden = false;
+    }).catch(function(err){
+      console.error(err);
+      btn.disabled = false;
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 80 ? msg : '보내지 못했어요. 다시 시도해 주세요');
+    });
+  }
+  function initRegRequestUI(){
+    $('reqPauseBtn').addEventListener('click', function(){ setRegReqKind('pause'); });
+    $('reqStopBtn').addEventListener('click', function(){ setRegReqKind('stop'); });
+    $('reqPauseChips').addEventListener('click', function(e){
+      var c = e.target.closest('.chip'); if(!c) return;
+      regReqDays = Number(c.dataset.days);
+      Array.prototype.forEach.call(this.querySelectorAll('.chip'), function(x){ x.setAttribute('aria-pressed', x === c ? 'true' : 'false'); });
+    });
+    $('reqSend').addEventListener('click', sendRegRequest);
+  }
   function initEditLinkView(token){
     $('lockOverlay').hidden = true;
+    initRegRequestUI();
     supabase.rpc('edit_link_get', { p_token: token }).then(function(res){
       if(res.error) throw res.error;
       openLinkEditForm(token, res.data || {});
@@ -5980,6 +6152,294 @@
     });
   }
 
+  /* ---------------- v18: 결정 링크 시간 · 만남 결과 · 쉬기 · 참가자 요청 ---------------- */
+  var offerTimes = {};   // 매칭 id → { a:{sent,decided,reminded}, b:{…} }
+  var preqs = [];        // 내가 처리할 참가자 요청
+  var OUTCOME_LABEL = { not_yet:'아직 안 만났어요', dating:'만나는 중', ended:'잘 안 됐어요', couple:'커플이 됐어요' };
+  function fmtShortDate(d){
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d || ''));
+    return m ? (Number(m[2]) + '/' + Number(m[3])) : '';
+  }
+  function refetchOfferTimes(){
+    if(!currentUser || !matchesLoaded) return Promise.resolve();
+    var ids = matches.filter(function(x){ return x.aDecision !== 'none' || x.bDecision !== 'none'; }).map(function(x){ return x.id; });
+    if(!ids.length){ offerTimes = {}; renderTodoV18(); return Promise.resolve(); }
+    return Promise.resolve(supabase.rpc('offer_times', { p_ids: ids })).then(function(res){
+      if(res.error) throw res.error;
+      var map = {};
+      (res.data || []).forEach(function(r){
+        (map[r.match_id] = map[r.match_id] || {})[r.side] = { sent:r.sent_at, decided:r.decided_at, reminded:r.reminded_at };
+      });
+      var changed = JSON.stringify(map) !== JSON.stringify(offerTimes);
+      offerTimes = map;
+      if(changed) renderMatches();
+      renderTodoV18();
+      renderAdminSummary();
+    }).catch(function(err){ console.error('offer times error', err); });
+  }
+  function ownerIdOf(pid){ var m = memberById(pid); return m ? m.ownerId : null; }
+  function canRecordOutcome(x){
+    if(!matchRevealed(x)) return false;
+    var me = myId();
+    return isAdmin() || x.createdBy === me || ownerIdOf(x.aId) === me || ownerIdOf(x.bId) === me;
+  }
+  function revealedAt(x){
+    var t = offerTimes[x.id] || {};
+    var a = t.a && t.a.decided, b = t.b && t.b.decided;
+    return (a && b) ? (a > b ? a : b) : (a || b || x.updatedAt);
+  }
+  function outcomeDue(x){
+    return canRecordOutcome(x) && !x.outcome && x.status !== 'success' && x.status !== 'failed' && daysSince(revealedAt(x)) >= 7;
+  }
+  function outcomeHtml(x){
+    if(!canRecordOutcome(x)) return '';
+    var due = outcomeDue(x);
+    return '<div class="outcome-box'+(due ? ' due' : '')+'"><div class="outcome-title">' +
+      (due ? '만남은 어떠셨어요? 결과를 골라 주세요' : '만남 결과') +
+      (x.outcomeAt ? '<span> · '+esc(fmtDate(String(x.outcomeAt).slice(0,10)))+' 기록</span>' : '') + '</div><div class="chip-group">' +
+      ['not_yet','dating','ended','couple'].map(function(k){
+        return '<button type="button" class="chip" data-action="record-outcome" data-id="'+esc(x.id)+'" data-outcome="'+k+'" aria-pressed="'+(x.outcome === k ? 'true' : 'false')+'">'+OUTCOME_LABEL[k]+'</button>';
+      }).join('') + '</div></div>';
+  }
+  function recordOutcome(id, outcome, btn){
+    var x = matches.filter(function(m){ return m.id === id; })[0];
+    if(!x || x.outcome === outcome) return;
+    btn.disabled = true;
+    Promise.resolve(supabase.rpc('record_match_outcome', { p_match: id, p_outcome: outcome })).then(function(res){
+      if(res.error) throw res.error;
+      showToast(outcome === 'couple' ? '축하해요! 성사로 기록했어요' : (outcome === 'ended' ? '기록했어요. 안 된 매칭으로 옮겼어요' : '기록했어요'));
+      return refetchMatches();
+    }).catch(function(err){
+      console.error(err);
+      btn.disabled = false;
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '기록하지 못했어요. 다시 시도해 주세요');
+    });
+  }
+  function replyLate(x){
+    if(matchClosed(x) || !matchReady(x)) return false;
+    return ['a','b'].some(function(side){
+      var dec = side === 'a' ? x.aDecision : x.bDecision;
+      var ot = (offerTimes[x.id] || {})[side];
+      return dec === 'pending' && ot && ot.sent && daysSince(ot.sent) >= 3 && canSendOffer(x, side);
+    });
+  }
+  function renderTodoV18(){
+    var late = matchesLoaded ? matches.filter(replyLate) : [];
+    var due = matchesLoaded ? matches.filter(outcomeDue) : [];
+    var reqs = preqs.filter(function(r){ return memberById(r.participant_id); });
+    $('replyNudge').hidden = !late.length;
+    if(late.length) $('replyNudgeText').innerHTML = '3일째 답이 없는 결정 링크 <b>' + late.length + '건</b> · 한 번 더 물어봐 주세요';
+    $('outcomeNudge').hidden = !due.length;
+    if(due.length) $('outcomeNudgeText').innerHTML = '만남 결과를 기다리는 매칭 <b>' + due.length + '건</b>';
+    $('preqNudge').hidden = !reqs.length;
+    if(reqs.length) $('preqNudgeText').innerHTML = '참가자 요청 <b>' + reqs.length + '건</b> · ' + esc(reqs.map(function(r){
+      var m = memberById(r.participant_id);
+      return (m ? displayName(m) : '참가자') + (r.kind === 'pause' ? ' 쉬기' : ' 그만하기');
+    }).slice(0, 2).join(', '));
+  }
+  function goToMatch(list){
+    if(!list.length) return;
+    matchSeg = matchBucket(list[0]);
+    switchToTab('matches');
+    renderMatches();
+    window.scrollTo(0, 0);
+    setTimeout(function(){ flashCard('#matchesList .match-row[data-id="'+list[0].id+'"]'); }, 80);
+  }
+  // 참가자 요청 (잠시 쉬기 / 그만하기)
+  function refetchPreqs(){
+    if(!currentUser) return Promise.resolve();
+    return Promise.resolve(supabase.rpc('participant_requests_list')).then(function(res){
+      if(res.error) throw res.error;
+      var next = res.data || [];
+      var changed = JSON.stringify(next) !== JSON.stringify(preqs);
+      preqs = next;
+      if(changed){ renderMembers(); }
+      renderTodoV18();
+    }).catch(function(err){ console.error('requests error', err); });
+  }
+  function preqHtml(m){
+    var list = preqs.filter(function(r){ return r.participant_id === m.id; });
+    return list.map(function(r){
+      var head = r.kind === 'pause'
+        ? '<b>' + esc(displayName(m)) + '</b> 님이 <b>' + esc(fmtShortDate(r.until_date)) + '까지</b> 잠시 쉬고 싶대요.'
+        : '<b>' + esc(displayName(m)) + '</b> 님이 소개를 그만하고 <b>정보 삭제</b>를 원해요.' + (isAdmin() ? ' 소개를 멈춘 뒤 휴지통 버튼으로 지워 주세요.' : ' 관리자에게도 전달됐어요.');
+      return '<div class="preq-box"><div>' + head + '</div>' + (r.note ? '<div class="preq-note">' + esc(r.note) + '</div>' : '') +
+        '<div class="preq-actions"><button class="btn btn-primary" type="button" data-action="preq-apply" data-id="'+esc(m.id)+'" data-req="'+esc(r.id)+'">' + (r.kind === 'pause' ? '쉬기 적용' : '소개 멈추기') + '</button>' +
+        '<button class="btn btn-ghost" type="button" data-action="preq-dismiss" data-id="'+esc(m.id)+'" data-req="'+esc(r.id)+'">닫기</button></div></div>';
+    }).join('');
+  }
+  function handlePreq(reqId, action, btn){
+    btn.disabled = true;
+    Promise.resolve(supabase.rpc('handle_participant_request', { p_id: reqId, p_action: action })).then(function(res){
+      if(res.error) throw res.error;
+      showToast(action === 'apply' ? '적용했어요' : '요청을 닫았어요');
+      return Promise.all([refetchPreqs(), refetchParticipants()]);
+    }).catch(function(err){
+      console.error(err);
+      btn.disabled = false;
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '처리하지 못했어요. 다시 시도해 주세요');
+    });
+  }
+  // 잠시 쉬기 (주선자·관리자)
+  var pauseTarget = null;
+  function kstDatePlus(days){
+    var d = new Date(Date.now() + 9 * 3600000 + days * 86400000);
+    return d.toISOString().slice(0, 10);
+  }
+  function openPause(id){
+    var m = memberById(id);
+    if(!m || !canEditMember(m)) return;
+    pauseTarget = m;
+    var paused = m.status === 'hold' && m.pauseUntil;
+    $('pauseSub').textContent = displayName(m) + ' 님' + (paused ? ' · 지금 ' + fmtShortDate(m.pauseUntil) + '까지 쉬는 중이에요' : (m.status === 'hold' ? ' · 지금 보류 상태예요' : ''));
+    $('pauseDate').min = kstDatePlus(1);
+    $('pauseDate').max = kstDatePlus(365);
+    $('pauseDate').value = paused ? m.pauseUntil : kstDatePlus(30);
+    syncPauseChips();
+    $('pauseEnd').hidden = m.status !== 'hold';
+    $('pauseOverlay').hidden = false;
+  }
+  function syncPauseChips(){
+    Array.prototype.forEach.call(document.querySelectorAll('#pauseChips .chip'), function(c){
+      c.setAttribute('aria-pressed', kstDatePlus(Number(c.dataset.days)) === $('pauseDate').value ? 'true' : 'false');
+    });
+  }
+  function savePause(until){
+    var m = pauseTarget;
+    if(!m) return;
+    var btn = until ? $('pauseSave') : $('pauseEnd');
+    btn.disabled = true;
+    Promise.resolve(supabase.rpc('set_participant_pause', { p_participant: m.id, p_until: until })).then(function(res){
+      if(res.error) throw res.error;
+      $('pauseOverlay').hidden = true;
+      showToast(until ? fmtShortDate(until) + '까지 쉬어요' : '다시 소개할 수 있어요');
+      return refetchParticipants();
+    }).catch(function(err){
+      console.error(err);
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '바꾸지 못했어요. 다시 시도해 주세요');
+    }).then(function(){ btn.disabled = false; });
+  }
+  var dailyJobsTried = 0;
+  function runDailyJobs(){
+    if(!currentUser || Date.now() - dailyJobsTried < 3600000) return;
+    dailyJobsTried = Date.now();
+    Promise.resolve(supabase.rpc('run_daily_jobs')).then(function(res){
+      if(res && res.data === true){ refetchMatches(); refetchParticipants(); }
+    }).catch(function(){});
+  }
+
+  /* 관리자: 운영 요약 · 엑셀 내려받기 */
+  function withinDays(iso, n){ return !!iso && (Date.now() - Date.parse(iso)) < n * 86400000; }
+  function renderAdminSummary(){
+    var el = $('adminSummaryBody');
+    if(!el || !isAdmin() || !membersLoaded || !matchesLoaded) return;
+    var appr = members.filter(function(m){ return m.approved !== false; });
+    var f = appr.filter(function(m){ return m.gender === 'female'; }).length, mm = appr.filter(function(m){ return m.gender === 'male'; }).length;
+    var sent = 0, answered = 0, waitDays = [];
+    Object.keys(offerTimes).forEach(function(id){ ['a','b'].forEach(function(sd){
+      var o = offerTimes[id][sd]; if(!o || !o.sent) return;
+      sent++;
+      if(o.decided){ answered++; waitDays.push((Date.parse(o.decided) - Date.parse(o.sent)) / 86400000); }
+    }); });
+    var avgWait = waitDays.length ? (waitDays.reduce(function(a, b){ return a + b; }, 0) / waitDays.length) : null;
+    var revealed = matches.filter(matchRevealed);
+    var item = function(v, label){ return '<div class="sum-item"><b>' + esc(String(v)) + '</b><span>' + esc(label) + '</span></div>'; };
+    el.innerHTML =
+      '<div class="sum-h">최근 7일</div>' +
+      item(appr.filter(function(m){ return withinDays(m.createdAt, 7); }).length + '명', '새 참가자') +
+      item(matches.filter(function(x){ return withinDays(x.createdAt, 7); }).length + '건', '새 매칭') +
+      item(revealed.filter(function(x){ return withinDays(revealedAt(x), 7); }).length + '건', '연락처 공개') +
+      item(matches.filter(function(x){ return x.status === 'success' && withinDays(x.outcomeAt || x.updatedAt, 7); }).length + '건', '성사') +
+      '<div class="sum-h">전체</div>' +
+      item(appr.length + '명', '참가자 (여 ' + f + ' · 남 ' + mm + ')') +
+      item(matches.filter(function(x){ return matchBucket(x) === 'active'; }).length + '건', '진행 중 매칭') +
+      item(sent ? Math.round(answered / sent * 100) + '%' : '–', '결정 링크 응답률 (' + answered + '/' + sent + ')') +
+      item(avgWait == null ? '–' : (avgWait < 1 ? '하루 안' : avgWait.toFixed(1) + '일'), '결정까지 평균') +
+      item(revealed.length + '건', '연락처 공개 누적') +
+      item(matches.filter(function(x){ return x.status === 'success'; }).length + '건', '성사 누적') +
+      item(appr.filter(function(m){ return m.status === 'hold'; }).length + '명', '쉬는 중·보류');
+  }
+  var xlsxLoading = null;
+  function loadXlsx(){
+    if(window.XLSX) return Promise.resolve(window.XLSX);
+    if(xlsxLoading) return xlsxLoading;
+    xlsxLoading = new Promise(function(resolve, reject){
+      var sc = document.createElement('script');
+      sc.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      sc.onload = function(){ resolve(window.XLSX); };
+      sc.onerror = function(){ xlsxLoading = null; reject(new Error('엑셀 도구를 불러오지 못했어요')); };
+      document.head.appendChild(sc);
+    });
+    return xlsxLoading;
+  }
+  function exportXlsx(){
+    if(!isAdmin()) return;
+    var btn = $('btnExportXlsx');
+    btn.disabled = true;
+    loadXlsx().then(function(X){
+      var pName = function(id){ var p = profileById(id); return p ? (p.display_name || '') : ''; };
+      var people = members.map(function(m){
+        return {
+          '코드': m.codeName || '', '이름': m.name || '', '연락처': m.contact || '', '성별': GENDER_LABEL[m.gender] || '',
+          '출생연도': m.birthYear || '', '나이': ageFromBirthYear(m.birthYear) == null ? '' : ageFromBirthYear(m.birthYear),
+          '키': m.height || '', '사는 곳': [m.regionSido, m.regionDetail].filter(Boolean).join(' '), '직업': m.job || '', 'MBTI': m.mbti || '',
+          '만남 목적': PURPOSE_LABEL[m.purpose] || '', '상태': (MEMBER_STATUS[m.status] || {}).label || m.status || '',
+          '쉬는 마지막 날': m.pauseUntil || '', '승인': m.approved === false ? '대기' : '승인', '담당 주선자': m.ownerId ? pName(m.ownerId) : '',
+          '추천인': m.referrer || '', '등록일': String(m.createdAt || '').slice(0, 10)
+        };
+      });
+      var nm = function(id, fallback){ var m = memberById(id); return m ? displayName(m) : (fallback || ''); };
+      var rows = matches.map(function(x){
+        return {
+          'A': nm(x.aId, x.aName), 'B': nm(x.bId, x.bName), '요청자': x.createdBy ? pName(x.createdBy) : (x.matchmaker || ''),
+          '상태': (MATCH_STATUS[x.status] || {}).label || x.status || '', '담당 수락 A': x.aConsent, '담당 수락 B': x.bConsent,
+          '본인 결정 A': DECISION_LABEL[x.aDecision] || '', '본인 결정 B': DECISION_LABEL[x.bDecision] || '',
+          '만남 결과': OUTCOME_LABEL[x.outcome] || '', '안 된 이유': CLOSE_REASON_LABEL[matchCloseReason(x)] || '',
+          '만든 날': String(x.createdAt || '').slice(0, 10), '메모': x.memo || ''
+        };
+      });
+      var mms = profiles.map(function(p){
+        return { '이름': p.display_name || '', '로그인 이름': loginEmailToName(p.email) || '', '역할': ROLE_LABEL[p.role] || p.role || '',
+                 '승인': p.approved ? '승인' : '대기', '가입일': String(p.created_at || '').slice(0, 10) };
+      });
+      var wb = X.utils.book_new();
+      X.utils.book_append_sheet(wb, X.utils.json_to_sheet(people), '참가자');
+      X.utils.book_append_sheet(wb, X.utils.json_to_sheet(rows), '매칭');
+      X.utils.book_append_sheet(wb, X.utils.json_to_sheet(mms), '주선자');
+      X.writeFile(wb, '매칭메이커_' + kstDatePlus(0) + '.xlsx');
+      showToast('엑셀 파일을 내려받았어요');
+    }).catch(function(err){
+      console.error(err);
+      showToast((err && err.message) || '내려받지 못했어요');
+    }).then(function(){ btn.disabled = false; });
+  }
+  function initV18UI(){
+    $('btnExportXlsx').addEventListener('click', exportXlsx);
+    $('replyNudgeOpen').addEventListener('click', function(){ goToMatch(matches.filter(replyLate)); });
+    $('outcomeNudgeOpen').addEventListener('click', function(){ goToMatch(matches.filter(outcomeDue)); });
+    $('preqNudgeOpen').addEventListener('click', function(){
+      var r = preqs.filter(function(q){ return memberById(q.participant_id); })[0];
+      if(r) openMsgAttachment(r.participant_id, null);
+    });
+    $('pauseChips').addEventListener('click', function(e){
+      var c = e.target.closest('.chip'); if(!c) return;
+      $('pauseDate').value = kstDatePlus(Number(c.dataset.days));
+      syncPauseChips();
+    });
+    $('pauseDate').addEventListener('change', syncPauseChips);
+    $('pauseSave').addEventListener('click', function(){
+      var v = $('pauseDate').value;
+      if(!v){ showToast('쉬는 마지막 날을 골라 주세요'); return; }
+      savePause(v);
+    });
+    $('pauseEnd').addEventListener('click', function(){ savePause(null); });
+    $('pauseCancel').addEventListener('click', function(){ $('pauseOverlay').hidden = true; });
+    $('pauseOverlay').addEventListener('click', function(e){ if(e.target === this) this.hidden = true; });
+  }
+
   /* ---------------- 앱 설정 (관리자) ---------------- */
   var appSettings = { match_admin_approval: false };
   function approvalRequired(){ return appSettings.match_admin_approval === true; }
@@ -6153,6 +6613,9 @@
       if(btn.dataset.action === 'review-change') openChangeReview(id);
       if(btn.dataset.action === 'view-photos') openPhotoViewer(id);
       if(btn.dataset.action === 'copy-member') copyMemberInfo(id);
+      if(btn.dataset.action === 'pause-member') openPause(id);
+      if(btn.dataset.action === 'preq-apply') handlePreq(btn.dataset.req, 'apply', btn);
+      if(btn.dataset.action === 'preq-dismiss') handlePreq(btn.dataset.req, 'dismiss', btn);
       if(btn.dataset.action === 'quick-match'){
         var qmMember = memberById(id);
         if(qmMember) presetQuickMatchMember(qmMember);
@@ -6181,6 +6644,7 @@
       if(btn.dataset.action === 'copy-contacts') copyMatchContacts(id);
       if(btn.dataset.action === 'reopen-match') reopenMatch(id, btn);
       if(btn.dataset.action === 'view-photos') openPhotoViewer(id);
+      if(btn.dataset.action === 'record-outcome') recordOutcome(id, btn.dataset.outcome, btn);
       if(btn.dataset.action === 'delete-match'){
         var x = matches.filter(function(mm){ return mm.id === id; })[0];
         var label = x ? ((x.aName||'')+' · '+(x.bName||'')) : '';
@@ -6227,7 +6691,7 @@
     var updateTodoCard = function(){ $('todoCard').hidden = !$('todoCard').querySelector('.nudge:not([hidden])'); };
     if(window.MutationObserver){
       var todoObs = new MutationObserver(updateTodoCard);
-      ['pushNudge','fillNudge','svNudge'].forEach(function(id){ todoObs.observe($(id), { attributes:true, attributeFilter:['hidden'] }); });
+      ['pushNudge','fillNudge','svNudge','preqNudge','replyNudge','outcomeNudge'].forEach(function(id){ todoObs.observe($(id), { attributes:true, attributeFilter:['hidden'] }); });
     }
     updateTodoCard();
     $('btnNotify').addEventListener('click', openNotify);
@@ -6238,6 +6702,7 @@
     });
     initFillUI();
     initSurveyManageUI();
+    initV18UI();
     $('notifyClose').addEventListener('click', closeNotify);
     $('notifyOverlay').addEventListener('click', function(e){ if(e.target === this) closeNotify(); });
     $('notifyActions').addEventListener('click', function(e){
@@ -6446,6 +6911,7 @@
       matchesLoaded = true;
       matchesFailed = false;
       renderMatches();
+      refetchOfferTimes();
       renderStats();
       if(membersLoaded) renderMembers(); // 참가자 카드의 소개 이력
       if($('panel-recommend').style.display === 'flex') renderRecommend();
@@ -6476,7 +6942,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-18.2';
+  var APP_VERSION = '2026-10-19.1';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
@@ -6506,7 +6972,8 @@
     return supabase.auth.getSession().catch(function(){}).then(function(){
       if(rtStatus !== 'SUBSCRIBED') subscribeRealtime();
       if(reason === 'resume' || reason === 'pull'){ msgNeedFull = true; refetchSurveyStatus(); refetchSettings(); }
-      var jobs = [refetchParticipants(), refetchMatches(), refetchMemberNames(), refetchChangeRequests(), refetchMessages()];
+      var jobs = [refetchParticipants(), refetchMatches(), refetchMemberNames(), refetchChangeRequests(), refetchMessages(), refetchPreqs(), refetchOfferTimes()];
+      if(reason === 'resume') runDailyJobs();
       if(isAdmin()) jobs.push(refetchProfiles());
       if(reason === 'resume' || reason === 'pull') jobs.push(checkNewVersion());
       return Promise.all(jobs);
@@ -6573,6 +7040,8 @@
     refetchMessages();
     refetchSurveyStatus();
     refetchSettings();
+    refetchPreqs();
+    runDailyJobs();
     subscribeRealtime();
     initAutoRefresh();
     lastRefreshAt = Date.now();
