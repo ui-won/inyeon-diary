@@ -639,6 +639,18 @@
   #panel-members .toolbar .search{ flex:1 1 120px; min-width:0; }
   .filter-toggle{ position:relative; }
   .filter-toggle .fcount{ display:inline-block; min-width:18px; padding:0 5px; border-radius:999px; background:var(--accent); color:var(--accent-ink); font-size:11px; font-weight:700; line-height:18px; text-align:center; }
+  .scope-bar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .scope-seg{ display:flex; background:var(--surface-2); border-radius:999px; padding:4px; gap:2px; }
+  .scope-seg button{ appearance:none; border:0; background:none; color:var(--muted); font-family:inherit; font-size:14.5px; font-weight:700; padding:8px 16px; border-radius:999px; cursor:pointer; white-space:nowrap; }
+  .scope-seg button b{ font-weight:800; margin-left:2px; color:inherit; opacity:.75; }
+  .scope-seg button[aria-pressed="true"]{ background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(35,28,31,.12); }
+  .scope-seg button[aria-pressed="true"] b{ color:var(--accent); opacity:1; }
+  #memberScopeOwner{ width:auto; min-width:0; max-width:220px; flex:0 1 auto; }
+  #memberScopeOwner.on{ border-color:var(--accent); color:var(--accent); font-weight:700; }
+  .scope-line{ display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--muted); margin:-2px 0 0; }
+  .scope-line.active{ color:var(--success); }
+  .scope-line.late{ color:var(--accent); }
+  .scope-line svg{ width:14px; height:14px; flex:none; }
   .filter-panel{ display:flex; flex-wrap:wrap; gap:8px; width:100%; padding:12px; background:var(--surface); border:1px solid var(--line); border-radius:16px; }
   .filter-panel select.select-input{ flex:1 1 140px; min-width:0; }
   .filter-panel .age-pair{ display:flex; gap:8px; flex:1 1 220px; }
@@ -881,6 +893,7 @@
               <h4>참가자 모으기 · 정보 채우기 <span class="who">나</span></h4>
               <ul>
                 <li>오른쪽 위 내 이름 버튼을 눌러 <span class="guide-ui">내 등록 링크 복사</span>로 링크를 복사해 지인에게 보내면, 그 링크로 신청한 사람은 자동으로 <b>내 담당</b>이 돼요.</li>
+                <li>참가자 탭 위의 <span class="guide-ui">전체 / 내 담당</span>으로 내 사람만 모아 볼 수 있어요. 내 담당에서는 카드마다 진행 중인 소개나 마지막 소개 날짜가 보이고, 필터의 <b>소개 못 받은 지 오래된 순</b>으로 먼저 챙길 사람을 찾을 수 있어요.</li>
                 <li>링크 없이 신청할 때는 추천인 칸에 <b>등록된 주선자 이름</b>을 정확히 적어야 해요. 그 주선자가 담당이 되고, 등록되지 않은 이름으로는 신청할 수 없어요. 그래서 가입할 때 쓴 내 이름을 지인에게 알려 주세요.</li>
                 <li>새 신청은 <b>승인 대기</b>로 들어와요. 내용을 확인하고 카드의 <span class="guide-ui">승인</span>을 누르면 다른 주선자들도 볼 수 있고 매칭할 수 있어요. 승인 전에는 나와 관리자만 볼 수 있어요.</li>
                 <li>장난이나 잘못된 신청은 승인하지 말고 관리자에게 삭제를 요청해 주세요. 삭제는 관리자만 할 수 있어요.</li>
@@ -1281,6 +1294,13 @@
 
   <!-- ================= MEMBERS PANEL ================= -->
   <section id="panel-members" role="tabpanel" aria-labelledby="tabBtn-members" style="display:flex; flex-direction:column; gap:14px;">
+    <div class="scope-bar" id="memberScopeBar">
+      <div class="scope-seg" role="group" aria-label="볼 참가자">
+        <button type="button" data-scope="all" aria-pressed="true">전체 <b id="scopeCountAll">0</b></button>
+        <button type="button" data-scope="mine" aria-pressed="false">내 담당 <b id="scopeCountMine">0</b></button>
+      </div>
+      <select id="memberScopeOwner" class="select-input admin-only" aria-label="주선자별 보기"></select>
+    </div>
     <div class="toolbar">
       <div class="search">
         <input id="memberSearch" class="field-input" type="search" placeholder="이름·코드로 검색">
@@ -1305,7 +1325,6 @@
       </select>
       <select id="memberOwnerFilter" class="select-input">
         <option value="">모든 담당</option>
-        <option value="mine">내 담당만</option>
         <option value="none">담당 없음</option>
       </select>
       <span class="age-pair"><input id="memberAgeMin" class="field-input" type="number" inputmode="numeric" placeholder="나이(최소)" style="max-width:104px;">
@@ -1335,6 +1354,7 @@
         <option value="age_desc">나이 많은순</option>
         <option value="name">이름순</option>
         <option value="recent">최근 등록순</option>
+        <option value="stale">소개 못 받은 지 오래된 순</option>
       </select>
       <button class="btn btn-ghost filter-reset" id="btnMemberFilterReset" type="button">필터 모두 지우기</button>
       </div>
@@ -3860,8 +3880,76 @@
     var avatarHtml = '<button type="button" class="avatar-btn" data-action="'+(photoPaths.length ? 'view-photos' : 'noop')+'" data-id="'+esc(m.id)+'" aria-label="사진 보기">' + avatarInner + countBadge + '</button>';
     return avatarHtml;
   }
+  /* 참가자 탭: 전체 / 내 담당 / (관리자) 주선자별 보기 */
+  var memberScope = null; // 'all' | 'mine' | 'owner:<id>'
+  function scopeKey(){ return 'mm_scope_' + (myId() || ''); }
+  function getMemberScope(){
+    if(memberScope) return memberScope;
+    if(!myId()) return 'all';
+    var saved = null;
+    try{ saved = localStorage.getItem(scopeKey()); }catch(e){}
+    memberScope = (saved === 'all' || saved === 'mine') ? saved : (isAdmin() ? 'all' : 'mine');
+    return memberScope;
+  }
+  function setMemberScope(v){
+    memberScope = v;
+    if(v === 'all' || v === 'mine'){ try{ localStorage.setItem(scopeKey(), v); }catch(e){} }
+    renderMembers();
+  }
+  function scopeOwnerId(){
+    var sc = getMemberScope();
+    if(sc === 'mine') return myId();
+    if(sc.indexOf('owner:') === 0) return sc.slice(6);
+    return null;
+  }
+  // 참가자별 소개 현황: 진행 중 매칭 수, 마지막 소개 날짜
+  function introStats(){
+    var st = {};
+    matches.forEach(function(x){
+      [x.aId, x.bId].forEach(function(id){
+        if(!id) return;
+        var o = st[id] || (st[id] = { active:0, last:'' });
+        if(matchBucket(x) === 'active') o.active++;
+        var t = x.createdAt || x.date || '';
+        if(t > o.last) o.last = t;
+      });
+    });
+    return st;
+  }
+  function scopeLineHtml(m, st){
+    if(m.approved === false) return '';
+    var o = st[m.id] || { active:0, last:'' };
+    var ic = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+    if(o.active) return '<div class="scope-line active">' + ic + '진행 중인 소개 ' + o.active + '건</div>';
+    if(o.last){
+      var d = daysSince(o.last);
+      return '<div class="scope-line' + (d >= 30 ? ' late' : '') + '">' + ic + '마지막 소개 ' + (d === 0 ? '오늘' : d + '일 전') + '</div>';
+    }
+    var reg = daysSince(m.createdAt);
+    return '<div class="scope-line' + (reg >= 14 ? ' late' : '') + '">' + ic + '아직 소개 전 · 등록 ' + (reg === 0 ? '오늘' : reg + '일째') + '</div>';
+  }
+  function renderScopeBar(){
+    var me = myId();
+    var sc = getMemberScope();
+    $('scopeCountAll').textContent = members.length;
+    $('scopeCountMine').textContent = members.filter(function(m){ return m.ownerId && m.ownerId === me; }).length;
+    Array.prototype.forEach.call($('memberScopeBar').querySelectorAll('[data-scope]'), function(b){ b.setAttribute('aria-pressed', b.dataset.scope === sc ? 'true' : 'false'); });
+    var sel = $('memberScopeOwner');
+    if(!isAdmin()){ sel.hidden = true; return; }
+    sel.hidden = false;
+    var cnt = {};
+    members.forEach(function(m){ if(m.ownerId) cnt[m.ownerId] = (cnt[m.ownerId] || 0) + 1; });
+    var ppl = (profiles || []).filter(function(p){ return p.approved && p.id !== me; }).map(function(p){ return { id:p.id, name:p.display_name || '이름 없음', n:cnt[p.id] || 0 }; });
+    Object.keys(cnt).forEach(function(id){ if(id !== me && !ppl.some(function(p){ return p.id === id; })) ppl.push({ id:id, name:ownerName(id), n:cnt[id] }); });
+    ppl.sort(function(a, b){ return (b.n - a.n) || a.name.localeCompare(b.name, 'ko'); });
+    var cur = sc.indexOf('owner:') === 0 ? sc.slice(6) : '';
+    sel.innerHTML = '<option value="">주선자별 보기</option>' + ppl.map(function(p){ return '<option value="'+esc(p.id)+'">'+esc(p.name)+' ('+p.n+')</option>'; }).join('');
+    sel.value = cur;
+    sel.classList.toggle('on', !!cur);
+  }
   function renderMembers(){
     renderFillNudge();
+    renderScopeBar();
     var listEl = $('membersList');
     var loadingEl = $('membersLoading');
     var emptyEl = $('membersEmpty');
@@ -3883,8 +3971,10 @@
     var nFilters = [statusFilter, genderFilter, ownerFilter, mbtiFilter].filter(Boolean).length + ((ageMinRaw !== '' || ageMaxRaw !== '') ? 1 : 0) + (sortMode && sortMode !== 'default' ? 1 : 0);
     $('memberFilterCount').textContent = String(nFilters);
     $('memberFilterCount').hidden = !nFilters;
+    var scopeOwner = scopeOwnerId();
+    var stats = introStats();
     var filtered = members.filter(function(m){
-      if(ownerFilter === 'mine' && m.ownerId !== myId()) return false;
+      if(scopeOwner && m.ownerId !== scopeOwner) return false;
       if(ownerFilter === 'none' && m.ownerId) return false;
       if(statusFilter && m.status !== statusFilter) return false;
       if(genderFilter && m.gender !== genderFilter) return false;
@@ -3915,6 +4005,13 @@
       if(sortMode === 'recent'){
         return (b.createdAt || '').localeCompare(a.createdAt || '');
       }
+      if(sortMode === 'stale'){
+        // 진행 중인 소개가 없는 사람 → 마지막 소개(없으면 등록일)가 오래된 사람부터
+        var sa = stats[a.id] || { active:0, last:'' }, sb = stats[b.id] || { active:0, last:'' };
+        if(!!sa.active !== !!sb.active) return sa.active ? 1 : -1;
+        var ka = sa.last || a.createdAt || '', kb = sb.last || b.createdAt || '';
+        return ka.localeCompare(kb);
+      }
       return 0;
     });
 
@@ -3922,6 +4019,17 @@
       emptyEl.hidden = false; listEl.hidden = true;
       $('membersEmptyTitle').textContent = '아직 등록된 참가자가 없어요';
       $('membersEmptyText').textContent = '소개팅을 주선할 지인을 등록하면 여기 카드로 모아서 보여드려요.';
+      return;
+    }
+    if(filtered.length === 0 && scopeOwner && !members.some(function(m){ return m.ownerId === scopeOwner; })){
+      emptyEl.hidden = false; listEl.hidden = true;
+      if(scopeOwner === myId()){
+        $('membersEmptyTitle').textContent = '아직 내 담당 참가자가 없어요';
+        $('membersEmptyText').textContent = '오른쪽 위 내 이름 버튼의 "내 등록 링크 복사"로 링크를 보내면, 그 링크로 신청한 사람이 내 담당으로 들어와요. 전체 참가자는 위의 "전체"에서 볼 수 있어요.';
+      } else {
+        $('membersEmptyTitle').textContent = '이 주선자가 담당하는 참가자가 없어요';
+        $('membersEmptyText').textContent = '위의 "전체"를 눌러 모든 참가자를 볼 수 있어요.';
+      }
       return;
     }
     if(filtered.length === 0){
@@ -3952,7 +4060,7 @@
               '<div style="min-width:0;">' +
                 '<div class="card-name">'+esc(displayName(m))+'</div>' +
                 '<div class="card-meta">'+metaBits.map(esc).join(' · ')+'</div>' +
-                (!isAdmin() && m.ownerId && m.ownerId === myId() ? '<span class="badge badge-accent" style="margin-top:4px; display:inline-block;">내 담당</span>' :
+                (m.ownerId && m.ownerId === myId() && !scopeOwner ? '<span class="badge badge-accent" style="margin-top:4px; display:inline-block;">내 담당</span>' :
                   (!isAdmin() && m.revealed ? '<span class="badge badge-success" style="margin-top:4px; display:inline-block;">매칭 승인 · 정보 공개</span>' : '')) +
               '</div>' +
             '</div>' +
@@ -3960,6 +4068,7 @@
             (changeRequests[m.id] && canEditMember(m) ? '<span class="badge badge-info" style="margin-right:6px;">정보 수정 요청</span>' : '') +
             '<span class="badge '+st.cls+'">'+(m.status === 'hold' && m.pauseUntil ? '쉬는 중 ~'+esc(fmtShortDate(m.pauseUntil)) : st.label)+'</span>' +
           '</div>' +
+          (scopeOwner ? scopeLineHtml(m, stats) : '') +
           preqHtml(m) +
           (rows ? '<div class="card-body">'+rows+'</div>' : '') +
           (changeRequests[m.id] && canEditMember(m)
@@ -5786,6 +5895,7 @@
       ['memberStatusFilter','memberGenderFilter','memberMbtiFilter','memberOwnerFilter'].forEach(function(id){ if($(id)) $(id).value = ''; });
       $('memberAgeMin').value = ''; $('memberAgeMax').value = '';
       $('memberSearch').value = m.codeName || m.name || '';
+      memberScope = 'all';
       switchToTab('members');
       renderMembers();
       setTimeout(function(){ flashCard('#membersList .card[data-id="'+pid+'"]'); }, 80);
@@ -6499,6 +6609,13 @@
     $('memberAgeMax').addEventListener('input', renderMembers);
     $('memberMbtiFilter').addEventListener('change', renderMembers);
     $('memberSort').addEventListener('change', renderMembers);
+    $('memberScopeBar').addEventListener('click', function(e){
+      var b = e.target.closest('[data-scope]'); if(!b) return;
+      setMemberScope(b.dataset.scope);
+    });
+    $('memberScopeOwner').addEventListener('change', function(){
+      setMemberScope(this.value ? 'owner:' + this.value : 'all');
+    });
 
     $('m-photo-strip').addEventListener('click', function(e){
       var btn = e.target.closest('button');
@@ -6684,7 +6801,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-19.5';
+  var APP_VERSION = '2026-10-19.6';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
