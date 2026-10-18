@@ -727,6 +727,20 @@
   .offer-photos img{ border-radius:20px; }
   .offer-facts{ background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px 16px; }
   .offer-result .big svg{ width:120px; height:auto; }
+  .rec-direct{ display:flex; flex-direction:column; gap:10px; padding:14px; border:1px dashed var(--line); border-radius:var(--radius); background:var(--surface); }
+  .rec-direct-head{ display:flex; flex-direction:column; gap:2px; }
+  .rec-direct-head b{ font-size:15px; }
+  .rec-direct-head span{ font-size:12.5px; color:var(--muted); }
+  .rec-pick-row{ display:flex; gap:6px; }
+  .rec-pick-row .field-input{ flex:1; min-width:0; }
+  .rec-pick-list{ display:flex; flex-direction:column; gap:6px; }
+  .rec-pick-list:empty{ display:none; }
+  .rec-pick-opt{ appearance:none; display:flex; align-items:center; gap:10px; text-align:left; border:1px solid var(--line); background:var(--surface-2); border-radius:12px; padding:8px 10px; cursor:pointer; font-family:inherit; color:var(--ink); }
+  .rec-pick-opt:hover{ border-color:var(--accent); }
+  .rec-pick-opt .avatar, .rec-pick-opt .avatar-placeholder{ width:38px; height:38px; font-size:14px; }
+  .rec-pick-opt b{ font-size:14px; }
+  .rec-pick-opt span{ font-size:12px; color:var(--muted); }
+  .rec-pick-opt .badge{ margin-left:auto; }
   .sum-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:8px; }
   .sum-item{ background:var(--surface-2); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:2px; }
   .sum-item b{ font-family:var(--font-display); font-size:20px; font-variant-numeric:tabular-nums; }
@@ -873,7 +887,7 @@
               <h4>AI 추천 보고 제안하기 <span class="who">나</span></h4>
               <ul>
                 <li><span class="guide-ui">AI 추천</span> 탭에서 내 참가자마다 잘 맞을 후보와 이유를 자동으로 보여줘요. 조건이 안 맞는 사람과 이미 제안한 짝은 빠져 있어요. 사진을 누르면 크게 보이고, <b>프로필 자세히 보기</b>로 참가자 관리에 가지 않아도 전체 정보를 볼 수 있어요.</li>
-                <li>후보를 살펴보고 괜찮으면 <span class="guide-ui">제안하기</span>를 눌러요. 직접 고르고 싶으면 <span class="guide-ui">빠른 매칭</span>이나 <span class="guide-ui">새 매칭 등록</span>을 써도 돼요.</li>
+                <li>후보를 살펴보고 괜찮으면 <span class="guide-ui">제안하기</span>를 눌러요. 생각해 둔 상대가 있으면 같은 화면의 <span class="guide-ui">직접 골라 궁합 보기</span>에서 이름·코드로 찾아 바로 제안할 수 있어요. 날짜·메모를 직접 적고 싶으면 매칭 탭의 <span class="guide-ui">새 매칭 등록</span>을 써요.</li>
               </ul>
             </div>
           </li>
@@ -925,7 +939,7 @@
         <h3>궁합 점수는 이렇게 계산해요</h3>
         <ul class="guide-plain">
           <li>나이, 사는 곳, 만남 목적, 관심사, 흡연·음주, 원하는 키, 이상형 키워드, MBTI, 종교를 보고 점수를 매겨요. 나이·지역·목적·관심사의 비중이 커요.</li>
-          <li><b>조건 불일치</b>: 한쪽이 원하는 나이·키·비흡연·종교 조건에 맞지 않는 경우예요. AI 추천에서는 빠지고, 빠른 매칭에서는 맨 아래에 보여요.</li>
+          <li><b>조건 불일치</b>: 한쪽이 원하는 나이·키·비흡연·종교 조건에 맞지 않는 경우예요. AI 추천 후보에서는 빠지고, 직접 골라 궁합 보기에서는 빨간 표시로 알려 줘요.</li>
           <li><b>정보 적음</b>: 비교할 정보가 부족하면 점수가 50% 근처로 나와요. 참가자 정보를 채우면 정확해져요.</li>
           <li>점수는 참고용이에요. 두 사람을 아는 주선자의 판단이 가장 중요해요.</li>
         </ul>
@@ -1241,7 +1255,6 @@
   <nav class="tabs" role="tablist">
     <button class="tab-btn" role="tab" id="tabBtn-members" aria-selected="true" aria-controls="panel-members" data-tab="members"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.6c2.7.1 4.8 1.8 5.5 4.9"/></svg><span>참가자</span></button>
     <button class="tab-btn" role="tab" id="tabBtn-recommend" aria-selected="false" aria-controls="panel-recommend" data-tab="recommend"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><span>AI 추천</span></button>
-    <button class="tab-btn" role="tab" id="tabBtn-quickmatch" aria-selected="false" aria-controls="panel-quickmatch" data-tab="quickmatch"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12z"/></svg><span>빠른 매칭</span></button>
     <button class="tab-btn" role="tab" id="tabBtn-matches" aria-selected="false" aria-controls="panel-matches" data-tab="matches"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="4" cy="15" r="2.2"/><circle cx="20" cy="9" r="2.2"/><path d="M6.2 15c3 0 2.6-8 6.3-8 3.4 0 2.6 6.5-.3 6.2-2.6-.3-1.4-6.4 2.6-5.9 1.3.2 2.2.7 3.3.7"/></svg><span>매칭</span><span class="tab-count" id="pendingMatchCount" hidden></span></button>
     <button class="tab-btn admin-only" role="tab" id="tabBtn-accounts" aria-selected="false" aria-controls="panel-accounts" data-tab="accounts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.2 7.5 9.5 4.4-1.3 7.5-4.9 7.5-9.5V6z"/><path d="m9 12 2 2 4-4"/></svg><span>주선자</span><span class="tab-count" id="pendingAccountCount" hidden></span></button>
   </nav>
@@ -1327,83 +1340,16 @@
     <div class="toolbar">
       <select id="recTarget" class="select-input" style="flex:1 1 220px;"></select>
     </div>
+    <div class="rec-direct" id="recDirect">
+      <div class="rec-direct-head"><b>직접 골라 궁합 보기</b><span id="recPickHint">생각해 둔 상대가 있으면 이름·코드로 찾아보세요</span></div>
+      <div class="rec-pick-row">
+        <input id="recPickSearch" class="field-input" type="search" placeholder="상대 이름·코드·직업 검색" autocomplete="off">
+        <button type="button" class="btn btn-ghost" id="recPickClear" hidden>지우기</button>
+      </div>
+      <div id="recPickList" class="rec-pick-list"></div>
+      <div id="recPickResult"></div>
+    </div>
     <div id="recList" style="display:flex; flex-direction:column; gap:14px;"></div>
-  </section>
-
-  <section id="panel-quickmatch" role="tabpanel" aria-labelledby="tabBtn-quickmatch" style="display:none; flex-direction:column; gap:14px;">
-    <h2 class="page-title">빠른 매칭</h2>
-    <p class="helper-text" style="margin:0;">양쪽에서 한 명씩 선택하면 궁합을 참고해서 바로 매칭을 만들 수 있어요.</p>
-    <div class="toolbar">
-      <div style="display:flex; align-items:center; gap:6px;">
-        <span class="helper-text" style="margin:0; white-space:nowrap;">나이</span>
-        <input id="qmAgeMin" class="field-input" type="number" placeholder="최소" style="max-width:80px;">
-        <span class="helper-text" style="margin:0;">~</span>
-        <input id="qmAgeMax" class="field-input" type="number" placeholder="최대" style="max-width:80px;">
-      </div>
-      <select id="qmMbtiFilter" class="select-input">
-        <option value="">모든 MBTI</option>
-        <option value="ENFJ">ENFJ</option>
-        <option value="ENFP">ENFP</option>
-        <option value="ENTJ">ENTJ</option>
-        <option value="ENTP">ENTP</option>
-        <option value="ESFJ">ESFJ</option>
-        <option value="ESFP">ESFP</option>
-        <option value="ESTJ">ESTJ</option>
-        <option value="ESTP">ESTP</option>
-        <option value="INFJ">INFJ</option>
-        <option value="INFP">INFP</option>
-        <option value="INTJ">INTJ</option>
-        <option value="INTP">INTP</option>
-        <option value="ISFJ">ISFJ</option>
-        <option value="ISFP">ISFP</option>
-        <option value="ISTJ">ISTJ</option>
-        <option value="ISTP">ISTP</option>
-      </select>
-      <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; color:var(--muted);">
-        <input type="checkbox" id="qmAvailableOnly" checked style="width:16px; height:16px;">
-        소개 가능만 보기
-      </label>
-      <label style="display:flex; align-items:center; gap:6px; font-size:13.5px; color:var(--muted);">
-        <input type="checkbox" id="qmHardOnly" style="width:16px; height:16px;">
-        조건 안 맞는 사람 숨기기
-      </label>
-    </div>
-
-    <div class="qm-bar" id="qmSelectionBar" hidden>
-      <span id="qmSelectionText"></span>
-      <span style="flex:1"></span>
-      <button class="btn btn-ghost" type="button" id="qmClearSelectionBtn">선택 취소</button>
-      <button class="btn btn-primary" type="button" id="qmCreateMatchBtn">매칭 만들기</button>
-    </div>
-    <div class="qm-reasons" id="qmReasons" hidden></div>
-
-    <div class="qm-columns">
-      <div>
-        <div class="qm-column-head">
-          <select id="qmLeftGender" class="select-input">
-            <option value="male">남성</option>
-            <option value="female">여성</option>
-            <option value="">전체</option>
-          </select>
-          <span class="helper-text" id="qmLeftCount">&nbsp;</span>
-        </div>
-        <div id="qmLeftList" style="display:flex; flex-direction:column; gap:10px;"></div>
-        <p class="helper-text" id="qmLeftEmpty" hidden>조건에 맞는 참가자가 없어요.</p>
-      </div>
-      <div>
-        <div class="qm-column-head">
-          <select id="qmRightGender" class="select-input">
-            <option value="female">여성</option>
-            <option value="male">남성</option>
-            <option value="">전체</option>
-          </select>
-          <span class="helper-text" id="qmRightCount">&nbsp;</span>
-        </div>
-        <div id="qmRightList" style="display:flex; flex-direction:column; gap:10px;"></div>
-        <p class="helper-text" id="qmRightEmpty" hidden>조건에 맞는 참가자가 없어요.</p>
-      </div>
-    </div>
-    <p class="helper-text" style="margin:0;">* 궁합 점수는 나이, 사는 곳, 만남 목적, 관심사, 생활 습관(흡연·음주), 원하는 키, 이상형 키워드, MBTI, 종교를 참고한 추정치예요. 한쪽이 원하는 조건(나이·키·흡연·종교)에 맞지 않으면 '조건 불일치'로 표시하고 아래로 보내요. 입력된 정보가 적으면 점수가 50% 근처로 나와요.</p>
   </section>
 
   <!-- ================= MATCHES PANEL ================= -->
@@ -1995,8 +1941,6 @@
   var editingMemberId = null;
   var editingMatchId = null;
   var pendingDelete = null; // {kind:'member'|'match', id, label, photoPaths}
-  var qmLeftSelectedId = null;
-  var qmRightSelectedId = null;
   var memberPhoto = { original:[], working:[] };
   var regPhoto = { working:[] };
   var MAX_PHOTOS = 6;
@@ -2728,6 +2672,7 @@
       return '<div class="rec-group">'+head+body+'</div>';
     }).join('');
     hydratePhotos();
+    renderRecDirect();
   }
   // AI 추천: 펼친 프로필은 화면이 새로고침돼도 펼친 채로 둬요
   var recOpen = {};
@@ -2815,7 +2760,101 @@
       showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '링크를 만들지 못했어요. 다시 시도해 주세요.');
     });
   }
+
+  /* AI 추천: 직접 골라 궁합 보기 (예전 '빠른 매칭'을 여기로 합쳤어요) */
+  var recPickId = null;
+  function openRecFor(m){
+    var targets = recTargets();
+    var mine = targets.some(function(t){ return t.id === m.id; });
+    switchToTab('recommend');
+    window.scrollTo(0, 0);
+    if(mine){
+      $('recTarget').value = m.id;
+      recPickId = null;
+    } else {
+      // 내 담당이 아니면 상대로 넣어 두고, 내 참가자를 고르게 해요
+      recPickId = m.id;
+    }
+    $('recPickSearch').value = '';
+    renderRecommend();
+  }
+  function recPickCandidates(t, q){
+    q = q.trim().toLowerCase();
+    return members.filter(function(c){
+      if(c.approved === false || (t && c.id === t.id)) return false;
+      if(t && t.gender && c.gender && t.gender === c.gender) return false;
+      if(!q) return false;
+      var hay = [c.name, c.codeName, c.job, c.regionSido, c.regionDetail, c.mbti].filter(Boolean).join(' ').toLowerCase();
+      return hay.indexOf(q) >= 0;
+    }).slice(0, 6);
+  }
+  function renderRecDirect(){
+    var box = $('recDirect');
+    if(!box) return;
+    var tid = $('recTarget').value;
+    var t = tid ? memberById(tid) : null;
+    var other = recPickId ? memberById(recPickId) : null;
+    var q = $('recPickSearch').value;
+    $('recPickClear').hidden = !(q || other);
+    if(!t){
+      $('recPickHint').textContent = other
+        ? displayName(other) + ' 님과 맞춰 볼 내 참가자를 위에서 골라 주세요'
+        : '먼저 위에서 내 참가자를 한 명 고르면, 생각해 둔 상대와 궁합을 볼 수 있어요';
+    } else {
+      $('recPickHint').textContent = displayName(t) + ' 님과 맞춰 볼 상대를 이름·코드·직업으로 찾아보세요';
+    }
+    var list = (q && !other) ? recPickCandidates(t, q) : [];
+    $('recPickList').innerHTML = list.map(function(c){
+      var sc = t ? compatibilityScore(t, c) : null;
+      var badge = sc ? (sc.conflicts.length ? '<span class="badge badge-danger">조건 불일치</span>' : '<span class="badge badge-accent">궁합 '+sc.pct+'%</span>') : '';
+      return '<button type="button" class="rec-pick-opt" data-pick="'+esc(c.id)+'">' + memberAvatarHtml(c).replace(/<button[^>]*>|<\/button>/g, '') +
+        '<span style="display:flex; flex-direction:column; min-width:0;"><b>'+esc(displayName(c))+'</b><span>'+esc(memberMetaText(c))+'</span></span>' + badge + '</button>';
+    }).join('') || ((q && !other) ? '<p class="rec-empty" style="margin:0;">찾는 사람이 없어요.</p>' : '');
+    if(!other || !t){
+      $('recPickResult').innerHTML = (other && !t) ? '<div class="rec-item"><div class="rec-item-top">' + memberAvatarHtml(other) +
+        '<div class="rec-who"><span class="nm">'+esc(displayName(other))+'</span><span class="meta">'+esc(memberMetaText(other))+'</span></div></div></div>' : '';
+      hydratePhotos();
+      return;
+    }
+    var sc = compatibilityScore(t, other);
+    var chips = sc.conflicts.map(function(x){ return '<span class="badge badge-danger">'+esc(x)+'</span>'; }).join('') +
+                sc.reasons.slice(0, 4).map(function(x){ return '<span class="badge badge-success">'+esc(x)+'</span>'; }).join('') +
+                sc.cautions.slice(0, 3).map(function(x){ return '<span class="badge badge-warn">'+esc(x)+'</span>'; }).join('');
+    var cls = sc.conflicts.length ? 'badge-danger' : (sc.pct >= 70 ? 'badge-success' : (sc.pct >= 40 ? 'badge-accent' : 'badge-neutral'));
+    var label = sc.conflicts.length ? '조건 불일치' : '궁합 ' + sc.pct + '%' + (sc.lowInfo ? ' · 정보 적음' : '');
+    var action;
+    if(pairExists(t.id, other.id)) action = '<span class="badge badge-neutral">이미 제안한 짝이에요</span>';
+    else if(t.status !== 'available' || other.status !== 'available') action = '<span class="badge badge-warn">지금은 소개 가능 상태가 아니에요</span>';
+    else action = '<button class="btn btn-primary" type="button" data-action="rec-propose" data-a="'+esc(t.id)+'" data-b="'+esc(other.id)+'" data-pct="'+sc.pct+'">제안하기</button>';
+    $('recPickResult').innerHTML = '<div class="rec-item">' +
+      '<div class="rec-item-top">' + memberAvatarHtml(other) +
+        '<div class="rec-who"><span class="nm">'+esc(displayName(other))+'</span><span class="meta">'+esc(memberMetaText(other))+'</span>' + recTraitLine(other) + '</div>' +
+        '<div class="rec-side"><span class="badge '+cls+'">'+esc(label)+'</span>' + action + '</div></div>' +
+      (chips ? '<div class="qm-reasons" style="margin:0;">'+chips+'</div>' : '') +
+      (sc.conflicts.length ? '<p class="helper-text" style="margin:0;">한쪽이 원하는 조건과 달라요. 그래도 제안할 수는 있지만, 담당 주선자와 먼저 이야기해 보세요.</p>' : '') +
+      recProfileHtml(other, 'pick:' + t.id + ':' + other.id, '프로필 자세히 보기') +
+    '</div>';
+    hydratePhotos();
+  }
+  function initRecDirect(){
+    $('recPickSearch').addEventListener('input', function(){ recPickId = null; renderRecDirect(); });
+    $('recPickClear').addEventListener('click', function(){ recPickId = null; $('recPickSearch').value = ''; renderRecDirect(); });
+    $('recPickList').addEventListener('click', function(e){
+      var b = e.target.closest('[data-pick]'); if(!b) return;
+      recPickId = b.dataset.pick;
+      var m = memberById(recPickId);
+      $('recPickSearch').value = m ? displayName(m) : '';
+      renderRecDirect();
+    });
+    $('recPickResult').addEventListener('click', function(e){
+      var b = e.target.closest('button[data-action="rec-propose"]');
+      if(b) recPropose(b);
+      var v = e.target.closest('button[data-action="view-photos"]');
+      if(v) openPhotoViewer(v.dataset.id);
+    });
+  }
   function initOfferLink(){
+    initRecDirect();
     $('offerLinkClose').addEventListener('click', closeOfferLink);
     $('offerLinkCancel').addEventListener('click', closeOfferLink);
     $('offerLinkDone').addEventListener('click', closeOfferLink);
@@ -3553,14 +3592,13 @@
     var btns = document.querySelectorAll('.tab-btn');
     btns.forEach(function(b){ b.setAttribute('aria-selected', b.dataset.tab === tabName ? 'true':'false'); });
     if(tabName === 'accounts' && !isAdmin()) tabName = 'members';
-    var membersPanel = $('panel-members'), qmPanel = $('panel-quickmatch'), matchesP = $('panel-matches'), accountsP = $('panel-accounts');
+    if(tabName === 'quickmatch') tabName = 'recommend';
+    var membersPanel = $('panel-members'), matchesP = $('panel-matches'), accountsP = $('panel-accounts');
     $('panel-recommend').style.display = tabName === 'recommend' ? 'flex' : 'none';
     if(tabName === 'recommend') renderRecommend();
     membersPanel.style.display = tabName === 'members' ? 'flex' : 'none';
-    qmPanel.style.display = tabName === 'quickmatch' ? 'flex' : 'none';
     matchesP.style.display = tabName === 'matches' ? 'flex' : 'none';
     accountsP.style.display = tabName === 'accounts' ? 'flex' : 'none';
-    if(tabName === 'quickmatch') renderQuickMatch();
     if(tabName === 'accounts') refetchProfiles();
   }
   function initTabs(){
@@ -3775,142 +3813,6 @@
     };
   }
 
-  /* ---------------- quick match: list + render ---------------- */
-  function qmFilteredList(genderFilter, otherSelected){
-    var ageMinRaw = $('qmAgeMin').value.trim();
-    var ageMaxRaw = $('qmAgeMax').value.trim();
-    var ageMin = ageMinRaw === '' ? null : Number(ageMinRaw);
-    var ageMax = ageMaxRaw === '' ? null : Number(ageMaxRaw);
-    var mbtiFilter = $('qmMbtiFilter').value;
-    var availableOnly = $('qmAvailableOnly').checked;
-    var hardOnly = $('qmHardOnly').checked;
-    return members.filter(function(m){
-      if(m.approved === false) return false;
-      if(hardOnly && otherSelected && otherSelected.id !== m.id && compatibilityScore(otherSelected, m).conflicts.length) return false;
-      if(genderFilter && m.gender !== genderFilter) return false;
-      if(mbtiFilter && String(m.mbti || '').toUpperCase() !== mbtiFilter) return false;
-      if(availableOnly && m.status !== 'available') return false;
-      if(ageMin != null || ageMax != null){
-        var age = ageFromBirthYear(m.birthYear);
-        if(age == null) return false;
-        if(ageMin != null && age < ageMin) return false;
-        if(ageMax != null && age > ageMax) return false;
-      }
-      return true;
-    });
-  }
-  function qmCardHtml(m, otherSelected, side){
-    var selectedId = side === 'left' ? qmLeftSelectedId : qmRightSelectedId;
-    var isSelected = selectedId === m.id;
-    var st = MEMBER_STATUS[m.status] || MEMBER_STATUS.available;
-    var metaBits = [];
-    if(m.gender && GENDER_LABEL[m.gender]) metaBits.push(GENDER_LABEL[m.gender]);
-    var age = ageFromBirthYear(m.birthYear);
-    if(age != null) metaBits.push(age + '세');
-    if(m.job) metaBits.push(esc(m.job));
-    if(m.mbti) metaBits.push(esc(m.mbti));
-    if(m.height) metaBits.push(esc(String(m.height)) + 'cm');
-    var compatHtml = '';
-    if(otherSelected && otherSelected.id !== m.id){
-      var c = compatibilityScore(otherSelected, m);
-      if(c.conflicts.length){
-        compatHtml = '<span class="badge badge-danger" title="'+esc(c.conflicts.join(', '))+'">조건 불일치</span>';
-      } else {
-        var cls = c.pct >= 70 ? 'badge-success' : (c.pct >= 40 ? 'badge-accent' : 'badge-neutral');
-        compatHtml = '<span class="badge '+cls+'" title="'+esc(c.reasons.join(', ') || '참고할 정보가 적어요')+'">궁합 '+c.pct+'%'+(c.lowInfo ? ' · 정보 적음' : '')+'</span>';
-      }
-    }
-    return (
-      '<div class="qm-card'+(isSelected ? ' selected' : '')+'" data-id="'+esc(m.id)+'" data-side="'+side+'">' +
-        '<div class="qm-card-top">' +
-          '<span class="qm-card-name">'+esc(displayName(m))+'</span>' +
-          '<span class="qm-card-badges"><span class="badge '+st.cls+'">'+st.label+'</span>'+compatHtml+'</span>' +
-        '</div>' +
-        '<div class="qm-card-meta">'+metaBits.join(' · ')+'</div>' +
-      '</div>'
-    );
-  }
-  function renderQuickMatch(){
-    if(!membersLoaded) return;
-    var leftGender = $('qmLeftGender').value;
-    var rightGender = $('qmRightGender').value;
-    var leftSelectedMember = qmLeftSelectedId ? memberById(qmLeftSelectedId) : null;
-    var rightSelectedMember = qmRightSelectedId ? memberById(qmRightSelectedId) : null;
-    var leftList = qmFilteredList(leftGender, rightSelectedMember);
-    var rightList = qmFilteredList(rightGender, leftSelectedMember);
-
-    if(rightSelectedMember){
-      leftList = leftList.slice().sort(function(a,b){
-        return compatibilityScore(rightSelectedMember, b).score - compatibilityScore(rightSelectedMember, a).score;
-      });
-    }
-    if(leftSelectedMember){
-      rightList = rightList.slice().sort(function(a,b){
-        return compatibilityScore(leftSelectedMember, b).score - compatibilityScore(leftSelectedMember, a).score;
-      });
-    }
-
-    $('qmLeftCount').textContent = leftList.length + '명';
-    $('qmRightCount').textContent = rightList.length + '명';
-    $('qmLeftEmpty').hidden = leftList.length > 0;
-    $('qmRightEmpty').hidden = rightList.length > 0;
-
-    $('qmLeftList').innerHTML = leftList.map(function(m){ return qmCardHtml(m, rightSelectedMember, 'left'); }).join('');
-    $('qmRightList').innerHTML = rightList.map(function(m){ return qmCardHtml(m, leftSelectedMember, 'right'); }).join('');
-
-    var bar = $('qmSelectionBar');
-    var createBtn = $('qmCreateMatchBtn');
-    if(leftSelectedMember && rightSelectedMember){
-      bar.hidden = false;
-      if(leftSelectedMember.id === rightSelectedMember.id){
-        $('qmSelectionText').textContent = '같은 참가자는 매칭할 수 없어요';
-        createBtn.disabled = true;
-      } else {
-        var c = compatibilityScore(leftSelectedMember, rightSelectedMember);
-        $('qmSelectionText').textContent = displayName(leftSelectedMember) + ' + ' + displayName(rightSelectedMember) + ' · ' + (c.conflicts.length ? '조건 불일치' : '궁합 ' + c.pct + '%' + (c.lowInfo ? ' (정보 적음)' : ''));
-        createBtn.disabled = false;
-        var chipsHtml = c.conflicts.map(function(t){ return '<span class="badge badge-danger">'+esc(t)+'</span>'; }).join('') +
-          c.reasons.map(function(t){ return '<span class="badge badge-success">'+esc(t)+'</span>'; }).join('') +
-          c.cautions.map(function(t){ return '<span class="badge badge-warn">'+esc(t)+'</span>'; }).join('');
-        $('qmReasons').innerHTML = chipsHtml;
-        $('qmReasons').hidden = !chipsHtml;
-      }
-    } else {
-      bar.hidden = true;
-    }
-    if(!(leftSelectedMember && rightSelectedMember && leftSelectedMember.id !== rightSelectedMember.id)) $('qmReasons').hidden = true;
-  }
-  function presetQuickMatchMember(m){
-    if(!m) return;
-    if(m.gender === 'female'){
-      qmRightSelectedId = m.id;
-      qmLeftSelectedId = null;
-      $('qmRightGender').value = 'female';
-    } else if(m.gender === 'male'){
-      qmLeftSelectedId = m.id;
-      qmRightSelectedId = null;
-      $('qmLeftGender').value = 'male';
-    } else {
-      qmLeftSelectedId = m.id;
-      qmRightSelectedId = null;
-      $('qmLeftGender').value = '';
-    }
-    switchToTab('quickmatch');
-  }
-  function qmCardClickHandler(side){
-    return function(e){
-      var card = e.target.closest('.qm-card');
-      if(!card) return;
-      var id = card.dataset.id;
-      if(side === 'left'){
-        qmLeftSelectedId = (qmLeftSelectedId === id) ? null : id;
-      } else {
-        qmRightSelectedId = (qmRightSelectedId === id) ? null : id;
-      }
-      renderQuickMatch();
-    };
-  }
-
   // 참가자 프로필 줄 (참가자 카드와 AI 추천에서 같이 써요)
   function memberRowsHtml(m, opt){
     opt = opt || {};
@@ -4061,7 +3963,7 @@
               '<button class="btn btn-danger-ghost" type="button" data-action="reject-member" data-id="'+esc(m.id)+'">거절</button>'
             : '') +
             (!pending ?
-              '<button class="btn btn-ghost" type="button" data-action="quick-match" data-id="'+esc(m.id)+'" aria-label="빠른 매칭">' +
+              '<button class="btn btn-ghost" type="button" data-action="quick-match" data-id="'+esc(m.id)+'" aria-label="AI 추천에서 궁합 보기" title="AI 추천에서 궁합 보기">' +
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
               '</button>'
             : '') +
@@ -6691,7 +6593,7 @@
       if(btn.dataset.action === 'preq-dismiss') handlePreq(btn.dataset.req, 'dismiss', btn);
       if(btn.dataset.action === 'quick-match'){
         var qmMember = memberById(id);
-        if(qmMember) presetQuickMatchMember(qmMember);
+        if(qmMember) openRecFor(qmMember);
       }
       if(btn.dataset.action === 'approve-member') approveMember(id);
       if(btn.dataset.action === 'reject-member'){
@@ -6810,24 +6712,6 @@
     $('memberAgeMax').addEventListener('input', renderMembers);
     $('memberMbtiFilter').addEventListener('change', renderMembers);
     $('memberSort').addEventListener('change', renderMembers);
-
-    $('qmLeftList').addEventListener('click', qmCardClickHandler('left'));
-    $('qmRightList').addEventListener('click', qmCardClickHandler('right'));
-    $('qmClearSelectionBtn').addEventListener('click', function(){
-      qmLeftSelectedId = null; qmRightSelectedId = null; renderQuickMatch();
-    });
-    $('qmCreateMatchBtn').addEventListener('click', function(){
-      if(qmLeftSelectedId && qmRightSelectedId && qmLeftSelectedId !== qmRightSelectedId){
-        openMatchModal(null, qmLeftSelectedId, qmRightSelectedId);
-      }
-    });
-    $('qmAgeMin').addEventListener('input', renderQuickMatch);
-    $('qmAgeMax').addEventListener('input', renderQuickMatch);
-    $('qmMbtiFilter').addEventListener('change', renderQuickMatch);
-    $('qmAvailableOnly').addEventListener('change', renderQuickMatch);
-    $('qmHardOnly').addEventListener('change', renderQuickMatch);
-    $('qmLeftGender').addEventListener('change', renderQuickMatch);
-    $('qmRightGender').addEventListener('change', renderQuickMatch);
 
     $('m-photo-strip').addEventListener('click', function(e){
       var btn = e.target.closest('button');
@@ -6963,7 +6847,6 @@
       renderMembers();
       renderMatches();
       renderStats();
-      renderQuickMatch();
       if($('panel-recommend').style.display === 'flex') renderRecommend();
       if(!$('matchOverlay').hidden){ populateMemberSelects(); }
     }).catch(function(err){
@@ -7015,7 +6898,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-19.2';
+  var APP_VERSION = '2026-10-19.3';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
