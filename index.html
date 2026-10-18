@@ -1470,6 +1470,23 @@
       </div>
       <p class="helper-text" id="photoOptStatus" hidden style="margin:8px 0 0; font-weight:600;"></p>
     </div>
+    <div class="card" style="padding:12px 14px;">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:space-between;">
+        <div style="flex:1; min-width:200px;">
+          <b>안 쓰는 사진 정리</b>
+          <p class="helper-text" style="margin:4px 0 0;">삭제된 참가자 사진, 바꾸기 전 사진, 신청을 끝내지 않은 사진처럼 어느 참가자에게도 연결되지 않은 사진을 지워요. 하루 안에 올라온 사진과 열려 있는 결정 링크의 사진은 남겨 둬요.</p>
+        </div>
+        <button class="btn" id="btnOrphanCheck" type="button">확인하기</button>
+      </div>
+      <div id="orphanBox" class="msg-purge-confirm" hidden style="margin-top:10px;">
+        <span id="orphanText"></span>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn" id="btnOrphanCancel" type="button">그만두기</button>
+          <button class="btn btn-primary" id="btnOrphanDelete" type="button">지우기</button>
+        </div>
+      </div>
+      <p class="helper-text" id="orphanStatus" hidden style="margin:8px 0 0; font-weight:600;"></p>
+    </div>
     <div id="accountsList" style="display:flex; flex-direction:column; gap:10px;"></div>
     <p class="helper-text" id="accountsEmpty" hidden>아직 가입한 주선자가 없어요.</p>
   </section>
@@ -3289,7 +3306,7 @@
   // 사진 저장소는 비공개예요. 로그인한 승인 회원만 잠깐(1시간) 유효한 서명 링크로 볼 수 있어요.
   var BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   // 서명 링크를 3일 동안 같은 주소로 다시 써서, 브라우저가 한 번 받은 사진은 다시 받지 않게 해요 (트래픽 절약)
-  var SIGNED_URL_TTL = 3 * 86400;
+  var SIGNED_URL_TTL = 14 * 86400;   // 사진 주소를 2주 동안 그대로 써서, 브라우저에 저장된 사진을 다시 받지 않아요
   var PHOTO_CACHE_CONTROL = '2592000';   // 새로 올리는 사진: 브라우저가 30일 동안 저장해 둬요
   var thumbMissing = {};     // 미리보기(작은 사진)가 아직 없는 사진
   var signedUrlCache = {};   // path -> { url, exp }
@@ -6416,7 +6433,63 @@
       showToast((err && err.message) || '내려받지 못했어요');
     }).then(function(){ btn.disabled = false; });
   }
+
+  /* 관리자: 안 쓰는 사진 정리 (먼저 개수를 보여 주고, 한 번 더 눌러야 지워요) */
+  var orphanList = null;
+  function fmtBytes(n){ return n >= 1048576 ? (n / 1048576).toFixed(1) + 'MB' : Math.max(1, Math.round(n / 1024)) + 'KB'; }
+  function checkOrphans(){
+    var btn = $('btnOrphanCheck');
+    btn.disabled = true;
+    $('orphanStatus').hidden = true;
+    Promise.resolve(supabase.rpc('orphan_photos', { p_min_age_hours: 24 })).then(function(res){
+      if(res.error) throw res.error;
+      orphanList = res.data || [];
+      if(!orphanList.length){
+        $('orphanBox').hidden = true;
+        $('orphanStatus').textContent = '지울 사진이 없어요.';
+        $('orphanStatus').hidden = false;
+        return;
+      }
+      var total = orphanList.reduce(function(a, o){ return a + Number(o.size || 0); }, 0);
+      $('orphanText').innerHTML = '어느 참가자에게도 연결되지 않은 사진 <b>' + orphanList.length + '개 (' + fmtBytes(total) + ')</b>가 있어요. 지우면 되돌릴 수 없어요.';
+      $('btnOrphanDelete').textContent = orphanList.length + '개 지우기';
+      $('orphanBox').hidden = false;
+    }).catch(function(err){
+      console.error(err);
+      showToast('확인하지 못했어요. 다시 시도해 주세요');
+    }).then(function(){ btn.disabled = false; });
+  }
+  function deleteOrphans(){
+    if(!orphanList || !orphanList.length) return;
+    var names = orphanList.map(function(o){ return o.name; });
+    var btn = $('btnOrphanDelete');
+    btn.disabled = true; $('btnOrphanCancel').disabled = true;
+    var done = 0, failed = 0;
+    var chunks = [];
+    for(var i = 0; i < names.length; i += 100) chunks.push(names.slice(i, i + 100));
+    chunks.reduce(function(p, chunk){
+      return p.then(function(){
+        return Promise.resolve(supabase.storage.from(PHOTO_BUCKET).remove(chunk)).then(function(res){
+          if(res.error) throw res.error;
+          done += (res.data || []).length;
+          failed += chunk.length - (res.data || []).length;
+          $('btnOrphanDelete').textContent = '지우는 중… ' + done + '/' + names.length;
+        });
+      });
+    }, Promise.resolve()).then(function(){
+      $('orphanBox').hidden = true;
+      $('orphanStatus').textContent = '사진 ' + done + '개를 지웠어요.' + (failed ? ' (' + failed + '개는 이미 없거나 지우지 못했어요)' : '');
+      $('orphanStatus').hidden = false;
+      orphanList = null;
+    }).catch(function(err){
+      console.error(err);
+      showToast('지우다가 멈췄어요. ' + done + '개를 지웠어요. 다시 확인해 주세요');
+    }).then(function(){ btn.disabled = false; $('btnOrphanCancel').disabled = false; });
+  }
   function initV18UI(){
+    $('btnOrphanCheck').addEventListener('click', checkOrphans);
+    $('btnOrphanCancel').addEventListener('click', function(){ $('orphanBox').hidden = true; orphanList = null; });
+    $('btnOrphanDelete').addEventListener('click', deleteOrphans);
     $('btnExportXlsx').addEventListener('click', exportXlsx);
     $('replyNudgeOpen').addEventListener('click', function(){ goToMatch(matches.filter(replyLate)); });
     $('outcomeNudgeOpen').addEventListener('click', function(){ goToMatch(matches.filter(outcomeDue)); });
@@ -6942,7 +7015,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-19.1';
+  var APP_VERSION = '2026-10-19.2';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
@@ -6962,6 +7035,34 @@
         }
       }).catch(function(){});
   }
+  // 표마다 짧은 지문(md5)만 받아서, 달라진 표만 다시 불러와요
+  var lastStamp = null;
+  function refreshStamp(){
+    return Promise.resolve(supabase.rpc('data_stamp')).then(function(res){
+      if(res && !res.error && res.data) lastStamp = res.data;
+    }).catch(function(){});
+  }
+  function refetchChanged(){
+    return Promise.resolve(supabase.rpc('data_stamp')).then(function(res){
+      var s = res && !res.error ? res.data : null;
+      var old = lastStamp;
+      if(!s || !old){
+        lastStamp = s || lastStamp;
+        var all = [refetchParticipants(), refetchMatches(), refetchMemberNames(), refetchChangeRequests(), refetchPreqs()];
+        if(isAdmin()) all.push(refetchProfiles());
+        return Promise.all(all);
+      }
+      lastStamp = s;
+      var j = [];
+      if(s.p !== old.p || s.v !== old.v) j.push(refetchParticipants());
+      if(s.m !== old.m) j.push(refetchMatches());
+      else if(s.o !== old.o) j.push(refetchOfferTimes());
+      if(s.c !== old.c) j.push(refetchChangeRequests());
+      if(s.r !== old.r) j.push(refetchPreqs());
+      if(s.u !== old.u){ j.push(refetchMemberNames()); if(isAdmin()) j.push(refetchProfiles()); }
+      return Promise.all(j);
+    }).catch(function(err){ console.error('stamp error', err); });
+  }
   function refreshAll(reason, force){
     if(!appStarted) return Promise.resolve();
     var now = Date.now();
@@ -6972,9 +7073,15 @@
     return supabase.auth.getSession().catch(function(){}).then(function(){
       if(rtStatus !== 'SUBSCRIBED') subscribeRealtime();
       if(reason === 'resume' || reason === 'pull'){ msgNeedFull = true; refetchSurveyStatus(); refetchSettings(); }
-      var jobs = [refetchParticipants(), refetchMatches(), refetchMemberNames(), refetchChangeRequests(), refetchMessages(), refetchPreqs(), refetchOfferTimes()];
+      var jobs;
+      if(reason !== 'pull' && lastStamp){
+        // 바뀐 표만 다시 받아요 (지문 비교: 몇백 바이트)
+        jobs = [refetchChanged(), refetchMessages()];
+      } else {
+        jobs = [refreshStamp(), refetchParticipants(), refetchMatches(), refetchMemberNames(), refetchChangeRequests(), refetchMessages(), refetchPreqs(), refetchOfferTimes()];
+        if(isAdmin()) jobs.push(refetchProfiles());
+      }
       if(reason === 'resume') runDailyJobs();
-      if(isAdmin()) jobs.push(refetchProfiles());
       if(reason === 'resume' || reason === 'pull') jobs.push(checkNewVersion());
       return Promise.all(jobs);
     }).catch(function(err){ console.error('refresh error', err); });
@@ -7041,6 +7148,7 @@
     refetchSurveyStatus();
     refetchSettings();
     refetchPreqs();
+    refreshStamp();
     runDailyJobs();
     subscribeRealtime();
     initAutoRefresh();
