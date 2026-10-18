@@ -717,7 +717,7 @@
     </div>
     <div class="guide-body">
       <section>
-        <p class="guide-lead">AI가 궁합으로 후보를 찾고, 주선자가 검토해서 제안하고, 관리자 승인 뒤 참가자 본인이 최종 결정해요. 두 사람이 모두 만나보기로 하면 연락처가 공개돼요.</p>
+        <p class="guide-lead">AI가 궁합으로 후보를 찾고, 주선자가 검토해서 제안하고, 상대 담당 주선자가 수락하면 참가자 본인이 최종 결정해요. 두 사람이 모두 만나보기로 하면 연락처가 공개돼요.</p>
       </section>
 
       <section>
@@ -726,9 +726,8 @@
           <span class="gf-step"><b>1</b>AI 추천</span><span class="gf-arrow">→</span>
           <span class="gf-step"><b>2</b>주선자 검토·제안</span><span class="gf-arrow">→</span>
           <span class="gf-step"><b>3</b>상대 담당 수락</span><span class="gf-arrow">→</span>
-          <span class="gf-step"><b>4</b>관리자 승인</span><span class="gf-arrow">→</span>
-          <span class="gf-step"><b>5</b>참가자 최종 결정</span><span class="gf-arrow">→</span>
-          <span class="gf-step"><b>6</b>연락처 공개 · 소개</span>
+          <span class="gf-step"><b>4</b>참가자 최종 결정</span><span class="gf-arrow">→</span>
+          <span class="gf-step"><b>5</b>연락처 공개 · 소개</span>
         </div>
       </section>
 
@@ -771,9 +770,10 @@
           <li>
             <span class="guide-num">4</span>
             <div>
-              <h4>관리자 승인 <span class="who">관리자</span></h4>
+              <h4>관리자 확인 (필요할 때만) <span class="who">관리자</span></h4>
               <ul>
-                <li>관리자가 매칭을 확인하고 승인해야 참가자에게 보낼 수 있어요.</li>
+                <li>양쪽 담당 주선자가 수락하면 바로 시작돼서 참가자에게 결정 링크를 보낼 수 있어요.</li>
+                <li>담당 주선자가 없는 참가자가 낀 매칭만 관리자가 승인해요. 관리자는 모든 매칭을 보고, 문제가 있으면 안 됨으로 정리할 수 있어요.</li>
               </ul>
             </div>
           </li>
@@ -906,7 +906,7 @@
     <form id="regForm">
       <p class="helper-text" id="regRefNote" hidden style="margin:0 0 4px; color:var(--accent); font-weight:700;"></p>
       <div class="legacy-box" id="reg-legacy" hidden></div>
-      <p class="reg-intro">신청 내용은 담당 주선자나 관리자가 확인 후 승인해요. 이름과 연락처는 관리자와, 관리자가 승인한 매칭을 맡은 주선자에게만 공개돼요.</p>
+      <p class="reg-intro">신청 내용은 담당 주선자나 관리자가 확인 후 승인해요. 이름과 연락처는 관리자와, 두 분이 모두 만나보기로 한 매칭을 맡은 주선자에게만 공개돼요.</p>
       <div class="field">
         <label>사진 (최대 6장, 선택)</label>
         <div class="photo-strip" id="reg-photo-strip"></div>
@@ -1254,8 +1254,17 @@
   <!-- ================= ACCOUNTS PANEL (admin) ================= -->
   <section id="panel-accounts" class="admin-only" role="tabpanel" aria-labelledby="tabBtn-accounts" style="display:none; flex-direction:column; gap:14px;">
     <div class="toolbar">
-      <p class="helper-text" style="margin:0; flex:1;">주선자가 가입하면 여기서 승인해 주세요. 승인된 주선자는 참가자를 코드네임으로만 보고, 관리자가 승인한 본인 매칭의 두 사람만 이름·연락처를 볼 수 있어요.</p>
+      <p class="helper-text" style="margin:0; flex:1;">주선자가 가입하면 여기서 승인해 주세요. 승인된 주선자는 참가자를 코드네임으로만 보고, 두 사람이 모두 만나보기로 한 본인 매칭에서만 이름·연락처를 볼 수 있어요.</p>
       <button class="btn" id="btnRefreshAccounts" type="button">새로고침</button>
+    </div>
+    <div class="card" style="padding:12px 14px;">
+      <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+        <input type="checkbox" id="setMatchApproval" style="width:20px; height:20px; margin-top:2px; accent-color:var(--accent); flex:none;">
+        <span style="flex:1;">
+          <b>매칭마다 관리자 승인 받기</b>
+          <span class="helper-text" style="display:block; margin:4px 0 0;" id="setMatchApprovalHelp">꺼 두면 양쪽 담당 주선자가 수락하는 즉시 매칭이 시작돼요. 담당 주선자가 없는 참가자가 낀 매칭만 관리자가 승인해요. 켜면 모든 매칭을 관리자가 승인해야 시작돼요.</span>
+        </span>
+      </label>
     </div>
     <div class="card" style="padding:12px 14px;">
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:space-between;">
@@ -1327,7 +1336,7 @@
       <div class="field">
         <label for="m-contact">연락처</label>
         <input class="field-input" id="m-contact" placeholder="전화번호나 메신저 아이디">
-        <span class="helper-text">이름·연락처는 관리자와, 관리자가 승인한 매칭을 맡은 주선자에게만 보여요.</span>
+        <span class="helper-text">이름·연락처는 관리자와, 두 사람이 모두 만나보기로 한 매칭을 맡은 주선자에게만 보여요.</span>
       </div>
       <div class="field-row">
         <div class="field">
@@ -2507,7 +2516,7 @@
     if(isAdmin()) row.approved = true;
     supabase.from('matches').insert(row).then(function(res){
       if(res.error) throw res.error;
-      showToast(isAdmin() ? '제안했어요. 담당 주선자가 참가자에게 링크를 보낼 수 있어요' : '제안했어요. 상대 담당 수락과 관리자 승인을 기다려요');
+      showToast(isAdmin() ? '제안했어요. 담당 주선자가 참가자에게 링크를 보낼 수 있어요' : (approvalRequired() ? '제안했어요. 상대 담당 수락과 관리자 승인을 기다려요' : '제안했어요. 상대 담당이 수락하면 바로 시작돼요'));
       return refetchMatches();
     }).then(function(){ renderRecommend(); }).catch(function(err){
       console.error(err);
@@ -2772,7 +2781,8 @@
     if(isAdmin()){
       items.push('새 주선자가 가입을 신청했을 때');
       items.push('담당 주선자가 없는 참가자 신청이 들어왔을 때');
-      items.push('매칭이 관리자 승인을 기다릴 때');
+      items.push(approvalRequired() ? '매칭이 관리자 승인을 기다릴 때' : '담당 없는 참가자 매칭이 승인을 기다릴 때');
+      items.push('양쪽 담당 수락으로 새 매칭이 시작됐을 때');
     }
     items.push('내 등록 링크로 새 참가자가 신청했을 때');
     items.push('다른 주선자가 내 참가자와의 소개를 제안했을 때');
@@ -3323,14 +3333,14 @@
     if(membersLoaded && matchesLoaded){
       var pendingMembers = members.filter(function(m){ return m.approved === false; }).length +
         members.filter(function(m){ return changeRequests[m.id] && canEditMember(m); }).length;
-      var pendingMatches = matches.filter(function(x){ return !x.approved; }).length;
+      var pendingMatches = isAdmin() ? matches.filter(matchNeedsAdmin).length : 0;
       $('statPending').textContent = String(pendingMembers + pendingMatches);
     } else {
       $('statPending').textContent = '–';
     }
     if(matchesLoaded){
       var pm = isAdmin()
-        ? matches.filter(function(x){ return !x.approved; }).length
+        ? matches.filter(matchNeedsAdmin).length
         : matches.filter(function(x){ return mySidesPending(x).length > 0 || mySidesToSend(x).length > 0; }).length;
       $('pendingMatchCount').textContent = String(pm);
       $('pendingMatchCount').hidden = pm === 0;
@@ -3898,7 +3908,9 @@
       if(pendingMine.length) statusBadges += '<span class="badge badge-warn" style="margin-right:6px;">받은 요청</span>';
       if(toSend.length) statusBadges += '<span class="badge badge-warn" style="margin-right:6px;">링크 보낼 차례</span>';
       if(declined) statusBadges += '<span class="badge badge-danger" style="margin-right:6px;">상대측 거절</span>';
-      else if(!x.approved) statusBadges += '<span class="badge badge-warn" style="margin-right:6px;">관리자 승인 대기</span>';
+      else if(!x.approved) statusBadges += (x.aConsent === 'pending' || x.bConsent === 'pending')
+        ? '<span class="badge badge-warn" style="margin-right:6px;">상대 담당 수락 대기</span>'
+        : '<span class="badge badge-warn" style="margin-right:6px;">관리자 승인 대기</span>';
       else if(pDeclined) statusBadges += '<span class="badge badge-danger" style="margin-right:6px;">참가자 거절</span>';
       else if(matchRevealed(x)) statusBadges += '<span class="badge badge-success" style="margin-right:6px;">둘 다 수락</span>';
       else if(matchReady(x)) statusBadges += '<span class="badge badge-info" style="margin-right:6px;">참가자 결정 중</span>';
@@ -3921,7 +3933,7 @@
         requestHtml =
           '<div class="request-box">' +
             '<div><b>'+esc(ownerName(x.createdBy))+'</b> 님이 내 담당 <b>'+esc(mine ? displayName(mine) : '')+'</b> 님과 <b>'+esc(other ? displayName(other) : '')+'</b>'+(otherBits.length ? ' ('+esc(otherBits.join(' · '))+')' : '')+' 매칭을 요청했어요.</div>' +
-            '<div class="reveal-hint">수락하고 관리자가 승인하면, 각 담당 주선자가 참가자에게 결정 링크를 보내요. 두 참가자가 모두 만나보기로 하면 이름·연락처가 공개돼요.</div>' +
+            '<div class="reveal-hint">' + (matchWaitsAdmin(x) ? '수락하고 관리자가 승인하면' : '수락하면 바로 시작돼서') + ', 각 담당 주선자가 참가자에게 결정 링크를 보내요. 두 참가자가 모두 만나보기로 하면 이름·연락처가 공개돼요.</div>' +
             '<div class="request-actions">' +
               '<button class="btn btn-primary" type="button" data-action="accept-match" data-id="'+esc(x.id)+'">수락</button>' +
               '<button class="btn btn-danger-ghost" type="button" data-action="decline-match" data-id="'+esc(x.id)+'">거절</button>' +
@@ -3943,7 +3955,7 @@
         else {
           if(x.aConsent === 'pending' && aMember) waits.push(displayName(aMember) + ' 담당 ' + ownerName(aMember.ownerId) + ' 님 수락');
           if(x.bConsent === 'pending' && bMember) waits.push(displayName(bMember) + ' 담당 ' + ownerName(bMember.ownerId) + ' 님 수락');
-          if(!x.approved) waits.push('관리자 승인');
+          if(!x.approved && matchWaitsAdmin(x)) waits.push('관리자 승인');
           if(matchReady(x) && !pDeclined){
             if(x.aDecision !== 'accepted' && aMember) waits.push(displayName(aMember) + ' 본인 결정');
             if(x.bDecision !== 'accepted' && bMember) waits.push(displayName(bMember) + ' 본인 결정');
@@ -3977,8 +3989,8 @@
       var approveBtns = '';
       if(isAdmin() && !(closed && x.status !== 'success')){
         approveBtns = !x.approved
-          ? '<button class="btn btn-primary" type="button" data-action="approve-match" data-id="'+esc(x.id)+'">매칭 승인</button>'
-          : (x.createdBy ? '<button class="btn" type="button" data-action="unapprove-match" data-id="'+esc(x.id)+'">승인 취소</button>' : '');
+          ? (matchNeedsAdmin(x) ? '<button class="btn btn-primary" type="button" data-action="approve-match" data-id="'+esc(x.id)+'">매칭 승인</button>' : '')
+          : (x.createdBy && approvalRequired() ? '<button class="btn" type="button" data-action="unapprove-match" data-id="'+esc(x.id)+'">승인 취소</button>' : '');
       }
       var closeHtml = '';
       if(closed && x.status !== 'success'){
@@ -4085,7 +4097,7 @@
   function respondMatch(id, accept){
     supabase.rpc('respond_match', { p_match: id, p_accept: accept }).then(function(res){
       if(res.error) throw res.error;
-      showToast(accept ? '수락했어요. 관리자 승인 후 참가자에게 결정 링크를 보낼 수 있어요' : '거절했어요');
+      showToast(accept ? (approvalRequired() ? '수락했어요. 관리자 승인 후 참가자에게 결정 링크를 보낼 수 있어요' : '수락했어요. 매칭이 시작되면 참가자에게 결정 링크를 보낼 수 있어요') : '거절했어요');
       refetchMatches();
       refetchParticipants();
     }).catch(function(err){
@@ -4253,7 +4265,7 @@
     var until = edit && edit.data && edit.data.expires_at ? fmtDate(String(edit.data.expires_at).slice(0,10)) : '';
     document.querySelector('#regForm .reg-intro').textContent = edit
       ? '고친 내용을 보내면 담당 주선자가 확인한 뒤 반영해요. 이 링크는 한 번만 제출할 수 있어요' + (until ? ' (' + until + '까지)' : '') + '. 추천인(담당 주선자)은 바꿀 수 없어요.'
-      : '신청 내용은 담당 주선자나 관리자가 확인 후 승인해요. 이름과 연락처는 관리자와, 관리자가 승인한 매칭을 맡은 주선자에게만 공개돼요.';
+      : '신청 내용은 담당 주선자나 관리자가 확인 후 승인해요. 이름과 연락처는 관리자와, 두 분이 모두 만나보기로 한 매칭을 맡은 주선자에게만 공개돼요.';
     $('reg-consent-box').hidden = !!edit;
     $('regSubmitBtn').textContent = edit ? '수정 내용 보내기' : '신청하기';
     $('regCancel').hidden = !!edit;
@@ -5456,7 +5468,9 @@
       if(isAdmin()){
         if(!x) msgs.push('관리자가 만든 매칭은 바로 승인돼요.');
       } else {
-        msgs.push('저장하면 관리자 승인을 기다려요. 승인되면 참가자에게 결정 링크를 보내고, 두 사람이 모두 만나보기로 하면 이름·연락처가 공개돼요.');
+        msgs.push(approvalRequired()
+          ? '저장하면 관리자 승인을 기다려요. 승인되면 참가자에게 결정 링크를 보내고, 두 사람이 모두 만나보기로 하면 이름·연락처가 공개돼요.'
+          : '상대 담당 주선자가 수락하면 바로 시작돼요(담당 없는 참가자가 있으면 관리자 승인이 필요해요). 그다음 참가자에게 결정 링크를 보내고, 두 사람이 모두 만나보기로 하면 이름·연락처가 공개돼요.');
       }
     }
     note.textContent = msgs.join(' ');
@@ -5491,7 +5505,7 @@
       : supabase.from('matches').insert(row);
     Promise.resolve(req).then(function(res){
       if(res.error) throw res.error;
-      showToast(wasEditing ? '수정했어요' : (isAdmin() ? '등록했어요' : '등록했어요. 관리자 승인을 기다려요'));
+      showToast(wasEditing ? '수정했어요' : (isAdmin() ? '등록했어요' : (approvalRequired() ? '등록했어요. 관리자 승인을 기다려요' : '등록했어요. 상대 담당이 수락하면 바로 시작돼요')));
       closeMatchModal();
       refetchMatches();
     }).catch(function(err){
@@ -5788,6 +5802,39 @@
     $('msgText').addEventListener('keydown', function(e){
       if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) sendMessage(e);
     });
+  }
+
+  /* ---------------- 앱 설정 (관리자) ---------------- */
+  var appSettings = { match_admin_approval: false };
+  function approvalRequired(){ return appSettings.match_admin_approval === true; }
+  // 관리자가 직접 승인해야 시작되는 매칭 (담당 없는 참가자가 끼었거나, 승인 받기를 켠 경우)
+  function matchNeedsAdmin(x){ return !x.approved && !matchClosed(x) && consentOk(x.aConsent) && consentOk(x.bConsent); }
+  function matchWaitsAdmin(x){ return approvalRequired() || x.aConsent === 'none' || x.bConsent === 'none'; }
+  function refetchSettings(){
+    if(!currentUser) return Promise.resolve();
+    return supabase.from('app_settings').select('key,value').then(function(res){
+      if(res.error) throw res.error;
+      var next = { match_admin_approval: false };
+      (res.data || []).forEach(function(r){ next[r.key] = r.value; });
+      var changed = JSON.stringify(next) !== JSON.stringify(appSettings);
+      appSettings = next;
+      if($('setMatchApproval')) $('setMatchApproval').checked = approvalRequired();
+      if(changed){ renderMatches(); renderStats(); }
+    }).catch(function(err){ console.error('settings error', err); });
+  }
+  function saveMatchApprovalSetting(on){
+    var box = $('setMatchApproval');
+    box.disabled = true;
+    Promise.resolve(supabase.from('app_settings').upsert({ key:'match_admin_approval', value:on, updated_by: myId(), updated_at: new Date().toISOString() })).then(function(res){
+      if(res.error) throw res.error;
+      appSettings.match_admin_approval = on;
+      showToast(on ? '이제 모든 매칭을 관리자가 승인해야 시작돼요' : '이제 양쪽 담당 주선자가 수락하면 바로 시작돼요');
+      renderMatches(); renderStats();
+    }).catch(function(err){
+      console.error(err);
+      box.checked = !on;
+      showToast('바꾸지 못했어요. 다시 시도해 주세요');
+    }).then(function(){ box.disabled = false; });
   }
 
   /* ---------------- 안 된 매칭 정리 ---------------- */
@@ -6106,6 +6153,7 @@
       renderMatches();
     });
     initCloseMatchUI();
+    $('setMatchApproval').addEventListener('change', function(){ saveMatchApprovalSetting(this.checked); });
     initMessagesUI();
     $('x-a').addEventListener('change', function(){
       if($('x-a').value && $('x-a').value === $('x-b').value){ $('x-b').value = ''; }
@@ -6229,7 +6277,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-16.1';
+  var APP_VERSION = '2026-10-18.1';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
@@ -6258,7 +6306,7 @@
     // 잠들었다 깨어나면 로그인 토큰이 만료됐을 수 있어 먼저 세션을 확인해요
     return supabase.auth.getSession().catch(function(){}).then(function(){
       if(rtStatus !== 'SUBSCRIBED') subscribeRealtime();
-      if(reason === 'resume' || reason === 'pull'){ msgNeedFull = true; refetchSurveyStatus(); }
+      if(reason === 'resume' || reason === 'pull'){ msgNeedFull = true; refetchSurveyStatus(); refetchSettings(); }
       var jobs = [refetchParticipants(), refetchMatches(), refetchMemberNames(), refetchChangeRequests(), refetchMessages()];
       if(isAdmin()) jobs.push(refetchProfiles());
       if(reason === 'resume' || reason === 'pull') jobs.push(checkNewVersion());
@@ -6325,6 +6373,7 @@
     refetchChangeRequests();
     refetchMessages();
     refetchSurveyStatus();
+    refetchSettings();
     subscribeRealtime();
     initAutoRefresh();
     lastRefreshAt = Date.now();
