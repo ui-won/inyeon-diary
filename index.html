@@ -506,6 +506,8 @@
   .seg button{ flex:1; appearance:none; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:12px; min-height:54px; font-size:17px; font-family:inherit; font-weight:600; cursor:pointer; }
   .seg button[aria-pressed="true"]{ background:var(--accent); border-color:var(--accent); color:#fff; }
   .reg-req-jump{ appearance:none; display:flex; justify-content:space-between; align-items:center; gap:8px; width:100%; text-align:left; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:var(--radius-sm); padding:14px 16px; font-family:inherit; font-size:15px; font-weight:600; cursor:pointer; }
+  .reg-admin-ref{ appearance:none; align-self:flex-start; border:0; background:none; padding:2px 0; font-family:inherit; font-size:14px; color:var(--muted); cursor:pointer; text-align:left; }
+  .reg-admin-ref b{ color:var(--accent); text-decoration:underline; text-underline-offset:3px; }
   .reg-req-jump span{ color:var(--accent); font-weight:700; white-space:nowrap; }
   details.legacy-box summary{ cursor:pointer; font-weight:700; color:var(--ink); }
   .q-hint{ font-weight:500; color:var(--muted); font-size:12.5px; margin-left:4px; }
@@ -1125,7 +1127,8 @@
       <div class="field" id="reg-referrer-field">
         <label for="reg-referrer">추천인 (주선자 이름) <span class="required-mark">*</span></label>
         <input class="field-input" id="reg-referrer" maxlength="40" placeholder="소개해 준 주선자 이름 (예: 민지)" required autocomplete="off">
-        <span class="helper-text" id="reg-referrer-check">등록된 주선자 이름만 쓸 수 있어요. 그 주선자가 담당이 돼요.</span>
+        <span class="helper-text" id="reg-referrer-check">등록된 주선자 이름만 쓸 수 있어요. 그 주선자가 담당이 돼요. 관리자에게 신청하려면 "관리자"라고 적어 주세요.</span>
+        <button type="button" class="reg-admin-ref" id="regAdminRef">소개해 준 주선자가 없나요? <b>관리자에게 바로 신청하기</b></button>
       </div>
       </div>
       <div class="reg-step" data-step="2">
@@ -2509,6 +2512,11 @@
     $('reg-gender-btns').addEventListener('click', function(e){
       var b = e.target.closest('button[data-g]'); if(!b) return;
       $('reg-gender').value = b.dataset.g; syncGenderBtns();
+    });
+    $('regAdminRef').addEventListener('click', function(){
+      if(regRefId) return;
+      $('reg-referrer').value = '관리자';
+      clearTimeout(refCheckTimer); verifyReferrer();
     });
     $('regReqJump').addEventListener('click', function(){ $('regRequestBox').scrollIntoView({ behavior:'smooth', block:'start' }); });
     $('reg-referrer').addEventListener('input', onReferrerInput);
@@ -4482,6 +4490,7 @@
     $('regCancel').hidden = !!edit;
     $('regReqJump').hidden = !edit;
     $('reg-referrer-field').hidden = false;
+    $('regAdminRef').hidden = !!edit;
     setRegStep(1);
     if(!edit){
       $('reg-legacy').hidden = true;
@@ -4573,7 +4582,7 @@
     } else {
       $('regRefNote').hidden = true;
       $('reg-referrer').readOnly = false;
-      setReferrerCheck('', '등록된 주선자 이름만 쓸 수 있어요. 그 주선자가 담당이 돼요.');
+      setReferrerCheck('', '등록된 주선자 이름만 쓸 수 있어요. 그 주선자가 담당이 돼요. 관리자에게 신청하려면 "관리자"라고 적어 주세요.');
     }
     $('regForm').hidden = false;
     $('regSuccess').hidden = true;
@@ -4602,7 +4611,7 @@
   }
   function verifyReferrer(){
     var v = $('reg-referrer').value.trim();
-    if(!v){ setReferrerCheck('', '등록된 주선자 이름만 쓸 수 있어요. 그 주선자가 담당이 돼요.'); return Promise.resolve(null); }
+    if(!v){ setReferrerCheck('', '등록된 주선자 이름만 쓸 수 있어요. 그 주선자가 담당이 돼요. 관리자에게 신청하려면 "관리자"라고 적어 주세요.'); return Promise.resolve(null); }
     var seq = ++refCheckSeq;
     return supabase.rpc('check_referrer', { p_name: v }).then(function(res){
       if(seq !== refCheckSeq) return res.data || null;
@@ -4677,8 +4686,13 @@
         showToast('추천인은 등록된 주선자 이름만 쓸 수 있어요');
         throw { soft:true };
       }
-      if(!regRefId) params.p_referrer = okName;
-      return supabase.rpc('register_participant', params);
+      if(regRefId) return supabase.rpc('register_participant', params);
+      params.p_referrer = okName;
+      // 추천인 글자로 담당 주선자를 찾아 넘겨요 ('관리자'라고 적으면 관리자에게 연결돼요)
+      return Promise.resolve(supabase.rpc('referrer_owner', { p_name: referrer })).then(function(r){
+        if(r && !r.error && r.data) params.p_owner = r.data;
+        return supabase.rpc('register_participant', params);
+      });
     }).then(function(res){
       if(res.error) throw res.error;
       regPhoto.working = [];
@@ -6670,7 +6684,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-19.4';
+  var APP_VERSION = '2026-10-19.5';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
