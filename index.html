@@ -558,6 +558,11 @@
   .notify-steps b{ color:var(--accent); }
   .notify-what-title{ font-size:13px; font-weight:700; color:var(--muted); margin:14px 0 4px; }
   .notify-list{ margin:0; padding-left:18px; font-size:14px; line-height:1.7; color:var(--ink); }
+  .notify-opt{ display:flex; gap:10px; align-items:flex-start; margin:14px 0 0; padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:var(--surface-2); cursor:pointer; }
+  .notify-opt[hidden]{ display:none; }
+  .notify-opt input{ width:20px; height:20px; margin:1px 0 0; accent-color:var(--accent); flex:none; }
+  .notify-opt b{ display:block; font-size:14.5px; color:var(--ink); }
+  .notify-opt small{ display:block; font-size:12.5px; color:var(--muted); line-height:1.5; margin-top:2px; }
   .notify-on{ display:inline-flex; align-items:center; gap:6px; color:var(--success); font-weight:700; }
   #btnNotify.is-on{ color:var(--success); }
   #btnNotify .notify-dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--accent); margin-left:5px; vertical-align:middle; }
@@ -1883,6 +1888,7 @@
     <div id="notifyBody"><p class="notify-state">확인하는 중이에요…</p></div>
     <p class="notify-what-title">이럴 때 알려드려요</p>
     <ul class="notify-list" id="notifyWhat"></ul>
+    <label class="notify-opt" id="notifyNewPeopleRow"><input type="checkbox" id="notifyNewPeople"><span><b>새 이성 참가자 알림</b><small>내 담당 참가자와 성별이 다른 분이 새로 승인되면 알려드려요. 휴대폰 알림을 켠 기기로 와요.</small></span></label>
     <div class="dialog-actions" id="notifyActions">
       <button type="button" class="btn" id="notifyClose">닫기</button>
     </div>
@@ -3114,6 +3120,7 @@
       items.push('양쪽 담당 수락으로 새 매칭이 시작됐을 때');
     }
     items.push('내 등록 링크로 새 참가자가 신청했을 때');
+    if(currentProfile && currentProfile.notify_new_people !== false) items.push('내 담당과 성별이 다른 새 참가자가 승인됐을 때');
     items.push('다른 주선자가 내 참가자와의 소개를 제안했을 때');
     items.push('매칭이 승인돼 결정 링크를 보낼 차례일 때');
     items.push('참가자가 결정 링크에서 수락하거나 거절했을 때');
@@ -3148,6 +3155,8 @@
     $('notifyClose').addEventListener('click', closeNotify);
   }
   function renderNotify(){
+    $('notifyNewPeopleRow').hidden = !currentUser;
+    $('notifyNewPeople').checked = !(currentProfile && currentProfile.notify_new_people === false);
     $('notifyWhat').innerHTML = pushWhatItems().map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('');
     var body = $('notifyBody');
     if(isIOSDevice() && !isStandaloneApp()){
@@ -6617,6 +6626,20 @@
     initV18UI();
     $('notifyClose').addEventListener('click', closeNotify);
     $('notifyOverlay').addEventListener('click', function(e){ if(e.target === this) closeNotify(); });
+    $('notifyNewPeople').addEventListener('change', function(){
+      var box = this, on = box.checked;
+      box.disabled = true;
+      Promise.resolve(supabase.rpc('set_notify_new_people', { p_on: on })).then(function(res){
+        if(res.error) throw res.error;
+        if(currentProfile) currentProfile.notify_new_people = on;
+        showToast(on ? '새 이성 참가자 알림을 켰어요' : '새 이성 참가자 알림을 껐어요');
+        $('notifyWhat').innerHTML = pushWhatItems().map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('');
+      }).catch(function(err){
+        console.error(err);
+        box.checked = !on;
+        showToast('바꾸지 못했어요. 다시 시도해 주세요');
+      }).then(function(){ box.disabled = false; });
+    });
     $('notifyActions').addEventListener('click', function(e){
       var b = e.target.closest('button[data-push]');
       if(!b) return;
@@ -6841,7 +6864,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-19.7';
+  var APP_VERSION = '2026-10-19.8';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
