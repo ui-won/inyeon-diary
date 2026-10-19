@@ -110,10 +110,31 @@
   .auth-form .field-input{ text-align:left; }
   .auth-form .field{ margin-bottom:10px; }
   .auth-note{ font-size:12.5px; color:var(--muted); margin:8px 0 0; line-height:1.5; }
-  .reveal-box{ display:flex; flex-direction:column; gap:4px; font-size:13px; background:var(--success-soft); color:var(--ink); border-radius:10px; padding:8px 10px; }
-  .reveal-box b{ font-weight:700; }
-  .reveal-box .reveal-title{ font-weight:700; color:var(--success); font-size:12.5px; }
-  .reveal-box .btn{ align-self:flex-start; margin-top:4px; padding:5px 12px; font-size:12.5px; background:var(--surface); }
+  .reveal-box{ display:flex; flex-direction:column; gap:12px; background:var(--success-soft); color:var(--ink); border:1px solid color-mix(in srgb, var(--success) 22%, transparent); border-radius:16px; padding:14px; }
+  .reveal-head{ display:flex; align-items:center; gap:10px; }
+  .reveal-ic{ width:34px; height:34px; border-radius:50%; background:var(--surface); color:var(--accent); display:grid; place-items:center; flex:none; box-shadow:0 1px 3px rgba(35,28,31,.08); }
+  .reveal-ic svg{ width:18px; height:18px; }
+  .reveal-head > div > b{ display:block; font-size:15px; font-weight:800; color:var(--success); font-family:var(--font-display); }
+  .reveal-head > div > span{ display:block; font-size:12.5px; color:var(--muted); margin-top:1px; }
+  .reveal-pair{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; }
+  .reveal-person{ display:flex; align-items:center; gap:10px; min-width:0; background:var(--surface); border-radius:12px; padding:10px 12px; }
+  .reveal-av{ width:38px; height:38px; border-radius:50%; display:grid; place-items:center; flex:none; font-weight:800; font-size:15px; color:#fff; background:var(--muted); }
+  .reveal-av.f{ background:var(--av-f); } .reveal-av.m{ background:var(--av-m); }
+  .reveal-who{ display:flex; flex-direction:column; min-width:0; line-height:1.35; }
+  .reveal-who b{ font-size:15px; font-weight:800; color:var(--ink); }
+  .reveal-who b small{ font-size:12px; font-weight:600; color:var(--muted); margin-left:4px; }
+  .reveal-who a, .reveal-who .ph{ font-size:14px; font-weight:600; color:var(--ink); text-decoration:none; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .reveal-who a{ color:var(--accent); }
+  .reveal-link{ color:var(--accent); display:grid; place-items:center; }
+  .reveal-link svg{ width:34px; height:18px; }
+  .reveal-box .reveal-copy{ align-self:flex-start; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-size:13.5px; font-weight:700; background:var(--surface); border-radius:999px; }
+  .reveal-box .reveal-copy svg{ width:15px; height:15px; }
+  @media (max-width:520px){
+    .reveal-pair{ grid-template-columns:1fr; gap:4px; }
+    .reveal-link{ height:16px; }
+    .reveal-link svg{ transform:rotate(90deg); width:18px; height:16px; }
+    .reveal-box .reveal-copy{ align-self:stretch; justify-content:center; }
+  }
   .reveal-hint{ font-size:12.5px; color:var(--muted); }
   .decision-box{ display:flex; flex-direction:column; gap:8px; font-size:13px; background:var(--surface-2); border-radius:10px; padding:10px 12px; }
   .decision-title{ font-weight:700; font-size:13px; }
@@ -4223,11 +4244,12 @@
       var revealHtml = '';
       if(revealed){
         // 두 사람 모두 만나보기로 하면 관리자·담당 주선자 모두 이름과 연락처를 볼 수 있어요
-        var lines = [aMember, bMember].filter(function(m){ return m && (m.name || m.contact); }).map(function(m){
-          return '<div><b>'+esc(m.name || m.codeName)+'</b>'+(m.codeName && m.name ? ' ('+esc(m.codeName)+')' : '')+(m.contact ? ' · '+esc(m.contact) : '')+'</div>';
-        });
-        if(lines.length) revealHtml = '<div class="reveal-box"><div class="reveal-title">두 분 모두 만나보기로 했어요</div>'+lines.join('') +
-          '<button class="btn" type="button" data-action="copy-contacts" data-id="'+esc(x.id)+'">이름·연락처 복사</button></div>';
+        var lines = [aMember, bMember].filter(function(m){ return m && (m.name || m.contact); }).map(revealPersonHtml);
+        if(lines.length) revealHtml = '<div class="reveal-box">' +
+          '<div class="reveal-head"><span class="reveal-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.3 3 4.5 6.7 4.5c2.1 0 3.6 1.1 4.4 2.5h1.8c.8-1.4 2.3-2.5 4.4-2.5 3.7 0 5.8 3.8 4.3 7.3C19.5 16.4 12 21 12 21Z"/></svg></span>' +
+            '<div><b>두 분 모두 만나보기로 했어요</b><span>서로의 이름과 연락처를 전해 주세요</span></div></div>' +
+          '<div class="reveal-pair">' + lines.join('<span class="reveal-link" aria-hidden="true"><svg viewBox="0 0 34 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 9c5 0 5-6 10-6s4 12 10 12 5-6 10-6"/></svg></span>') + '</div>' +
+          '<button class="btn reveal-copy" type="button" data-action="copy-contacts" data-id="'+esc(x.id)+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>이름·연락처 복사</button></div>';
       } else if(!isAdmin() && !pendingMine.length){
         var waits = [];
         if(declined) waits = ['상대 측에서 정중히 거절했어요. 다른 분을 찾아보세요.'];
@@ -5446,13 +5468,31 @@
       fallbackCopy(text, done);
     }
   }
+  // 전화번호는 010-1234-5678 꼴로 보여 줘요 (메신저 아이디 등은 그대로)
+  function fmtPhone(v){
+    var raw = String(v || '').trim();
+    var d = raw.replace(/[^0-9]/g, '');
+    if(!/^[0-9\s\-().+]+$/.test(raw)) return { text: raw, tel: '' };
+    if(/^01[016789]\d{7,8}$/.test(d)) return { text: d.slice(0,3) + '-' + d.slice(3, d.length - 4) + '-' + d.slice(-4), tel: d };
+    if(/^02\d{7,8}$/.test(d)) return { text: '02-' + d.slice(2, d.length - 4) + '-' + d.slice(-4), tel: d };
+    if(/^0\d{9,10}$/.test(d)) return { text: d.slice(0,3) + '-' + d.slice(3, d.length - 4) + '-' + d.slice(-4), tel: d };
+    return { text: raw, tel: d.length >= 8 ? d : '' };
+  }
+  function revealPersonHtml(m){
+    var nm = m.name || m.codeName || '참가자';
+    var ph = fmtPhone(m.contact);
+    var av = '<span class="reveal-av' + (m.gender === 'female' ? ' f' : (m.gender === 'male' ? ' m' : '')) + '">' + esc(nm.trim().charAt(0) || '?') + '</span>';
+    var contact = !m.contact ? '<span class="ph" style="color:var(--muted);">연락처 없음</span>'
+      : (ph.tel ? '<a href="tel:' + esc(ph.tel) + '">' + esc(ph.text) + '</a>' : '<span class="ph">' + esc(ph.text) + '</span>');
+    return '<div class="reveal-person">' + av + '<div class="reveal-who"><b>' + esc(nm) + (m.codeName && m.name ? '<small>' + esc(m.codeName) + '</small>' : '') + '</b>' + contact + '</div></div>';
+  }
   // 성사된(둘 다 수락) 매칭의 이름·연락처를 카톡으로 보내기 좋게 복사해요
   function copyMatchContacts(id){
     var x = matches.filter(function(m){ return m.id === id; })[0];
     if(!x || !matchRevealed(x)) return;
     var people = [memberById(x.aId), memberById(x.bId)].filter(Boolean);
     var lines = people.map(function(m){
-      return '· ' + (m.name || m.codeName || '참가자') + (m.contact ? ' ' + m.contact : '');
+      return '· ' + (m.name || m.codeName || '참가자') + (m.contact ? ' ' + fmtPhone(m.contact).text : '');
     });
     copyText('[매칭메이커] 두 분 모두 만나보기로 했어요\n' + lines.join('\n') + '\n서로 편하게 연락해 보세요.');
   }
@@ -6801,7 +6841,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-19.6';
+  var APP_VERSION = '2026-10-19.7';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
