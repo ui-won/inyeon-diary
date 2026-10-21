@@ -145,13 +145,30 @@
   .rec-group{ display:flex; flex-direction:column; gap:10px; padding:14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); }
   .rec-head{ display:flex; align-items:center; gap:10px; }
   .rec-head b{ font-size:16px; }
-  .rec-who{ display:flex; flex-direction:column; gap:1px; min-width:0; flex:1 1 auto; }
+  .rec-who{ display:flex; flex-direction:column; gap:1px; min-width:0; flex:1 1 160px; }
   .rec-who > span{ color:var(--muted); font-size:13px; }
   .rec-who .rec-traits{ color:var(--accent); font-size:12.5px; font-weight:600; }
   .rec-item{ display:flex; flex-direction:column; gap:8px; padding:10px 12px; border-radius:var(--radius-sm); background:var(--surface-2); }
   .rec-item-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
   .rec-item-top .nm{ font-weight:700; color:var(--ink); font-size:15px; }
   .rec-side{ display:flex; align-items:center; gap:8px; margin-left:auto; }
+  .rec-skip{ font-size:13px; padding:7px 10px; color:var(--muted); }
+  .rec-undo{ display:flex; flex-direction:column; gap:8px; padding:10px 12px; border-radius:var(--radius-sm); border:1px dashed var(--line); background:var(--surface); font-size:13.5px; }
+  .rec-undo-top{ display:flex; align-items:center; gap:8px; justify-content:space-between; }
+  .rec-undo-top b{ color:var(--ink); }
+  .rec-undo .btn{ padding:6px 12px; font-size:13px; }
+  .rec-why{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; color:var(--muted); font-size:12.5px; }
+  .rec-why .chip{ font-size:12.5px; padding:5px 11px; }
+  .rec-foot{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .rec-foot .btn{ font-size:13.5px; padding:8px 14px; }
+  .rec-hidden{ width:100%; font-size:13px; color:var(--muted); }
+  .rec-hidden summary{ cursor:pointer; font-weight:600; padding:4px 0; }
+  .rec-hidden-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 0; border-top:1px solid var(--line); }
+  .rec-hidden-row span{ color:var(--ink); }
+  .rec-hidden-row small{ color:var(--muted); margin-left:6px; }
+  .fav-mark{ color:#E0A100; margin-right:3px; }
+  .fav-btn[aria-pressed="true"]{ color:#E0A100; }
+  .fav-btn[aria-pressed="true"] svg{ fill:currentColor; }
   .rec-side .btn{ padding:6px 14px; font-size:13px; }
   .rec-more{ font-size:13.5px; }
   .rec-more > summary{ cursor:pointer; color:var(--accent); font-weight:600; font-size:13px; padding:2px 0; list-style:none; }
@@ -934,6 +951,8 @@
               <ul>
                 <li><span class="guide-ui">AI 추천</span> 탭에서 내 참가자마다 잘 맞을 후보와 이유를 자동으로 보여줘요. 조건이 안 맞는 사람과 이미 제안한 짝은 빠져 있어요. 사진을 누르면 크게 보이고, <b>프로필 자세히 보기</b>로 참가자 관리에 가지 않아도 전체 정보를 볼 수 있어요.</li>
                 <li>후보를 살펴보고 괜찮으면 <span class="guide-ui">제안하기</span>를 눌러요. 생각해 둔 상대가 있으면 같은 화면의 <span class="guide-ui">직접 골라 궁합 보기</span>에서 이름·코드로 찾아 바로 제안할 수 있어요. 날짜·메모를 직접 적고 싶으면 매칭 탭의 <span class="guide-ui">새 매칭 등록</span>을 써요.</li>
+                <li>마음에 안 드는 후보는 <span class="guide-ui">이 분 말고</span>를 누르면 빠지고 다음 후보가 채워져요. 빠진 후보는 아래 <b>숨긴 후보</b>에서 되돌릴 수 있고, 90일이 지나면 다시 나와요. 더 많은 후보는 <span class="guide-ui">다른 후보 더 보기</span>로 볼 수 있어요.</li>
+                <li>자주 챙기는 참가자는 카드의 <b>별 버튼</b>으로 즐겨찾기해 두세요. 참가자 탭 위의 <span class="guide-ui">★</span>에서 모아 보고, AI 추천에서도 맨 위에 나와요. 즐겨찾기와 숨긴 후보는 나만 보여요.</li>
               </ul>
             </div>
           </li>
@@ -1324,6 +1343,7 @@
       <div class="scope-seg" role="group" aria-label="볼 참가자">
         <button type="button" data-scope="all" aria-pressed="true">전체 <b id="scopeCountAll">0</b></button>
         <button type="button" data-scope="mine" aria-pressed="false">내 담당 <b id="scopeCountMine">0</b></button>
+        <button type="button" data-scope="fav" aria-pressed="false" aria-label="즐겨찾기">★ <b id="scopeCountFav">0</b></button>
       </div>
       <select id="memberScopeOwner" class="select-input admin-only" aria-label="주선자별 보기"></select>
     </div>
@@ -2656,24 +2676,25 @@
   function pairExists(aId, bId){
     return matches.some(function(x){ return (x.aId === aId && x.bId === bId) || (x.aId === bId && x.bId === aId); });
   }
-  function recommendFor(t, limit){
+  function recCandidates(t){
     return members.filter(function(c){
-      return c.id !== t.id && c.approved !== false && c.status === 'available' && oppositeGenderOk(t, c) && !pairExists(t.id, c.id);
+      return c.id !== t.id && c.approved !== false && c.status === 'available' && oppositeGenderOk(t, c) && !pairExists(t.id, c.id) && !recHides[t.id + '|' + c.id];
     }).map(function(c){ return { m:c, s:compatibilityScore(t, c) }; })
       .filter(function(r){ return !r.s.conflicts.length; })
-      .sort(function(a, b){ return b.s.score - a.s.score; })
-      .slice(0, limit);
+      .sort(function(a, b){ return b.s.score - a.s.score; });
   }
+  function recommendFor(t, limit){ return recCandidates(t).slice(0, limit); }
   function recTargets(){
     var me = myId();
-    return members.filter(function(m){ return m.approved !== false && (isAdmin() || m.ownerId === me); });
+    return members.filter(function(m){ return m.approved !== false && (isAdmin() || m.ownerId === me); })
+      .sort(function(a, b){ return (favs[b.id] ? 1 : 0) - (favs[a.id] ? 1 : 0); });
   }
   function renderRecommendTargets(){
     var sel = $('recTarget');
     var prev = sel.value;
     var list = recTargets();
     var html = '<option value="">' + (isAdmin() ? '전체 참가자 (각 3명)' : '내 담당 전체 (각 3명)') + '</option>';
-    html += list.map(function(m){ return '<option value="'+esc(m.id)+'">'+esc(displayName(m) + (m.name && m.codeName ? ' ('+m.codeName+')' : ''))+' · 후보 5명</option>'; }).join('');
+    html += list.map(function(m){ return '<option value="'+esc(m.id)+'">'+esc((favs[m.id] ? '★ ' : '') + displayName(m) + (m.name && m.codeName ? ' ('+m.codeName+')' : ''))+' · 후보 5명</option>'; }).join('');
     sel.innerHTML = html;
     if(prev && list.some(function(m){ return m.id === prev; })) sel.value = prev;
   }
@@ -2691,7 +2712,7 @@
     renderRecommendTargets();
     var targetId = $('recTarget').value;
     var targets = targetId ? [memberById(targetId)].filter(Boolean) : recTargets();
-    var limit = targetId ? 5 : 3;
+    var baseLimit = targetId ? 5 : 3;
     if(!targets.length){
       $('recList').innerHTML = '<p class="rec-empty">' + (isAdmin() ? '승인된 참가자가 아직 없어요.' : '내 담당 참가자가 아직 없어요. 오른쪽 위 내 이름 버튼의 "내 등록 링크 복사"로 참가자를 모아 보세요.') + '</p>';
       return;
@@ -2701,7 +2722,9 @@
         '<div class="rec-who"><b>'+esc(displayName(t))+'</b><span>'+esc(memberMetaText(t))+'</span>' + recTraitLine(t) + '</div></div>' +
         recProfileHtml(t, 'me:' + t.id, '프로필 보기');
       if(t.status !== 'available') return '<div class="rec-group">'+head+'<p class="rec-empty">지금은 소개 가능 상태가 아니에요.</p></div>';
-      var recs = recommendFor(t, limit);
+      var all = recCandidates(t);
+      var recs = all.slice(0, baseLimit + (recExtra[t.id] || 0));
+      var undo = recUndoHtml(t);
       var body = recs.length ? recs.map(function(r){
         var c = r.m, sc = r.s;
         var cls = sc.pct >= 70 ? 'badge-success' : (sc.pct >= 40 ? 'badge-accent' : 'badge-neutral');
@@ -2709,17 +2732,130 @@
                     sc.cautions.slice(0, 2).map(function(x){ return '<span class="badge badge-warn">'+esc(x)+'</span>'; }).join('');
         return '<div class="rec-item">' +
           '<div class="rec-item-top">' + memberAvatarHtml(c) +
-            '<div class="rec-who"><span class="nm">'+esc(displayName(c))+'</span><span class="meta">'+esc(memberMetaText(c))+'</span>' + recTraitLine(c) + '</div>' +
+            '<div class="rec-who"><span class="nm">'+(favs[c.id] ? '<span class="fav-mark">★</span>' : '')+esc(displayName(c))+'</span><span class="meta">'+esc(memberMetaText(c))+'</span>' + recTraitLine(c) + '</div>' +
             '<div class="rec-side"><span class="badge '+cls+'">궁합 '+sc.pct+'%'+(sc.lowInfo ? ' · 정보 적음' : '')+'</span>' +
+            '<button class="btn btn-ghost rec-skip" type="button" data-action="rec-skip" data-t="'+esc(t.id)+'" data-c="'+esc(c.id)+'">이 분 말고</button>' +
             '<button class="btn btn-primary" type="button" data-action="rec-propose" data-a="'+esc(t.id)+'" data-b="'+esc(c.id)+'" data-pct="'+sc.pct+'">제안하기</button></div></div>' +
           (chips ? '<div class="qm-reasons" style="margin:0;">'+chips+'</div>' : '') +
           recProfileHtml(c, t.id + ':' + c.id, '프로필 자세히 보기') +
         '</div>';
       }).join('') : '<p class="rec-empty">조건에 맞는 새 후보가 없어요. 정보를 더 채우거나 새 참가자가 들어오면 다시 확인해 보세요.</p>';
-      return '<div class="rec-group">'+head+body+'</div>';
+      return '<div class="rec-group" data-t="'+esc(t.id)+'">'+head+undo+body+recFootHtml(t, all.length - recs.length)+'</div>';
     }).join('');
     hydratePhotos();
     renderRecDirect();
+  }
+  /* AI 추천: 이 분 말고(숨기기) · 더 보기 · 숨긴 후보 되돌리기 — 주선자마다 따로, 90일 뒤 다시 나와요 */
+  var recHides = {};      // 'targetId|candidateId' -> { reason, at }
+  var recExtra = {};      // targetId -> 더 보기로 늘린 수
+  var recLastHidden = null; // { t, c, reasonSent }
+  var REC_HIDE_DAYS = 90;
+  var REC_WHY = { age:'나이', region:'지역', style:'스타일', known:'이미 아는 사이', other:'기타' };
+  function recHideCutoff(){ return new Date(Date.now() - REC_HIDE_DAYS * 86400000).toISOString(); }
+  function refetchRecHides(){
+    if(!currentUser) return Promise.resolve();
+    var cutoff = recHideCutoff();
+    return Promise.resolve(supabase.from('rec_hides').select('target_id,candidate_id,reason,created_at').gte('created_at', cutoff)).then(function(res){
+      if(res.error) throw res.error;
+      var map = {};
+      (res.data || []).forEach(function(r){ map[r.target_id + '|' + r.candidate_id] = { reason:r.reason || '', at:r.created_at }; });
+      var changed = JSON.stringify(map) !== JSON.stringify(recHides);
+      recHides = map;
+      if(changed) renderRecommend();
+      // 90일 지난 기록은 정리해요 (내 기록만)
+      Promise.resolve(supabase.from('rec_hides').delete().eq('user_id', myId()).lt('created_at', cutoff)).catch(function(){});
+    }).catch(function(err){ console.error('rec hides error', err); });
+  }
+  function recHide(tId, cId){
+    var key = tId + '|' + cId;
+    recHides[key] = { reason:'', at:new Date().toISOString() };
+    recLastHidden = { t:tId, c:cId, reasonSent:false };
+    renderRecommend();
+    Promise.resolve(supabase.from('rec_hides').upsert({ user_id: myId(), target_id: tId, candidate_id: cId, reason: null, created_at: new Date().toISOString() }, { onConflict:'user_id,target_id,candidate_id' })).then(function(res){
+      if(res.error) throw res.error;
+    }).catch(function(err){
+      console.error(err);
+      delete recHides[key]; recLastHidden = null; renderRecommend();
+      showToast('저장하지 못했어요. 다시 시도해 주세요');
+    });
+  }
+  function recUnhide(tId, cId){
+    var key = tId + '|' + cId, prev = recHides[key];
+    delete recHides[key];
+    if(recLastHidden && recLastHidden.t === tId && recLastHidden.c === cId) recLastHidden = null;
+    renderRecommend();
+    Promise.resolve(supabase.from('rec_hides').delete().eq('user_id', myId()).eq('target_id', tId).eq('candidate_id', cId)).then(function(res){
+      if(res.error) throw res.error;
+    }).catch(function(err){
+      console.error(err);
+      if(prev) recHides[key] = prev; renderRecommend();
+      showToast('되돌리지 못했어요. 다시 시도해 주세요');
+    });
+  }
+  function recSetReason(tId, cId, reason){
+    var key = tId + '|' + cId;
+    if(!recHides[key]) return;
+    recHides[key].reason = reason;
+    if(recLastHidden) recLastHidden.reasonSent = true;
+    renderRecommend();
+    Promise.resolve(supabase.from('rec_hides').update({ reason: reason }).eq('user_id', myId()).eq('target_id', tId).eq('candidate_id', cId)).catch(function(){});
+  }
+  function recUndoHtml(t){
+    if(!recLastHidden || recLastHidden.t !== t.id) return '';
+    var c = memberById(recLastHidden.c);
+    if(!c || !recHides[t.id + '|' + c.id]) return '';
+    var top = '<div class="rec-undo-top"><span><b>'+esc(displayName(c))+'</b> 님을 후보에서 뺐어요</span>' +
+      '<button class="btn" type="button" data-action="rec-unhide" data-t="'+esc(t.id)+'" data-c="'+esc(c.id)+'">되돌리기</button></div>';
+    var why = recLastHidden.reasonSent
+      ? '<div class="rec-why">고마워요. 다음 추천에 참고할게요.</div>'
+      : '<div class="rec-why">왜 별로예요? (선택)' + Object.keys(REC_WHY).map(function(k){
+          return '<button type="button" class="chip" data-action="rec-why" data-why="'+k+'" data-t="'+esc(t.id)+'" data-c="'+esc(c.id)+'">'+REC_WHY[k]+'</button>';
+        }).join('') + '</div>';
+    return '<div class="rec-undo">' + top + why + '</div>';
+  }
+  function recFootHtml(t, moreLeft){
+    var hidden = Object.keys(recHides).filter(function(k){ return k.indexOf(t.id + '|') === 0 && memberById(k.split('|')[1]); });
+    var more = moreLeft > 0 ? '<button class="btn" type="button" data-action="rec-more" data-t="'+esc(t.id)+'">다른 후보 더 보기 <span style="color:var(--muted); font-weight:600;">(' + moreLeft + '명 더)</span></button>' : '';
+    var hid = '';
+    if(hidden.length){
+      var hkey = 'hid:' + t.id;
+      hid = '<details class="rec-hidden rec-more" data-key="'+esc(hkey)+'"'+(recOpen[hkey] ? ' open' : '')+'><summary>숨긴 후보 '+hidden.length+'명 · 다시 보기</summary>' +
+        hidden.map(function(k){
+          var c = memberById(k.split('|')[1]), h = recHides[k];
+          var d = Math.max(0, REC_HIDE_DAYS - daysSince(h.at));
+          return '<div class="rec-hidden-row"><span>'+esc(displayName(c))+'<small>'+(h.reason && REC_WHY[h.reason] ? REC_WHY[h.reason] + ' · ' : '')+d+'일 뒤 다시 나와요</small></span>' +
+            '<button class="btn btn-ghost" type="button" data-action="rec-unhide" data-t="'+esc(t.id)+'" data-c="'+esc(c.id)+'">다시 보기</button></div>';
+        }).join('') + '</details>';
+    }
+    return (more || hid) ? '<div class="rec-foot">' + more + hid + '</div>' : '';
+  }
+  /* 즐겨찾기: 주선자마다 따로 (나만 보여요) */
+  var favs = {};
+  function refetchFavs(){
+    if(!currentUser) return Promise.resolve();
+    return Promise.resolve(supabase.from('member_favorites').select('participant_id')).then(function(res){
+      if(res.error) throw res.error;
+      var map = {};
+      (res.data || []).forEach(function(r){ map[r.participant_id] = true; });
+      var changed = JSON.stringify(map) !== JSON.stringify(favs);
+      favs = map;
+      if(changed){ renderMembers(); renderRecommend(); }
+    }).catch(function(err){ console.error('favs error', err); });
+  }
+  function toggleFav(id, btn){
+    var on = !favs[id];
+    if(on) favs[id] = true; else delete favs[id];
+    renderMembers(); renderRecommend();
+    showToast(on ? '즐겨찾기에 넣었어요. 위의 ★에서 모아 볼 수 있어요' : '즐겨찾기에서 뺐어요');
+    var q = on
+      ? supabase.from('member_favorites').upsert({ user_id: myId(), participant_id: id }, { onConflict:'user_id,participant_id' })
+      : supabase.from('member_favorites').delete().eq('user_id', myId()).eq('participant_id', id);
+    Promise.resolve(q).then(function(res){ if(res.error) throw res.error; }).catch(function(err){
+      console.error(err);
+      if(on) delete favs[id]; else favs[id] = true;
+      renderMembers(); renderRecommend();
+      showToast('저장하지 못했어요. 다시 시도해 주세요');
+    });
   }
   // AI 추천: 펼친 프로필은 화면이 새로고침돼도 펼친 채로 둬요
   var recOpen = {};
@@ -2830,7 +2966,7 @@
     return members.filter(function(c){
       if(c.approved === false || (t && c.id === t.id)) return false;
       if(t && t.gender && c.gender && t.gender === c.gender) return false;
-      if(!q) return false;
+      if(!q) return !!favs[c.id];
       var hay = [c.name, c.codeName, c.job, c.regionSido, c.regionDetail, c.mbti].filter(Boolean).join(' ').toLowerCase();
       return hay.indexOf(q) >= 0;
     }).slice(0, 6);
@@ -2850,12 +2986,12 @@
     } else {
       $('recPickHint').textContent = displayName(t) + ' 님과 맞춰 볼 상대를 이름·코드·직업으로 찾아보세요';
     }
-    var list = (q && !other) ? recPickCandidates(t, q) : [];
+    var list = !other ? recPickCandidates(t, q) : [];
     $('recPickList').innerHTML = list.map(function(c){
       var sc = t ? compatibilityScore(t, c) : null;
       var badge = sc ? (sc.conflicts.length ? '<span class="badge badge-danger">조건 불일치</span>' : '<span class="badge badge-accent">궁합 '+sc.pct+'%</span>') : '';
       return '<button type="button" class="rec-pick-opt" data-pick="'+esc(c.id)+'">' + memberAvatarHtml(c).replace(/<button[^>]*>|<\/button>/g, '') +
-        '<span style="display:flex; flex-direction:column; min-width:0;"><b>'+esc(displayName(c))+'</b><span>'+esc(memberMetaText(c))+'</span></span>' + badge + '</button>';
+        '<span style="display:flex; flex-direction:column; min-width:0;"><b>'+(favs[c.id] ? '<span class="fav-mark">★</span>' : '')+esc(displayName(c))+'</b><span>'+esc(memberMetaText(c))+'</span></span>' + badge + '</button>';
     }).join('') || ((q && !other) ? '<p class="rec-empty" style="margin:0;">찾는 사람이 없어요.</p>' : '');
     if(!other || !t){
       $('recPickResult').innerHTML = (other && !t) ? '<div class="rec-item"><div class="rec-item-top">' + memberAvatarHtml(other) +
@@ -2911,6 +3047,14 @@
     $('recList').addEventListener('click', function(e){
       var b = e.target.closest('button[data-action="rec-propose"]');
       if(b) recPropose(b);
+      var a = e.target.closest('button[data-action]');
+      if(a){
+        var act = a.dataset.action;
+        if(act === 'rec-skip') recHide(a.dataset.t, a.dataset.c);
+        if(act === 'rec-unhide') recUnhide(a.dataset.t, a.dataset.c);
+        if(act === 'rec-why') recSetReason(a.dataset.t, a.dataset.c, a.dataset.why);
+        if(act === 'rec-more'){ recExtra[a.dataset.t] = (recExtra[a.dataset.t] || 0) + 5; renderRecommend(); }
+      }
       var v = e.target.closest('button[data-action="view-photos"]');
       if(v) openPhotoViewer(v.dataset.id);
     });
@@ -3918,12 +4062,12 @@
     if(!myId()) return 'all';
     var saved = null;
     try{ saved = localStorage.getItem(scopeKey()); }catch(e){}
-    memberScope = (saved === 'all' || saved === 'mine') ? saved : (isAdmin() ? 'all' : 'mine');
+    memberScope = (saved === 'all' || saved === 'mine' || saved === 'fav') ? saved : (isAdmin() ? 'all' : 'mine');
     return memberScope;
   }
   function setMemberScope(v){
     memberScope = v;
-    if(v === 'all' || v === 'mine'){ try{ localStorage.setItem(scopeKey(), v); }catch(e){} }
+    if(v === 'all' || v === 'mine' || v === 'fav'){ try{ localStorage.setItem(scopeKey(), v); }catch(e){} }
     renderMembers();
   }
   function scopeOwnerId(){
@@ -3963,6 +4107,7 @@
     var sc = getMemberScope();
     $('scopeCountAll').textContent = members.length;
     $('scopeCountMine').textContent = members.filter(function(m){ return m.ownerId && m.ownerId === me; }).length;
+    $('scopeCountFav').textContent = members.filter(function(m){ return favs[m.id]; }).length;
     Array.prototype.forEach.call($('memberScopeBar').querySelectorAll('[data-scope]'), function(b){ b.setAttribute('aria-pressed', b.dataset.scope === sc ? 'true' : 'false'); });
     var sel = $('memberScopeOwner');
     if(!isAdmin()){ sel.hidden = true; return; }
@@ -4002,9 +4147,11 @@
     $('memberFilterCount').textContent = String(nFilters);
     $('memberFilterCount').hidden = !nFilters;
     var scopeOwner = scopeOwnerId();
+    var favScope = getMemberScope() === 'fav';
     var stats = introStats();
     var filtered = members.filter(function(m){
       if(scopeOwner && m.ownerId !== scopeOwner) return false;
+      if(favScope && !favs[m.id]) return false;
       if(ownerFilter === 'none' && m.ownerId) return false;
       if(statusFilter && m.status !== statusFilter) return false;
       if(genderFilter && m.gender !== genderFilter) return false;
@@ -4051,6 +4198,12 @@
       $('membersEmptyText').textContent = '소개팅을 주선할 지인을 등록하면 여기 카드로 모아서 보여드려요.';
       return;
     }
+    if(filtered.length === 0 && favScope && !members.some(function(m){ return favs[m.id]; })){
+      emptyEl.hidden = false; listEl.hidden = true;
+      $('membersEmptyTitle').textContent = '즐겨찾기한 참가자가 없어요';
+      $('membersEmptyText').textContent = '참가자 카드 아래의 별 버튼을 누르면 여기에 모아 볼 수 있어요. 나만 보이고, 다른 주선자에게는 보이지 않아요.';
+      return;
+    }
     if(filtered.length === 0 && scopeOwner && !members.some(function(m){ return m.ownerId === scopeOwner; })){
       emptyEl.hidden = false; listEl.hidden = true;
       if(scopeOwner === myId()){
@@ -4088,7 +4241,7 @@
             '<div style="display:flex; gap:10px; align-items:center; min-width:0;">' +
               avatarHtml +
               '<div style="min-width:0;">' +
-                '<div class="card-name">'+esc(displayName(m))+'</div>' +
+                '<div class="card-name">'+(favs[m.id] ? '<span class="fav-mark" title="즐겨찾기">★</span>' : '')+esc(displayName(m))+'</div>' +
                 '<div class="card-meta">'+metaBits.map(esc).join(' · ')+'</div>' +
                 (m.ownerId && m.ownerId === myId() && !scopeOwner ? '<span class="badge badge-accent" style="margin-top:4px; display:inline-block;">내 담당</span>' :
                   (!isAdmin() && m.revealed ? '<span class="badge badge-success" style="margin-top:4px; display:inline-block;">매칭 승인 · 정보 공개</span>' : '')) +
@@ -4098,13 +4251,14 @@
             (changeRequests[m.id] && canEditMember(m) ? '<span class="badge badge-info" style="margin-right:6px;">정보 수정 요청</span>' : '') +
             '<span class="badge '+st.cls+'">'+(m.status === 'hold' && m.pauseUntil ? '쉬는 중 ~'+esc(fmtShortDate(m.pauseUntil)) : st.label)+'</span>' +
           '</div>' +
-          (scopeOwner ? scopeLineHtml(m, stats) : '') +
+          ((scopeOwner || favScope) ? scopeLineHtml(m, stats) : '') +
           preqHtml(m) +
           (rows ? '<div class="card-body">'+rows+'</div>' : '') +
           (changeRequests[m.id] && canEditMember(m)
             ? '<div class="cr-box"><span>참가자가 정보를 고쳐 보냈어요. 확인 후 반영해 주세요.</span><button class="btn btn-primary" type="button" data-action="review-change" data-id="'+esc(m.id)+'">변경 확인</button></div>'
             : '') +
           '<div class="card-actions">' +
+            (!pending ? '<button class="btn btn-ghost fav-btn" type="button" data-action="fav-member" data-id="'+esc(m.id)+'" aria-pressed="'+(favs[m.id] ? 'true' : 'false')+'" aria-label="즐겨찾기" title="즐겨찾기 (나만 보여요)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z"/></svg></button>' : '') +
             (pending ?
               (canApproveMember(m) ? '<button class="btn btn-primary" type="button" data-action="approve-member" data-id="'+esc(m.id)+'">승인</button>' : '') +
               '<button class="btn btn-danger-ghost" type="button" data-action="reject-member" data-id="'+esc(m.id)+'">거절</button>'
@@ -6536,6 +6690,7 @@
       if(btn.dataset.action === 'view-photos') openPhotoViewer(id);
       if(btn.dataset.action === 'copy-member') copyMemberInfo(id);
       if(btn.dataset.action === 'pause-member') openPause(id);
+      if(btn.dataset.action === 'fav-member') toggleFav(id, btn);
       if(btn.dataset.action === 'preq-apply') handlePreq(btn.dataset.req, 'apply', btn);
       if(btn.dataset.action === 'preq-dismiss') handlePreq(btn.dataset.req, 'dismiss', btn);
       if(btn.dataset.action === 'quick-match'){
@@ -6864,7 +7019,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-19.8';
+  var APP_VERSION = '2026-10-21.1';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
@@ -6927,7 +7082,7 @@
         // 바뀐 표만 다시 받아요 (지문 비교: 몇백 바이트)
         jobs = [refetchChanged(), refetchMessages()];
       } else {
-        jobs = [refreshStamp(), refetchParticipants(), refetchMatches(), refetchMemberNames(), refetchChangeRequests(), refetchMessages(), refetchPreqs(), refetchOfferTimes()];
+        jobs = [refreshStamp(), refetchParticipants(), refetchMatches(), refetchMemberNames(), refetchChangeRequests(), refetchMessages(), refetchPreqs(), refetchOfferTimes(), refetchRecHides(), refetchFavs()];
         if(isAdmin()) jobs.push(refetchProfiles());
       }
       if(reason === 'resume') runDailyJobs();
@@ -6996,6 +7151,8 @@
     refetchMessages();
     refetchSettings();
     refetchPreqs();
+    refetchRecHides();
+    refetchFavs();
     refreshStamp();
     runDailyJobs();
     subscribeRealtime();
