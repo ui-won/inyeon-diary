@@ -77,7 +77,7 @@
     margin:0; line-height:1.6; -webkit-font-smoothing:antialiased;
   }
   body::before{
-    content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; transform:translate3d(0,0,0);
     background:radial-gradient(900px circle at 50% -260px, rgba(200,50,60,.08), transparent 70%);
   }
   .app{ position:relative; z-index:1; }
@@ -668,7 +668,9 @@
   .tab-btn[aria-selected="true"]{ background:var(--ink); color:var(--bg); }
   .tab-btn:hover:not([aria-selected="true"]){ color:var(--ink); background:var(--surface-2); }
   @media (max-width:760px){
-    .tabs{ position:fixed; left:0; right:0; bottom:0; z-index:40; border-radius:0; border:none; border-top:1px solid var(--line); background:var(--surface); padding:5px 4px calc(5px + env(safe-area-inset-bottom, 0px)); gap:0; box-shadow:0 -10px 24px -20px rgba(40,20,20,.5); }
+    .tabs{ position:fixed; left:0; right:0; bottom:0; z-index:40; border-radius:0; border:none; border-top:1px solid var(--line); background:var(--surface); padding:5px 4px calc(5px + env(safe-area-inset-bottom, 0px)); gap:0; box-shadow:0 -10px 24px -20px rgba(40,20,20,.5);
+      /* 아이폰에서 스크롤할 때 아래 탭 바가 위아래로 밀려 보이지 않게, 탭 바를 따로 그려요 */
+      -webkit-transform:translate3d(0,0,0); transform:translate3d(0,0,0); will-change:transform; -webkit-backface-visibility:hidden; backface-visibility:hidden; }
     .tab-btn{ flex:1 1 0; flex-direction:column; gap:2px; padding:6px 2px 4px; font-size:11px; font-weight:600; border-radius:10px; min-width:0; white-space:nowrap; }
     .tab-btn svg{ width:24px; height:24px; }
     .tab-btn[aria-selected="true"]{ background:none; color:var(--accent); font-weight:800; }
@@ -7019,7 +7021,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-21.1';
+  var APP_VERSION = '2026-10-23.1';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
