@@ -253,6 +253,29 @@
   .offer-actions .btn{ flex:1; font-size:18px; padding:16px; }
   .offer-actions .btn-primary{ flex:2; }
   .offer-result{ text-align:center; padding:40px 10px; font-size:19px; line-height:1.7; }
+  .offer-result.compact{ padding:18px 10px 6px; }
+  .offer-why{ display:flex; flex-direction:column; gap:10px; padding:14px 16px; border-radius:var(--radius); background:var(--accent-soft); border:1px solid var(--line); }
+  .offer-why b{ font-size:15px; }
+  .offer-why .helper-text{ margin:0; }
+  .offer-why .chip-group{ display:flex; flex-wrap:wrap; gap:8px; }
+  .offer-why .chip{ font-size:15px; padding:9px 14px; }
+  .offer-fu{ display:flex; flex-direction:column; gap:12px; padding:16px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--line); }
+  .offer-fu h3{ margin:0; font-size:18px; }
+  .offer-fu p{ margin:0; font-size:14.5px; line-height:1.6; color:var(--muted); }
+  .offer-fu .fu-opts{ display:flex; flex-direction:column; gap:8px; }
+  .offer-fu .fu-opt{ appearance:none; display:flex; align-items:center; gap:12px; text-align:left; width:100%; border:1px solid var(--line); background:var(--surface-2); border-radius:14px; padding:14px 16px; font-family:inherit; font-size:16px; font-weight:700; color:var(--ink); cursor:pointer; }
+  .offer-fu .fu-opt[aria-pressed="true"]{ border-color:var(--accent); background:var(--accent-soft); }
+  .offer-fu .fu-opt .fu-ic{ font-size:22px; width:30px; text-align:center; flex:none; }
+  .offer-fu .fu-opt small{ display:block; font-weight:500; color:var(--muted); font-size:13px; margin-top:2px; }
+  .offer-fu textarea{ min-height:70px; }
+  .offer-fu .fu-done{ padding:12px 14px; border-radius:12px; background:var(--success-soft); color:var(--ink); font-size:14.5px; line-height:1.5; }
+  .offer-fu .fu-done b{ color:var(--success); }
+  .decision-row .d-why{ font-size:12px; color:var(--muted); }
+  .fu-line{ display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; font-size:13px; color:var(--muted); }
+  .fu-line b{ color:var(--ink); }
+  .fu-line .fu-note{ flex-basis:100%; color:var(--ink); background:var(--surface-2); border-radius:8px; padding:6px 10px; font-size:13px; }
+  .reveal-box .reveal-ask{ align-self:flex-start; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-size:13.5px; font-weight:700; background:var(--surface); border-radius:999px; }
+  @media (max-width:520px){ .reveal-box .reveal-ask{ align-self:stretch; justify-content:center; } }
   .offer-result .big{ font-size:44px; display:block; margin-bottom:6px; }
   @media (min-width:640px){
     #offerOverlay{ align-items:center; padding:24px; }
@@ -1083,7 +1106,9 @@
           <dt>참가자가 정보를 고치고 싶다고 하면요?</dt>
           <dd>참가자 카드의 <b>링크 버튼</b>으로 수정 링크를 만들어 카톡으로 보내 주세요. 7일 동안 한 번만 제출할 수 있고, 새로 만들면 이전 링크는 끝나요. 제출되면 카드에 <span class="guide-ui">정보 수정 요청</span>이 뜨고, <span class="guide-ui">변경 확인</span>에서 전·후를 비교해 <b>반영하기</b>를 눌러야 실제로 바뀌어요. 그전까지는 기존 내용 그대로 매칭할 수 있어요. 예전에 쓴 성격·이상형 글은 그대로 보관돼요.</dd>
           <dt>참가자가 '이번엔 괜찮아요'를 누르면요?</dt>
-          <dd>매칭 카드에 '참가자 거절'로 표시되고 연락처는 공개되지 않아요. 그 짝은 AI 추천에 다시 나오지 않아요.</dd>
+          <dd>매칭 카드에 '참가자 거절'로 표시되고 연락처는 공개되지 않아요. 참가자가 아쉬운 점(나이·거리·사진·느낌 등)을 골랐다면 그 옆에 보여요. 그 짝은 AI 추천에 다시 나오지 않아요.</dd>
+          <dt>만난 뒤 결과는 어떻게 알 수 있어요?</dt>
+          <dd>연락처가 공개되고 3일이 지나면 매칭 카드에 <span class="guide-ui">OO 님께 결과 물어보기</span> 버튼이 떠요. 누르면 참가자가 이미 받았던 결정 링크가 든 문구가 복사되니 카톡에 붙여넣어 주세요. 참가자가 그 링크에서 "만나는 중 / 잘 되고 있어요 / 잘 안 됐어요"를 고르면 카드에 바로 표시되고, 결과도 자동으로 기록돼요. 직접 아는 분이라면 결과 칸을 직접 골라도 돼요.</dd>
           <dt>상대 주선자가 거절하면요?</dt>
           <dd>그 매칭은 공개되지 않아요. 카드에 '상대측 거절'로 표시되니 다른 분으로 다시 요청해 보세요.</dd>
           <dt>참가자 상태는 언제 바뀌나요?</dt>
@@ -3212,7 +3237,7 @@
     }
     var o = data.other || {};
     if(data.result === 'matched'){
-      body.innerHTML = '<div class="offer-result">' + OFFER_ART + '두 분 모두 만나보기로 했어요!<br>주선자가 곧 연락처를 전해 드릴게요.</div>'; return;
+      body.innerHTML = renderOfferMatched(data); return;
     }
     if(data.result === 'closed'){
       body.innerHTML = '<div class="offer-result">' + OFFER_ART + '' + (data.decision === 'declined' ? '답변을 전했어요.<br>다음에 더 잘 맞는 분을 소개해 드릴게요.' : '아쉽지만 이번 소개는 이어지지 않았어요.<br>주선자가 다른 분을 찾아볼게요.') + '</div>'; return;
@@ -3238,15 +3263,84 @@
       (o.extra_intro ? '<div class="offer-text"><h3>더 알려주고 싶은 점</h3><p>'+esc(o.extra_intro)+'</p></div>' : '') +
       (o.personality ? '<div class="offer-text"><h3>성격 · 특징</h3><p>'+esc(o.personality)+'</p></div>' : '') +
       (o.ideal_type ? '<div class="offer-text"><h3>이상형</h3><p>'+esc(o.ideal_type)+'</p></div>' : '') +
-      '<p class="helper-text" style="margin:0;">한 번 답하면 바꿀 수 없어요. 천천히 보고 정해 주세요.</p>';
+      '<p class="helper-text" style="margin:0;">한 번 답하면 바꿀 수 없어요. 천천히 보고 정해 주세요.</p>' +
+      '<div class="offer-why" id="offerWhy" hidden><b>괜찮으시다면, 어떤 점이 아쉬웠나요?</b><p class="helper-text">선택이에요. 상대에게는 보이지 않고, 주선자가 다음 소개를 고를 때만 참고해요.</p>' +
+        '<div class="chip-group" id="offerWhyChips">' + Object.keys(DECLINE_WHY).map(function(k){ return '<button type="button" class="chip" data-why="'+k+'" aria-pressed="false">'+DECLINE_WHY[k]+'</button>'; }).join('') + '</div></div>';
+    offerWhy = null;
+    $('offerWhyChips').addEventListener('click', function(e){
+      var c = e.target.closest('.chip'); if(!c) return;
+      offerWhy = offerWhy === c.dataset.why ? null : c.dataset.why;
+      Array.prototype.forEach.call(this.querySelectorAll('.chip'), function(x){ x.setAttribute('aria-pressed', x.dataset.why === offerWhy ? 'true' : 'false'); });
+    });
     actions.hidden = false;
     setOfferConfirm(null);
+  }
+  var DECLINE_WHY = { age:'나이가 안 맞아요', distance:'사는 곳이 멀어요', photo:'사진이 끌리지 않아요', vibe:'느낌이 안 와요', busy:'지금은 바빠요', other:'기타' };
+  var offerWhy = null;
+  var FU_OPTS = [
+    ['not_yet', '🙂', '아직 안 만났어요', '연락은 하고 있거나, 아직 약속 전이에요'],
+    ['dating', '☕', '만나는 중이에요', '한 번 이상 만났고 계속 보고 있어요'],
+    ['couple', '💕', '잘 되고 있어요', '연인으로 발전했어요. 축하드려요!'],
+    ['ended', '🍂', '잘 안 됐어요', '만나 봤지만 인연이 아니었어요']
+  ];
+  var FU_LABEL = { not_yet:'아직 안 만났어요', dating:'만나는 중이에요', couple:'잘 되고 있어요 (커플)', ended:'잘 안 됐어요' };
+  function renderOfferMatched(data){
+    var days = data.matched_at ? daysSince(data.matched_at) : 0;
+    var head = '<div class="offer-result compact">' + OFFER_ART + '두 분 모두 만나보기로 했어요!' +
+      (days < 1 ? '<br>주선자가 곧 연락처를 전해 드릴게요.' : '') + '</div>';
+    if(days < 3 && !data.followup){
+      return head + '<p class="helper-text" style="text-align:center; margin:0;">며칠 뒤 이 링크를 다시 열면, 만남이 어땠는지 알려 주실 수 있어요.</p>';
+    }
+    var done = data.followup ? '<div class="fu-done"><b>' + esc(FU_LABEL[data.followup] || '') + '</b>로 답해 주셨어요' +
+      (data.followup_at ? ' (' + esc(fmtDate(String(data.followup_at).slice(0, 10))) + ')' : '') + '. 바뀐 게 있으면 아래에서 다시 골라 주세요.</div>' : '';
+    return head + '<div class="offer-fu" id="offerFu">' +
+      '<h3>만남은 어떠셨어요?</h3>' +
+      '<p>주선자가 다음 소개를 준비하는 데 큰 도움이 돼요. 상대분에게는 보이지 않아요.</p>' + done +
+      '<div class="fu-opts">' + FU_OPTS.map(function(o){
+        return '<button type="button" class="fu-opt" data-fu="'+o[0]+'" aria-pressed="'+(data.followup === o[0] ? 'true' : 'false')+'"><span class="fu-ic">'+o[1]+'</span><span>'+o[2]+'<small>'+o[3]+'</small></span></button>';
+      }).join('') + '</div>' +
+      '<textarea class="field-input" id="fuNote" maxlength="200" placeholder="주선자에게 남길 말 (선택)"></textarea>' +
+      '<button type="button" class="btn btn-primary" id="fuSend" disabled>보내기</button>' +
+    '</div>';
+  }
+  var fuPick = null;
+  function initOfferFollowup(){
+    $('offerBody').addEventListener('click', function(e){
+      var b = e.target.closest('.fu-opt');
+      if(b){
+        fuPick = b.dataset.fu;
+        Array.prototype.forEach.call(document.querySelectorAll('.fu-opt'), function(x){ x.setAttribute('aria-pressed', x.dataset.fu === fuPick ? 'true' : 'false'); });
+        var sb = $('fuSend'); if(sb) sb.disabled = false;
+        return;
+      }
+      var send = e.target.closest('#fuSend');
+      if(send && fuPick){
+        send.disabled = true; send.textContent = '보내는 중…';
+        var note = $('fuNote') ? $('fuNote').value.trim() : '';
+        Promise.resolve(supabase.rpc('offer_followup', { p_token: offerToken, p_answer: fuPick, p_note: note || null })).then(function(res){
+          if(res.error) throw res.error;
+          fuPick = null;
+          renderOffer(res.data);
+          showToast(res.data && res.data.followup === 'couple' ? '축하드려요! 주선자에게 전했어요' : '고마워요. 주선자에게 전했어요');
+        }).catch(function(err){
+          console.error(err);
+          send.disabled = false; send.textContent = '보내기';
+          var msg = (err && err.message) || '';
+          showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '전하지 못했어요. 다시 시도해 주세요.');
+        });
+      }
+    });
   }
   function setOfferConfirm(which){
     offerConfirm = which;
     $('offerAccept').textContent = which === 'accept' ? '네, 만나볼게요' : '만나볼게요';
     $('offerDecline').textContent = which === 'decline' ? '네, 괜찮아요' : '이번엔 괜찮아요';
     $('offerAccept').classList.toggle('btn-primary', which !== 'decline');
+    var why = $('offerWhy');
+    if(why){
+      why.hidden = which !== 'decline';
+      if(which === 'decline') setTimeout(function(){ why.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 50);
+    }
   }
   function decideOffer(accept){
     var which = accept ? 'accept' : 'decline';
@@ -3257,7 +3351,7 @@
     }
     $('offerAccept').disabled = true; $('offerDecline').disabled = true;
     hideToast();
-    supabase.rpc('decide_offer', { p_token: offerToken, p_accept: accept }).then(function(res){
+    supabase.rpc('decide_offer', { p_token: offerToken, p_accept: accept, p_reason: accept ? null : offerWhy }).then(function(res){
       if(res.error) throw res.error;
       renderOffer(res.data);
     }).catch(function(err){
@@ -3272,6 +3366,7 @@
     $('offerOverlay').hidden = false;
     $('offerAccept').addEventListener('click', function(){ decideOffer(true); });
     $('offerDecline').addEventListener('click', function(){ decideOffer(false); });
+    initOfferFollowup();
     supabase.rpc('get_offer', { p_token: token }).then(function(res){
       if(res.error) throw res.error;
       renderOffer(res.data);
@@ -4545,7 +4640,14 @@
           '<div class="reveal-head"><span class="reveal-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.3 3 4.5 6.7 4.5c2.1 0 3.6 1.1 4.4 2.5h1.8c.8-1.4 2.3-2.5 4.4-2.5 3.7 0 5.8 3.8 4.3 7.3C19.5 16.4 12 21 12 21Z"/></svg></span>' +
             '<div><b>두 분 모두 만나보기로 했어요</b><span>서로의 이름과 연락처를 전해 주세요</span></div></div>' +
           '<div class="reveal-pair">' + lines.join('<span class="reveal-link" aria-hidden="true"><svg viewBox="0 0 34 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 9c5 0 5-6 10-6s4 12 10 12 5-6 10-6"/></svg></span>') + '</div>' +
-          '<button class="btn reveal-copy" type="button" data-action="copy-contacts" data-id="'+esc(x.id)+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>이름·연락처 복사</button></div>';
+          '<button class="btn reveal-copy" type="button" data-action="copy-contacts" data-id="'+esc(x.id)+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>이름·연락처 복사</button>' +
+          followupLineHtml(x, aMember, bMember) +
+          (x.status !== 'success' && x.outcome !== 'ended' && revealedAt(x) && daysSince(revealedAt(x)) >= 3
+            ? '<div style="display:flex; gap:8px; flex-wrap:wrap;">' + [['a', aMember], ['b', bMember]].filter(function(p){ return canSendOffer(x, p[0]) && !((offerTimes[x.id] || {})[p[0]] || {}).fu; }).map(function(p){
+                return '<button class="btn reveal-ask" type="button" data-action="ask-outcome" data-id="'+esc(x.id)+'" data-side="'+p[0]+'">' + esc(p[1] ? displayName(p[1]) : '참가자') + ' 님께 결과 물어보기</button>';
+              }).join('') + '</div>'
+            : '') +
+          '</div>';
       } else if(!isAdmin() && !pendingMine.length){
         var waits = [];
         if(declined) waits = ['상대 측에서 정중히 거절했어요. 다른 분을 찾아보세요.'];
@@ -4582,7 +4684,8 @@
           var ot = (offerTimes[x.id] || {})[side];
           var age = (dec === 'pending' && ot && ot.sent && !closed) ? daysSince(ot.sent) : -1;
           var ageHtml = age >= 0 ? '<span class="offer-age'+(age >= 3 ? ' late' : '')+'">'+(age === 0 ? '오늘 보냄' : '보낸 지 '+age+'일')+(age >= 3 ? ' · 답이 없어요' : '')+'</span>' : '';
-          return '<div class="decision-row"><span class="who">'+esc(mm ? displayName(mm) : (side === 'a' ? aName : bName))+'</span><span class="badge '+cls+'">'+esc(DECISION_LABEL[dec] || '')+'</span>'+ageHtml+btn+'</div>';
+          var whyHtml = (dec === 'declined' && ot && ot.why && MM_DECLINE_WHY[ot.why]) ? '<span class="d-why">이유: '+esc(MM_DECLINE_WHY[ot.why])+'</span>' : '';
+          return '<div class="decision-row"><span class="who">'+esc(mm ? displayName(mm) : (side === 'a' ? aName : bName))+'</span><span class="badge '+cls+'">'+esc(DECISION_LABEL[dec] || '')+'</span>'+whyHtml+ageHtml+btn+'</div>';
         }).join('') + '</div>';
       }
 
@@ -6323,6 +6426,37 @@
   var offerTimes = {};   // 매칭 id → { a:{sent,decided,reminded}, b:{…} }
   var preqs = [];        // 내가 처리할 참가자 요청
   var OUTCOME_LABEL = { not_yet:'아직 안 만났어요', dating:'만나는 중', ended:'잘 안 됐어요', couple:'커플이 됐어요' };
+  var MM_DECLINE_WHY = { age:'나이', distance:'거리', photo:'사진', vibe:'느낌', busy:'지금은 바쁨', other:'기타' };
+  // 참가자가 결정 링크에서 직접 답한 만남 결과
+  function followupLineHtml(x, aMember, bMember){
+    var t = offerTimes[x.id] || {};
+    var parts = [];
+    [['a', aMember], ['b', bMember]].forEach(function(p){
+      var o = t[p[0]];
+      if(!o || !o.fu) return;
+      parts.push('<span><b>' + esc(p[1] ? displayName(p[1]) : (p[0] === 'a' ? x.aName : x.bName)) + '</b> 님 답: ' + esc(OUTCOME_LABEL[o.fu] || o.fu) +
+        (o.fuAt ? ' (' + esc(fmtShortDate(String(o.fuAt).slice(0, 10))) + ')' : '') + '</span>' +
+        (o.fuNote ? '<span class="fu-note">' + esc(o.fuNote) + '</span>' : ''));
+    });
+    return parts.length ? '<div class="fu-line">' + parts.join('') + '</div>' : '';
+  }
+  // 결과 물어보기: 참가자가 이미 갖고 있는 결정 링크를 그대로 써요
+  function copyAskOutcome(id, side, btn){
+    var x = matches.filter(function(m){ return m.id === id; })[0];
+    if(!x) return;
+    var m = memberById(side === 'a' ? x.aId : x.bId);
+    if(btn) btn.disabled = true;
+    Promise.resolve(supabase.rpc('offer_link_token', { p_match: id, p_side: side })).then(function(res){
+      if(res.error) throw res.error;
+      if(!res.data) throw new Error('이 참가자에게 보낸 결정 링크가 없어요');
+      var url = location.origin + location.pathname + '?offer=' + res.data;
+      copyText('[매칭메이커] 안녕하세요! 지난번 소개해 드린 분과는 어떠셨어요?\n아래 링크에서 한 번만 눌러 알려 주시면 다음 소개에 큰 도움이 돼요. 상대분에게는 보이지 않아요 :)\n' + url);
+    }).catch(function(err){
+      console.error(err);
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '문구를 만들지 못했어요');
+    }).then(function(){ if(btn) btn.disabled = false; });
+  }
   function fmtShortDate(d){
     var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d || ''));
     return m ? (Number(m[2]) + '/' + Number(m[3])) : '';
@@ -6335,7 +6469,7 @@
       if(res.error) throw res.error;
       var map = {};
       (res.data || []).forEach(function(r){
-        (map[r.match_id] = map[r.match_id] || {})[r.side] = { sent:r.sent_at, decided:r.decided_at, reminded:r.reminded_at };
+        (map[r.match_id] = map[r.match_id] || {})[r.side] = { sent:r.sent_at, decided:r.decided_at, reminded:r.reminded_at, why:r.decline_reason || '', fu:r.followup || '', fuAt:r.followup_at || '', fuNote:r.followup_note || '' };
       });
       var changed = JSON.stringify(map) !== JSON.stringify(offerTimes);
       offerTimes = map;
@@ -6988,6 +7122,7 @@
       if(btn.dataset.action === 'unapprove-match') setMatchApproval(id, false);
       if(btn.dataset.action === 'close-match') openCloseMatch(id);
       if(btn.dataset.action === 'copy-contacts') copyMatchContacts(id);
+      if(btn.dataset.action === 'ask-outcome') copyAskOutcome(id, btn.dataset.side, btn);
       if(btn.dataset.action === 'reopen-match') reopenMatch(id, btn);
       if(btn.dataset.action === 'view-photos') openPhotoViewer(id);
       if(btn.dataset.action === 'record-outcome') recordOutcome(id, btn.dataset.outcome, btn);
@@ -7288,7 +7423,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-26.1';
+  var APP_VERSION = '2026-10-26.2';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
