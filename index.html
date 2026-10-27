@@ -274,6 +274,14 @@
   .fu-line{ display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; font-size:13px; color:var(--muted); }
   .fu-line b{ color:var(--ink); }
   .fu-line .fu-note{ flex-basis:100%; color:var(--ink); background:var(--surface-2); border-radius:8px; padding:6px 10px; font-size:13px; }
+  .share-row{ display:flex; flex-direction:column; gap:6px; }
+  .share-item{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; color:var(--muted); }
+  .share-item b{ color:var(--ink); }
+  .share-item .btn{ padding:6px 12px; font-size:13px; }
+  .share-item.done{ color:var(--success); }
+  .share-item.done .share-undo{ color:var(--muted); font-size:12px; padding:2px 6px; }
+  .share-item.late b{ color:var(--accent); }
+  .share-badge{ margin-right:6px; }
   .reveal-box .reveal-ask{ align-self:flex-start; display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-size:13.5px; font-weight:700; background:var(--surface); border-radius:999px; }
   @media (max-width:520px){ .reveal-box .reveal-ask{ align-self:stretch; justify-content:center; } }
   .offer-result .big{ font-size:44px; display:block; margin-bottom:6px; }
@@ -1107,6 +1115,8 @@
           <dd>참가자 카드의 <b>링크 버튼</b>으로 수정 링크를 만들어 카톡으로 보내 주세요. 7일 동안 한 번만 제출할 수 있고, 새로 만들면 이전 링크는 끝나요. 제출되면 카드에 <span class="guide-ui">정보 수정 요청</span>이 뜨고, <span class="guide-ui">변경 확인</span>에서 전·후를 비교해 <b>반영하기</b>를 눌러야 실제로 바뀌어요. 그전까지는 기존 내용 그대로 매칭할 수 있어요. 예전에 쓴 성격·이상형 글은 그대로 보관돼요.</dd>
           <dt>참가자가 '이번엔 괜찮아요'를 누르면요?</dt>
           <dd>매칭 카드에 '참가자 거절'로 표시되고 연락처는 공개되지 않아요. 참가자가 아쉬운 점(나이·거리·사진·느낌 등)을 골랐다면 그 옆에 보여요. 그 짝은 AI 추천에 다시 나오지 않아요.</dd>
+          <dt>두 분 다 수락하면 뭘 해야 해요?</dt>
+          <dd>매칭 카드에 두 분의 이름·연락처가 열리고, 참가자마다 <span class="guide-ui">보낼 문구 복사</span> 버튼이 생겨요. 누르면 상대 이름·연락처가 든 카톡 문구가 복사되고 <b>전달 완료</b>로 표시돼요 (잘못 눌렀으면 되돌릴 수 있어요). 직접 적어 보냈으면 <b>이미 전했어요</b>를 눌러 주세요. 2일이 지나도록 표시가 없으면 알림이 오고, 관리자 화면에도 '연락처 미전달'로 보여요.</dd>
           <dt>만난 뒤 결과는 어떻게 알 수 있어요?</dt>
           <dd>연락처가 공개되고 3일이 지나면 매칭 카드에 <span class="guide-ui">OO 님께 결과 물어보기</span> 버튼이 떠요. 누르면 참가자가 이미 받았던 결정 링크가 든 문구가 복사되니 카톡에 붙여넣어 주세요. 참가자가 그 링크에서 "만나는 중 / 잘 되고 있어요 / 잘 안 됐어요"를 고르면 카드에 바로 표시되고, 결과도 자동으로 기록돼요. 직접 아는 분이라면 결과 칸을 직접 골라도 돼요.</dd>
           <dt>상대 주선자가 거절하면요?</dt>
@@ -1380,6 +1390,11 @@
       <span class="todo-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
       <span class="nudge-text" id="replyNudgeText"></span>
       <span class="nudge-btns"><button type="button" class="btn btn-primary" id="replyNudgeOpen">보기</button></span>
+    </div>
+    <div id="shareNudge" class="nudge" hidden>
+      <span class="todo-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H7l-3 3z"/><path d="M8 9h8M8 12h5"/></svg></span>
+      <span class="nudge-text" id="shareNudgeText"></span>
+      <span class="nudge-btns"><button type="button" class="btn btn-primary" id="shareNudgeOpen">보기</button></span>
     </div>
     <div id="outcomeNudge" class="nudge" hidden>
       <span class="todo-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/></svg></span>
@@ -4603,7 +4618,7 @@
         ? '<span class="badge badge-warn" style="margin-right:6px;">상대 담당 수락 대기</span>'
         : '<span class="badge badge-warn" style="margin-right:6px;">관리자 승인 대기</span>';
       else if(pDeclined) statusBadges += '<span class="badge badge-danger" style="margin-right:6px;">참가자 거절</span>';
-      else if(matchRevealed(x)) statusBadges += '<span class="badge badge-success" style="margin-right:6px;">둘 다 수락</span>';
+      else if(matchRevealed(x)) statusBadges += (shareOpen(x).length && revealedAt(x) && daysSince(revealedAt(x)) >= 2 ? '<span class="badge badge-danger share-badge">연락처 미전달</span>' : '') + '<span class="badge badge-success" style="margin-right:6px;">둘 다 수락</span>';
       else if(matchReady(x)) statusBadges += '<span class="badge badge-info" style="margin-right:6px;">참가자 결정 중</span>';
 
       var chips = consentChip(aMember, x.aConsent, x.createdBy) + consentChip(bMember, x.bConsent, x.createdBy);
@@ -4640,7 +4655,8 @@
           '<div class="reveal-head"><span class="reveal-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.3 3 4.5 6.7 4.5c2.1 0 3.6 1.1 4.4 2.5h1.8c.8-1.4 2.3-2.5 4.4-2.5 3.7 0 5.8 3.8 4.3 7.3C19.5 16.4 12 21 12 21Z"/></svg></span>' +
             '<div><b>두 분 모두 만나보기로 했어요</b><span>서로의 이름과 연락처를 전해 주세요</span></div></div>' +
           '<div class="reveal-pair">' + lines.join('<span class="reveal-link" aria-hidden="true"><svg viewBox="0 0 34 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 9c5 0 5-6 10-6s4 12 10 12 5-6 10-6"/></svg></span>') + '</div>' +
-          '<button class="btn reveal-copy" type="button" data-action="copy-contacts" data-id="'+esc(x.id)+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>이름·연락처 복사</button>' +
+          shareRowHtml(x, aMember, bMember) +
+          '<button class="btn reveal-copy" type="button" data-action="copy-contacts" data-id="'+esc(x.id)+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>두 분 연락처 한꺼번에 복사</button>' +
           followupLineHtml(x, aMember, bMember) +
           (x.status !== 'success' && x.outcome !== 'ended' && revealedAt(x) && daysSince(revealedAt(x)) >= 3
             ? '<div style="display:flex; gap:8px; flex-wrap:wrap;">' + [['a', aMember], ['b', bMember]].filter(function(p){ return canSendOffer(x, p[0]) && !((offerTimes[x.id] || {})[p[0]] || {}).fu; }).map(function(p){
@@ -6440,6 +6456,63 @@
     });
     return parts.length ? '<div class="fu-line">' + parts.join('') + '</div>' : '';
   }
+  /* 연락처 전달 확인: 두 분 다 수락한 뒤, 각 참가자에게 상대 이름·연락처를 전했는지 */
+  function shareState(x, side){ var o = (offerTimes[x.id] || {})[side]; return o ? { at:o.shared, by:o.sharedBy } : { at:'', by:'' }; }
+  function shareOpen(x){
+    if(!matchRevealed(x) || x.status === 'failed' || x.outcome === 'ended') return [];
+    return ['a','b'].filter(function(sd){ return !shareState(x, sd).at; });
+  }
+  // 내가 전해야 하는(담당인) 쪽이 아직 미전달인 매칭 · 관리자는 전부
+  function shareDueMine(x){
+    return shareOpen(x).some(function(sd){ return isAdmin() || canSendOffer(x, sd); }) && revealedAt(x) && daysSince(revealedAt(x)) >= 1;
+  }
+  function shareRowHtml(x, aMember, bMember){
+    if(!matchRevealed(x)) return '';
+    var items = [['a', aMember, bMember], ['b', bMember, aMember]].map(function(p){
+      var side = p[0], me = p[1], other = p[2];
+      var st = shareState(x, side);
+      var who = me ? displayName(me) : (side === 'a' ? x.aName : x.bName);
+      var can = canSendOffer(x, side) || isAdmin();
+      if(st.at){
+        return '<div class="share-item done"><span>✓ <b>' + esc(who) + '</b> 님께 전달 완료 · ' + esc(fmtShortDate(String(st.at).slice(0, 10))) +
+          (st.by ? ' · ' + esc(ownerName(st.by)) : '') + '</span>' +
+          (can ? '<button type="button" class="btn btn-ghost share-undo" data-action="share-unmark" data-id="'+esc(x.id)+'" data-side="'+side+'">아직 안 보냈어요</button>' : '') + '</div>';
+      }
+      var late = revealedAt(x) && daysSince(revealedAt(x)) >= 2;
+      return '<div class="share-item' + (late ? ' late' : '') + '"><span><b>' + esc(who) + '</b> 님께 ' + (late ? '아직 미전달' : '전달 전') + '</span>' +
+        (can ? '<button type="button" class="btn btn-primary" data-action="share-copy" data-id="'+esc(x.id)+'" data-side="'+side+'">보낼 문구 복사</button>' +
+               '<button type="button" class="btn" data-action="share-mark" data-id="'+esc(x.id)+'" data-side="'+side+'">이미 전했어요</button>'
+             : '<span>· 담당 ' + esc(me && me.ownerId ? ownerName(me.ownerId) : '없음') + '</span>') + '</div>';
+    });
+    return '<div class="share-row">' + items.join('') + '</div>';
+  }
+  // 한 참가자에게 보낼 문구: 상대의 이름·연락처만 담아요. 복사하면 전달 완료로 표시해요 (되돌릴 수 있어요)
+  function copyShareMessage(id, side, btn){
+    var x = matches.filter(function(m){ return m.id === id; })[0];
+    if(!x || !matchRevealed(x)) return;
+    var me = memberById(side === 'a' ? x.aId : x.bId), other = memberById(side === 'a' ? x.bId : x.aId);
+    if(!other || !(other.name || other.contact)){ showToast('상대 이름·연락처를 아직 볼 수 없어요'); return; }
+    var ph = other.contact ? fmtPhone(other.contact).text : '';
+    copyText('[매칭메이커] 두 분 모두 만나보기로 하셨어요!\n상대분 연락처예요.\n· ' + (other.name || other.codeName || '상대') + (ph ? ' ' + ph : '') +
+      '\n편하게 먼저 연락해 보세요. 잘 되길 응원할게요 :)');
+    markShared(id, side, true, btn);
+  }
+  function markShared(id, side, on, btn){
+    if(btn) btn.disabled = true;
+    Promise.resolve(supabase.rpc('mark_contact_shared', { p_match: id, p_side: side, p_on: on })).then(function(res){
+      if(res.error) throw res.error;
+      var o = (offerTimes[id] = offerTimes[id] || {});
+      o[side] = o[side] || {};
+      o[side].shared = res.data || ''; o[side].sharedBy = on ? myId() : '';
+      renderMatches(); renderTodoV18();
+      if(!on) showToast('전달 전으로 되돌렸어요');
+    }).catch(function(err){
+      console.error(err);
+      if(btn) btn.disabled = false;
+      var msg = (err && err.message) || '';
+      showToast(/[가-힣]/.test(msg) && msg.length < 60 ? msg : '표시하지 못했어요. 다시 시도해 주세요');
+    });
+  }
   // 결과 물어보기: 참가자가 이미 갖고 있는 결정 링크를 그대로 써요
   function copyAskOutcome(id, side, btn){
     var x = matches.filter(function(m){ return m.id === id; })[0];
@@ -6469,7 +6542,7 @@
       if(res.error) throw res.error;
       var map = {};
       (res.data || []).forEach(function(r){
-        (map[r.match_id] = map[r.match_id] || {})[r.side] = { sent:r.sent_at, decided:r.decided_at, reminded:r.reminded_at, why:r.decline_reason || '', fu:r.followup || '', fuAt:r.followup_at || '', fuNote:r.followup_note || '' };
+        (map[r.match_id] = map[r.match_id] || {})[r.side] = { sent:r.sent_at, decided:r.decided_at, reminded:r.reminded_at, why:r.decline_reason || '', fu:r.followup || '', fuAt:r.followup_at || '', fuNote:r.followup_note || '', shared:r.contact_shared_at || '', sharedBy:r.contact_shared_by || '' };
       });
       var changed = JSON.stringify(map) !== JSON.stringify(offerTimes);
       offerTimes = map;
@@ -6532,6 +6605,9 @@
     var reqs = preqs.filter(function(r){ return memberById(r.participant_id); });
     $('replyNudge').hidden = !late.length;
     if(late.length) $('replyNudgeText').innerHTML = '3일째 답이 없는 결정 링크 <b>' + late.length + '건</b> · 한 번 더 물어봐 주세요';
+    var shareDue = matchesLoaded ? matches.filter(shareDueMine) : [];
+    $('shareNudge').hidden = !shareDue.length;
+    if(shareDue.length) $('shareNudgeText').innerHTML = (isAdmin() ? '연락처 미전달 매칭 <b>' + shareDue.length + '건</b> · 담당 주선자가 아직 전하지 않았어요' : '연락처 전할 매칭 <b>' + shareDue.length + '건</b> · 상대 이름·연락처를 참가자에게 보내 주세요');
     $('outcomeNudge').hidden = !due.length;
     if(due.length) $('outcomeNudgeText').innerHTML = '만남 결과를 기다리는 매칭 <b>' + due.length + '건</b>';
     $('preqNudge').hidden = !reqs.length;
@@ -6654,6 +6730,7 @@
       item(appr.filter(function(m){ return withinDays(m.createdAt, 7); }).length + '명', '새 참가자') +
       item(matches.filter(function(x){ return withinDays(x.createdAt, 7); }).length + '건', '새 매칭') +
       item(revealed.filter(function(x){ return withinDays(revealedAt(x), 7); }).length + '건', '연락처 공개') +
+      item(revealed.filter(function(x){ return shareOpen(x).length; }).length + '건', '연락처 미전달') +
       item(matches.filter(function(x){ return x.status === 'success' && withinDays(x.outcomeAt || x.updatedAt, 7); }).length + '건', '성사') +
       '<div class="sum-h">전체</div>' +
       item(appr.length + '명', '참가자 (여 ' + f + ' · 남 ' + mm + ')') +
@@ -6899,6 +6976,7 @@
     $('btnExportXlsx').addEventListener('click', exportXlsx);
     $('replyNudgeOpen').addEventListener('click', function(){ goToMatch(matches.filter(replyLate)); });
     $('outcomeNudgeOpen').addEventListener('click', function(){ goToMatch(matches.filter(outcomeDue)); });
+    $('shareNudgeOpen').addEventListener('click', function(){ goToMatch(matches.filter(shareDueMine)); });
     $('preqNudgeOpen').addEventListener('click', function(){
       var r = preqs.filter(function(q){ return memberById(q.participant_id); })[0];
       if(r) openMsgAttachment(r.participant_id, null);
@@ -7123,6 +7201,9 @@
       if(btn.dataset.action === 'close-match') openCloseMatch(id);
       if(btn.dataset.action === 'copy-contacts') copyMatchContacts(id);
       if(btn.dataset.action === 'ask-outcome') copyAskOutcome(id, btn.dataset.side, btn);
+      if(btn.dataset.action === 'share-copy') copyShareMessage(id, btn.dataset.side, btn);
+      if(btn.dataset.action === 'share-mark') markShared(id, btn.dataset.side, true, btn);
+      if(btn.dataset.action === 'share-unmark') markShared(id, btn.dataset.side, false, btn);
       if(btn.dataset.action === 'reopen-match') reopenMatch(id, btn);
       if(btn.dataset.action === 'view-photos') openPhotoViewer(id);
       if(btn.dataset.action === 'record-outcome') recordOutcome(id, btn.dataset.outcome, btn);
@@ -7172,7 +7253,7 @@
     var updateTodoCard = function(){ $('todoCard').hidden = !$('todoCard').querySelector('.nudge:not([hidden])'); };
     if(window.MutationObserver){
       var todoObs = new MutationObserver(updateTodoCard);
-      ['pushNudge','fillNudge','preqNudge','replyNudge','outcomeNudge'].forEach(function(id){ todoObs.observe($(id), { attributes:true, attributeFilter:['hidden'] }); });
+      ['pushNudge','fillNudge','preqNudge','replyNudge','outcomeNudge','shareNudge'].forEach(function(id){ todoObs.observe($(id), { attributes:true, attributeFilter:['hidden'] }); });
     }
     updateTodoCard();
     $('btnNotify').addEventListener('click', openNotify);
@@ -7423,7 +7504,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-26.2';
+  var APP_VERSION = '2026-10-27.1';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
