@@ -541,6 +541,39 @@
   .guide-faq dt:first-child{ margin-top:0; }
   .guide-faq dd{ margin:2px 0 0; color:var(--muted); }
   #guideOverlay .dialog-actions{ margin:0; padding:14px 22px calc(14px + env(safe-area-inset-bottom, 0px)); border-top:1px solid var(--line); }
+  /* 핵심만 / 자세히 탭 */
+  .guide-tabs{ display:flex; gap:6px; padding:12px 22px 0; }
+  .guide-tab{ flex:1; padding:8px 10px; border-radius:999px; border:1px solid var(--line); background:var(--surface); font:inherit; font-weight:700; font-size:14px; color:var(--muted); cursor:pointer; }
+  .guide-tab.is-on{ background:var(--accent-soft); color:var(--ink); border-color:transparent; }
+  .guide-tab small{ font-weight:400; margin-left:4px; }
+  /* 핵심만: 한 장씩 넘겨 보는 슬라이드 */
+  .gq-hello{ margin:0; font-size:15px; color:var(--muted); }
+  .gq-slide{ display:none; }
+  .gq-slide.is-on{ display:flex; flex-direction:column; gap:12px; }
+  .gq-slide h3{ font-size:20px; margin:0; line-height:1.35; }
+  .gq-slide p, .gq-slide ul{ margin:0; font-size:16px; line-height:1.65; }
+  .gq-slide ul{ padding-left:18px; }
+  .gq-slide li{ margin:4px 0; }
+  .gq-slide .guide-ui{ font-size:14.5px; }
+  .gq-slide .muted{ color:var(--muted); font-size:14.5px; }
+  .gq-slide .guide-flow .gf-step{ font-size:13.5px; padding:6px 10px; }
+  .gq-dots{ display:flex; gap:6px; align-items:center; margin-right:auto; }
+  .gq-dots i{ width:8px; height:8px; border-radius:50%; background:var(--line); display:block; transition:all .15s; }
+  .gq-dots i.is-on{ background:var(--accent); width:22px; border-radius:4px; }
+  #guideQuickActions{ align-items:center; }
+  #guideQuickActions .btn[disabled]{ visibility:hidden; }
+  /* 자세히: 접었다 펴는 항목 */
+  .guide-sec{ border:1px solid var(--line); border-radius:var(--radius-sm); padding:0 14px; background:var(--surface); }
+  .guide-sec.guide-box{ background:var(--surface-2); border-color:transparent; }
+  .guide-sec.warn{ background:var(--accent-soft); }
+  .guide-sec > summary{ cursor:pointer; padding:12px 0; list-style:none; display:flex; align-items:center; gap:8px; }
+  .guide-sec > summary::-webkit-details-marker{ display:none; }
+  .guide-sec > summary::after{ content:''; margin-left:auto; flex:none; width:8px; height:8px; border-right:2px solid var(--muted); border-bottom:2px solid var(--muted); transform:rotate(45deg); transition:transform .15s; }
+  .guide-sec[open] > summary::after{ transform:rotate(-135deg); }
+  .guide-sec > summary h3{ margin:0; }
+  .guide-sec[open]{ padding-bottom:14px; }
+  .guide-sec[open] > summary{ margin-bottom:4px; }
+  #guideFull{ gap:12px; }
   #guideOverlay .dialog-actions .btn{ font-size:16px; padding:12px 28px; }
   @media (max-width:639px){ #guideOverlay .dialog{ max-height:94vh; } }
   /* 로그인 화면의 참가자 등록 신청 버튼 */
@@ -982,13 +1015,60 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12" stroke-linecap="round"/></svg>
       </button>
     </div>
-    <div class="guide-body">
+    <div class="guide-tabs" id="guideTabs" role="tablist">
+      <button type="button" class="guide-tab is-on" data-gtab="quick" role="tab">핵심만<small>1분</small></button>
+      <button type="button" class="guide-tab" data-gtab="full" role="tab">자세히</button>
+    </div>
+    <div class="guide-body" id="guideQuick">
+      <p class="gq-hello" id="gqHello" hidden></p>
+      <section class="gq-slide is-on">
+        <h3>매칭은 이렇게 흘러가요</h3>
+        <div class="guide-flow" aria-label="매칭 순서">
+          <span class="gf-step"><b>1</b>참가자 모으기</span><span class="gf-arrow">→</span>
+          <span class="gf-step"><b>2</b>AI 추천·제안</span><span class="gf-arrow">→</span>
+          <span class="gf-step"><b>3</b>상대 주선자 수락</span><span class="gf-arrow">→</span>
+          <span class="gf-step"><b>4</b>참가자 결정</span><span class="gf-arrow">→</span>
+          <span class="gf-step"><b>5</b>연락처 전달</span>
+        </div>
+        <p>AI가 궁합으로 후보를 찾고, 주선자가 골라 제안하고, <b>참가자 본인이 최종 결정</b>해요. 두 분이 모두 만나보기로 하면 연락처가 열려요.</p>
+        <p class="muted">5장만 더 보면 바로 시작할 수 있어요.</p>
+      </section>
+      <section class="gq-slide">
+        <h3>① 참가자 모으기</h3>
+        <p>오른쪽 위 <b>내 이름</b> 버튼 → <span class="guide-ui">내 등록 링크 복사</span> → 지인에게 카톡으로 보내요. 그 링크로 신청한 사람은 자동으로 <b>내 담당</b>이 돼요.</p>
+        <p>신청이 들어오면 참가자 카드의 <span class="guide-ui">승인</span>을 눌러야 다른 주선자도 보고 매칭할 수 있어요.</p>
+      </section>
+      <section class="gq-slide">
+        <h3>② AI 추천 보고 제안하기</h3>
+        <p><span class="guide-ui">AI 추천</span> 탭에 내 참가자마다 잘 맞는 후보가 이유와 함께 떠요. 괜찮으면 <span class="guide-ui">제안하기</span>, 아니면 <span class="guide-ui">이 분 말고</span>로 다음 후보를 봐요.</p>
+        <p>제안하면 상대 담당 주선자에게 요청이 가요. 반대로 내게 온 요청은 <span class="guide-ui">매칭</span> 탭의 <b>받은 요청</b>에서 수락·거절해요.</p>
+      </section>
+      <section class="gq-slide">
+        <h3>③ 참가자에게 결정 링크 보내기</h3>
+        <p>양쪽 주선자가 수락하면 매칭 카드에 <span class="guide-ui">결정 링크 보내기</span>가 생겨요. 누르면 카톡용 문구가 복사되니 <b>내 참가자 본인에게만</b> 보내 주세요.</p>
+        <p>참가자는 링크에서 상대 프로필·사진(이름·연락처 제외)을 보고 <b>만나볼게요 / 이번엔 괜찮아요</b>를 골라요. 3일 동안 답이 없으면 알려 드려요.</p>
+      </section>
+      <section class="gq-slide">
+        <h3>④ 두 분 다 수락하면 연락처 전하기</h3>
+        <p>카드에 두 분의 이름·연락처가 열려요. 참가자마다 <span class="guide-ui">보낼 문구 복사</span>를 눌러 상대 연락처를 <b>꼭 전해 주세요</b>. 이걸 빼먹으면 소개가 멈춰요.</p>
+        <p>며칠 뒤 <span class="guide-ui">결과 물어보기</span>를 누르면 참가자가 어떻게 됐는지 답할 수 있고, 결과가 자동으로 기록돼요.</p>
+      </section>
+      <section class="gq-slide">
+        <h3>꼭 두 가지만 더</h3>
+        <ul>
+          <li><b>알림 켜기</b>: 오른쪽 위 <span class="guide-ui">종 모양 알림</span> 버튼을 눌러 주세요. 요청·결정·쪽지를 휴대폰으로 바로 받아요. (아이폰은 Safari 공유 → <b>홈 화면에 추가</b>한 뒤)</li>
+          <li><b>개인정보</b>: 열린 이름·연락처는 소개 목적으로만 쓰고, 결정 링크는 참가자 본인에게만 보내요.</li>
+        </ul>
+        <p class="muted">더 자세한 내용은 언제든 오른쪽 위 내 이름 → <span class="guide-ui">사용 가이드</span> → <b>자세히</b>에서 볼 수 있어요. 궁금한 건 <span class="guide-ui">쪽지</span>로 관리자에게 물어보세요.</p>
+      </section>
+    </div>
+    <div class="guide-body" id="guideFull" hidden>
       <section>
-        <p class="guide-lead">AI가 궁합으로 후보를 찾고, 주선자가 검토해서 제안하고, 상대 담당 주선자가 수락하면 참가자 본인이 최종 결정해요. 두 사람이 모두 만나보기로 하면 연락처가 공개돼요.</p>
+        <p class="guide-lead">AI가 궁합으로 후보를 찾고, 주선자가 검토해서 제안하고, 상대 담당 주선자가 수락하면 참가자 본인이 최종 결정해요. 두 사람이 모두 만나보기로 하면 연락처가 공개돼요. 항목을 누르면 펼쳐져요.</p>
       </section>
 
-      <section>
-        <h3>한눈에 보는 매칭 순서</h3>
+      <details class="guide-sec" open>
+        <summary><h3>한눈에 보는 매칭 순서</h3></summary>
         <div class="guide-flow" aria-label="매칭 순서">
           <span class="gf-step"><b>1</b>AI 추천</span><span class="gf-arrow">→</span>
           <span class="gf-step"><b>2</b>주선자 검토·제안</span><span class="gf-arrow">→</span>
@@ -996,10 +1076,10 @@
           <span class="gf-step"><b>4</b>참가자 최종 결정</span><span class="gf-arrow">→</span>
           <span class="gf-step"><b>5</b>연락처 공개 · 소개</span>
         </div>
-      </section>
+      </details>
 
-      <section>
-        <h3>단계별 방법</h3>
+      <details class="guide-sec">
+        <summary><h3>단계별 방법</h3></summary>
         <ol class="guide-steps">
           <li>
             <span class="guide-num">1</span>
@@ -1070,20 +1150,20 @@
             </div>
           </li>
         </ol>
-      </section>
+      </details>
 
-      <section>
-        <h3>궁합 점수는 이렇게 계산해요</h3>
+      <details class="guide-sec">
+        <summary><h3>궁합 점수는 이렇게 계산해요</h3></summary>
         <ul class="guide-plain">
           <li>나이, 사는 곳, 만남 목적, 관심사, 흡연·음주, 원하는 키, 이상형 키워드, MBTI, 종교를 보고 점수를 매겨요. 나이·지역·목적·관심사의 비중이 커요.</li>
           <li><b>조건 불일치</b>: 한쪽이 원하는 나이·키·비흡연·종교 조건에 맞지 않는 경우예요. AI 추천 후보에서는 빠지고, 직접 골라 궁합 보기에서는 빨간 표시로 알려 줘요.</li>
           <li><b>정보 적음</b>: 비교할 정보가 부족하면 점수가 50% 근처로 나와요. 참가자 정보를 채우면 정확해져요.</li>
           <li>점수는 참고용이에요. 두 사람을 아는 주선자의 판단이 가장 중요해요.</li>
         </ul>
-      </section>
+      </details>
 
-      <section class="guide-box">
-        <h3>누가 무엇을 볼 수 있나요?</h3>
+      <details class="guide-sec guide-box">
+        <summary><h3>누가 무엇을 볼 수 있나요?</h3></summary>
         <ul>
           <li><b>모든 주선자:</b> 승인된 참가자의 코드명, 나이, 키, 직업, MBTI, 지역, 만남 목적, 생활 습관, 관심사, 원하는 상대 조건, 성격, 이상형, 사진</li>
           <li><b>담당 주선자:</b> 내 담당 참가자의 이름과 연락처 (언제나)</li>
@@ -1091,10 +1171,10 @@
           <li><b>참가자:</b> 결정 링크에서 상대의 프로필과 사진만 (이름·연락처는 안 보여요)</li>
           <li><b>관리자:</b> 전체</li>
         </ul>
-      </section>
+      </details>
 
-      <section>
-        <h3>휴대폰 알림 받기</h3>
+      <details class="guide-sec">
+        <summary><h3>휴대폰 알림 받기</h3></summary>
         <ul>
           <li>오른쪽 위 <span class="guide-ui">종 모양 알림</span> 버튼을 누르면 새 신청, 매칭 제안, 승인, 참가자 결정을 휴대폰 알림으로 받아요. 앱을 닫아 둬도 와요.</li>
           <li><b>아이폰:</b> Safari로 이 사이트를 열고 공유 버튼 → <b>홈 화면에 추가</b>를 해요. 홈 화면의 매칭메이커 아이콘으로 열어 다시 로그인한 뒤 <span class="guide-ui">종 모양 알림</span> 버튼을 눌러요. (iOS 16.4 이상)</li>
@@ -1102,10 +1182,10 @@
           <li>알림은 기기마다 켜야 해요. 로그아웃하면 그 기기로는 알림이 가지 않아요.</li>
           <li>잠금화면에 보이기 때문에 알림에는 이름 대신 코드명만 나와요.</li>
         </ul>
-      </section>
+      </details>
 
-      <section>
-        <h3>자주 묻는 질문</h3>
+      <details class="guide-sec">
+        <summary><h3>자주 묻는 질문</h3></summary>
         <dl class="guide-faq">
           <dt>참가자가 잠시 쉬고 싶다고 하면요?</dt>
           <dd>참가자 카드의 <span class="guide-ui">잠시 쉬기</span>(일시정지 모양) 버튼으로 쉬는 마지막 날을 정해요. 그동안은 추천과 새 매칭에서 빠지고, 다음 날 자동으로 '소개 가능'으로 돌아와요. 참가자가 수정 링크에서 직접 쉬기·그만하기를 요청하면 <b>오늘 할 일</b>에 떠요.</dd>
@@ -1142,10 +1222,10 @@
           <dt>참가자 삭제나 담당 변경은요?</dt>
           <dd>관리자만 할 수 있어요. 필요하면 관리자에게 말해 주세요.</dd>
         </dl>
-      </section>
+      </details>
 
-      <section class="guide-box admin-only">
-        <h3>관리자가 할 일</h3>
+      <details class="guide-sec guide-box admin-only">
+        <summary><h3>관리자가 할 일</h3></summary>
         <ul>
           <li><b>주선자 가입 승인</b>: <span class="guide-ui">주선자</span> 탭에서 승인해요. 비밀번호를 잊은 주선자에게는 <span class="guide-ui">비밀번호 초기화</span>로 임시 비밀번호를 만들어 전해 주세요.</li>
           <li><b>참가자 신청 승인</b>: 담당 주선자가 있는 신청은 담당 주선자도 승인할 수 있어요. 담당이 없는 신청은 관리자가 카드의 <span class="guide-ui">승인</span>·<span class="guide-ui">거절</span>을 눌러 처리하고, 연필 버튼에서 담당 주선자를 지정해 주세요. 거절(삭제)은 관리자만 할 수 있어요.</li>
@@ -1153,18 +1233,23 @@
           <li><b>삭제 요청 처리</b>: 참가자가 정보 삭제를 요청하면 참가자 카드에서 삭제해 주세요.</li>
           <li>참가자 카드의 <b>동의</b> 줄에서 개인정보 동의 날짜를 확인할 수 있어요. '동의 기록 없음'은 신청서를 거치지 않고 직접 등록한 참가자예요.</li>
         </ul>
-      </section>
+      </details>
 
-      <section class="guide-box warn">
-        <h3>개인정보는 꼭 지켜 주세요</h3>
+      <details class="guide-sec guide-box warn">
+        <summary><h3>개인정보는 꼭 지켜 주세요</h3></summary>
         <ul>
           <li>공개된 이름과 연락처는 소개 목적으로만 쓰고, 다른 사람에게 전달하지 마세요.</li>
           <li>결정 링크는 그 참가자 본인에게만 보내 주세요. 링크를 가진 사람은 누구나 상대 프로필과 사진을 볼 수 있어요.</li>
           <li>공용 기기에서는 사용이 끝나면 오른쪽 위 내 이름 버튼에서 꼭 <span class="guide-ui">로그아웃</span>해 주세요.</li>
         </ul>
-      </section>
+      </details>
     </div>
-    <div class="dialog-actions">
+    <div class="dialog-actions" id="guideQuickActions">
+      <span class="gq-dots" id="gqDots" aria-hidden="true"></span>
+      <button type="button" class="btn" id="gqPrev">이전</button>
+      <button type="button" class="btn btn-primary" id="gqNext">다음</button>
+    </div>
+    <div class="dialog-actions" id="guideFullActions" hidden>
       <button type="button" class="btn btn-primary" id="guideOkBtn">확인했어요</button>
     </div>
   </div>
@@ -3620,22 +3705,70 @@
   }
 
   /* ---------------- 주선자 가이드 ---------------- */
-  function guideSeenKey(){ return 'mm_guide_seen_' + (currentUser ? currentUser.id : ''); }
-  function openGuide(){
+  function guideSeenKey(){ return 'mm_guide_v2_' + (currentUser ? currentUser.id : ''); } // 예전 키(mm_guide_seen_)는 일부러 안 써요: 기존 주선자도 핵심만 슬라이드를 한 번은 보도록
+  // 처음 가입한 주선자는 '핵심만' 슬라이드를 끝까지 읽어야 시작할 수 있어요 (읽은 시각은 계정에 기록)
+  var guideRequired = false, gqIndex = 0;
+  function guideRequiredNow(){
+    if(currentRole !== 'matchmaker' || !currentProfile || currentProfile.guide_read_at) return false;
+    var seen = false;
+    try{ seen = localStorage.getItem(guideSeenKey()) === '1'; }catch(e){}
+    return !seen;
+  }
+  function gqSlides(){ return Array.prototype.slice.call(document.querySelectorAll('#guideQuick .gq-slide')); }
+  function gqGo(i){
+    var slides = gqSlides();
+    gqIndex = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach(function(el, k){ el.classList.toggle('is-on', k === gqIndex); });
+    $('gqDots').innerHTML = slides.map(function(_, k){ return '<i' + (k === gqIndex ? ' class="is-on"' : '') + '></i>'; }).join('');
+    $('gqPrev').disabled = gqIndex === 0;
+    var last = gqIndex === slides.length - 1;
+    $('gqNext').textContent = last ? (guideRequired ? '다 읽었어요, 시작할게요' : '다 읽었어요') : '다음';
+    $('guideQuick').scrollTop = 0;
+  }
+  function setGuideTab(tab){
+    document.querySelectorAll('#guideTabs .guide-tab').forEach(function(b){ b.classList.toggle('is-on', b.dataset.gtab === tab); });
+    $('guideQuick').hidden = tab !== 'quick';
+    $('guideFull').hidden = tab !== 'full';
+    $('guideQuickActions').hidden = tab !== 'quick';
+    $('guideFullActions').hidden = tab !== 'full';
+    if(tab === 'quick') gqGo(gqIndex); else $('guideFull').scrollTop = 0;
+  }
+  function openGuide(opts){
+    opts = opts || {};
+    guideRequired = !!opts.required;
     $('guideOverlay').hidden = false;
-    var body = document.querySelector('#guideOverlay .guide-body'); if(body) body.scrollTop = 0;
+    $('guideClose').hidden = guideRequired;
+    $('guideTabs').hidden = guideRequired;
+    var hello = $('gqHello');
+    hello.hidden = !guideRequired;
+    if(guideRequired) hello.innerHTML = '<b>' + esc((currentProfile && currentProfile.display_name) || '주선자') + '</b> 님, 반가워요! 시작하기 전에 꼭 알아야 할 것만 6장으로 추렸어요. 1분이면 돼요.';
+    gqIndex = 0;
+    setGuideTab(opts.tab || 'quick');
   }
   function closeGuide(){
+    if(guideRequired) return;
     $('guideOverlay').hidden = true;
     try{ localStorage.setItem(guideSeenKey(), '1'); }catch(e){}
     setTimeout(maybeShowPushIntro, 300);
   }
+  function finishGuide(){
+    var btn = $('gqNext');
+    if(!guideRequired){ closeGuide(); return; }
+    btn.disabled = true;
+    Promise.resolve(supabase.rpc('mark_guide_read')).then(function(res){
+      if(res.error) throw res.error;
+      if(currentProfile) currentProfile.guide_read_at = res.data || new Date().toISOString();
+    }).catch(function(err){ console.error('guide read mark error', err); }).then(function(){
+      btn.disabled = false;
+      guideRequired = false;
+      closeGuide();
+      showToast('자세한 안내는 내 이름 → 사용 가이드에서 볼 수 있어요');
+    });
+  }
   function maybeShowGuideFirstTime(){
-    // 주선자가 처음 들어왔을 때 한 번 자동으로 보여줘요 (이후에는 '사용 가이드' 버튼으로)
-    if(currentRole !== 'matchmaker'){ maybeShowPushIntro(); return; }
-    var seen = false;
-    try{ seen = localStorage.getItem(guideSeenKey()) === '1'; }catch(e){}
-    if(!seen) setTimeout(openGuide, 400); else maybeShowPushIntro();
+    // 처음 들어온 주선자: 핵심만 슬라이드를 끝까지 읽어야 해요. 읽은 뒤에는 '사용 가이드' 버튼으로 언제든 볼 수 있어요
+    if(guideRequiredNow()) setTimeout(function(){ openGuide({ required:true }); }, 400);
+    else maybeShowPushIntro();
   }
   /* 알림 켜기 안내: 알림이 꺼진 사람에게 로그인 직후 한 번, 그 뒤로는 7일에 한 번만 다시 물어요 */
   function pushIntroKey(){ return 'mm_push_intro_' + (currentUser ? currentUser.id : ''); }
@@ -4934,8 +5067,9 @@
     var ownedMM = approvedMM.filter(function(p){ return act.owned[p.id]; }).length;
     renderEncBtns();
     var pushOn = approvedMM.filter(function(p){ return pushStatus[p.id]; }).length;
+    var guideRead = approvedMM.filter(function(p){ return p.role === 'matchmaker' && p.guide_read_at; }).length;
     var summary = pushStatusLoaded && approvedMM.length
-      ? '<p class="helper-text" style="margin:0;">승인된 주선자 ' + approvedMM.length + '명 · 담당 참가자 있음 <b>' + ownedMM + '</b> · 제안해 본 사람 <b>' + activeMM + '</b> · 알림 켬 <b>' + pushOn + '</b></p>'
+      ? '<p class="helper-text" style="margin:0;">승인된 주선자 ' + approvedMM.length + '명 · 담당 참가자 있음 <b>' + ownedMM + '</b> · 제안해 본 사람 <b>' + activeMM + '</b> · 알림 켬 <b>' + pushOn + '</b> · 가이드 읽음 <b>' + guideRead + '</b></p>'
       : '';
     listEl.innerHTML = summary + others.map(function(p){
       var roleLabel = ROLE_LABEL[p.role] || p.role;
@@ -4947,6 +5081,9 @@
       var pushBadge = !pushStatusLoaded || !p.approved ? '' : (ps
         ? '<span class="badge badge-success acct-push">알림 켬' + (ps.devices > 1 ? ' · 기기 ' + ps.devices + '대' : '') + '</span>'
         : '<span class="badge badge-neutral acct-push">알림 꺼짐</span>');
+      var guideBadge = !p.approved || p.role !== 'matchmaker' ? '' : (p.guide_read_at
+        ? '<span class="badge badge-success">가이드 읽음 · ' + esc(fmtShortDate(String(p.guide_read_at).slice(0, 10))) + '</span>'
+        : '<span class="badge badge-warn">가이드 안 읽음</span>');
       var actions = p.approved
         ? '<button class="btn" type="button" data-action="unapprove-account" data-id="'+esc(p.id)+'">승인 취소</button>'
         : '<button class="btn btn-primary" type="button" data-action="approve-account" data-id="'+esc(p.id)+'">승인</button>';
@@ -4960,7 +5097,7 @@
             (p.approved && p.role === 'matchmaker' ? '<div class="acct-act">담당 <b>' + (act.owned[p.id] || 0) + '</b> · 제안 <b>' + (act.made[p.id] || 0) + '</b>' +
               (act.last[p.id] ? ' · 마지막 제안 ' + esc(fmtShortDate(String(act.last[p.id]).slice(0, 10))) : (act.owned[p.id] ? ' · <span class="warn">아직 제안 없음</span>' : ' · <span class="warn">담당 없음</span>')) + '</div>' : '') +
           '</div>' +
-          '<span style="display:flex; gap:6px; flex-wrap:wrap;">' + status + pushBadge + '</span>' +
+          '<span style="display:flex; gap:6px; flex-wrap:wrap;">' + status + pushBadge + guideBadge + '</span>' +
           '<div class="card-actions" style="margin:0;">'+actions+'</div>' +
         '</div>'
       );
@@ -7293,6 +7430,9 @@
     $('guideClose').addEventListener('click', closeGuide);
     $('guideOkBtn').addEventListener('click', closeGuide);
     $('guideOverlay').addEventListener('click', function(e){ if(e.target === this) closeGuide(); });
+    $('guideTabs').addEventListener('click', function(e){ var b = e.target.closest('.guide-tab'); if(b) setGuideTab(b.dataset.gtab); });
+    $('gqPrev').addEventListener('click', function(){ gqGo(gqIndex - 1); });
+    $('gqNext').addEventListener('click', function(){ if(gqIndex >= gqSlides().length - 1) finishGuide(); else gqGo(gqIndex + 1); });
     $('memberOwnerFilter').addEventListener('change', renderMembers);
     $('x-a').addEventListener('change', updateMatchModalNote);
     $('x-b').addEventListener('change', updateMatchModalNote);
@@ -7504,7 +7644,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-27.1';
+  var APP_VERSION = '2026-10-28.1';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
