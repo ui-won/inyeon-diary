@@ -1207,6 +1207,8 @@
           <dd>오른쪽 위 <span class="guide-ui">쪽지</span>(봉투 모양) 버튼으로 관리자에게 바로 보낼 수 있어요. 궁금한 참가자나 매칭을 골라 함께 붙이면 관리자가 쪽지에서 바로 그 카드로 이동해 확인해요. 답이 오면 쪽지 버튼에 숫자가 뜨고, 알림을 켜 두었다면 휴대폰으로도 알려 드려요. 쪽지는 계속 보관되고, 관리자가 쪽지 목록 위의 <b>오래된 쪽지 정리</b>로 3개월·6개월·1년 지난 쪽지를 한꺼번에 지울 수 있어요.</dd>
           <dt>안 된 매칭은 어디서 보나요?</dt>
           <dd>매칭 기록의 <span class="guide-ui">안 된 매칭</span>에 따로 모여요. 상대 주선자나 참가자가 거절하면 자동으로 옮겨지고, 직접 <b>안 됨으로 정리</b>를 눌러 이유와 메모를 남길 수도 있어요. 지워지지 않고 참가자 카드의 <b>소개 이력</b>에 남아서 다음 소개 때 참고할 수 있어요. 거절 없이 정리한 매칭은 <b>다시 진행</b>으로 되돌릴 수 있어요. 30일 넘게 변화가 없는 매칭에는 '멈춘 매칭' 표시가 떠요.</dd>
+          <dt>한 번 소개팅까지 간 두 사람을 다시 소개할 수 있나요?</dt>
+          <dd>안 돼요. 두 분이 모두 '만나볼게요'를 눌렀던 짝은 매칭 카드를 지워도 기록이 남아서, AI 추천·직접 골라 궁합 보기·새 매칭 등록 어디에서도 서로 나오지 않아요.</dd>
           <dt>승인된 매칭의 사람을 바꿀 수 있나요?</dt>
           <dd>참가자는 바꿀 수 없어요. 상태·날짜·메모는 계속 수정할 수 있어요. 사람을 바꾸려면 새 매칭을 만들어 주세요.</dd>
           <dt>담당이 없는 참가자와 매칭하면요?</dt>
@@ -2592,7 +2594,9 @@
     var msg = (err && (err.message || err.error_description)) || '';
     if(/invalid login credentials/i.test(msg)) return '이름 또는 비밀번호가 맞지 않아요';
     if(/email not confirmed/i.test(msg)) return '아직 계정이 활성화되지 않았어요. 관리자에게 문의해 주세요';
-    if(/already registered|already been registered|user already exists/i.test(msg)) return '이미 가입된 이름이에요. 본인이면 로그인하고, 아니면 "민지2"처럼 다르게 가입해 주세요';
+    if(/already registered|already been registered|user already exists|이미 가입된 이름/i.test(msg)) return '이미 가입된 이름이에요 (숫자·띄어쓰기만 다른 이름도 같은 이름으로 봐요). 본인이면 로그인하고, 비밀번호를 잊었으면 관리자에게 초기화를 부탁해 주세요. 동명이인이면 "민지서울"처럼 구별되는 글자를 붙여 주세요';
+    if(/name too short/i.test(msg)) return '이름은 한글이나 영문 2자 이상으로 해주세요';
+    if(/database error saving new user/i.test(msg)) return '이미 가입된 이름이거나 가입할 수 없는 이름이에요. 관리자에게 알려주세요';
     if(/password should be at least|password.*(6|six)/i.test(msg)) return '비밀번호는 6자 이상으로 해주세요';
     if(/invalid.*email|email.*invalid|unable to validate email/i.test(msg)) return '이 이름으로는 가입할 수 없어요. 관리자에게 알려주세요';
     if(/rate limit|too many/i.test(msg)) return '잠시 후 다시 시도해 주세요';
@@ -2700,10 +2704,16 @@
       var btn = $('signupSubmitBtn');
       btn.disabled = true;
       $('signupError').innerHTML = '&nbsp;';
-      supabase.auth.signUp({
-        email: nameToLoginEmail(name),
-        password: password,
-        options: { data: { display_name: name } }
+      // 띄어쓰기·숫자·기호만 다른 이름(홍길동1, 홍 길동)은 같은 사람의 중복 가입으로 봐요
+      Promise.resolve(supabase.rpc('check_signup_name', { p_name: name })).then(function(res){
+        if(res.error) throw res.error;
+        if(res.data === 'taken') throw { message: 'User already registered' };
+        if(res.data === 'bad') throw { message: 'name too short' };
+        return supabase.auth.signUp({
+          email: nameToLoginEmail(name),
+          password: password,
+          options: { data: { display_name: name } }
+        });
       }).then(function(res){
         if(res.error) throw res.error;
         // 이메일 인증이 꺼져 있으면 이미 가입된 이름도 오류 없이 빈 계정이 돌아올 수 있어요
@@ -2906,9 +2916,21 @@
   function pairExists(aId, bId){
     return matches.some(function(x){ return (x.aId === aId && x.bId === bId) || (x.aId === bId && x.bId === aId); });
   }
+  /* 소개팅까지 간 짝(두 분 다 수락): 매칭을 지워도 서버에 기록이 남아요. 추천·직접 골라·새 매칭 모두에서 빼고, 서버에서도 재등록을 막아요 */
+  var metPairs = {};
+  function metPairKey(a, b){ return a < b ? a + '|' + b : b + '|' + a; }
+  function metPair(a, b){ return !!(a && b && metPairs[metPairKey(a, b)]); }
+  function refetchMetPairs(){
+    return Promise.resolve(supabase.from('met_pairs').select('a_id,b_id')).then(function(res){
+      if(res.error) throw res.error;
+      var map = {};
+      (res.data || []).forEach(function(r){ map[metPairKey(r.a_id, r.b_id)] = true; });
+      metPairs = map;
+    }).catch(function(err){ console.error('met pairs fetch error', err); });
+  }
   function recCandidates(t){
     return members.filter(function(c){
-      return c.id !== t.id && c.approved !== false && c.status === 'available' && oppositeGenderOk(t, c) && !pairExists(t.id, c.id) && !recHides[t.id + '|' + c.id];
+      return c.id !== t.id && c.approved !== false && c.status === 'available' && oppositeGenderOk(t, c) && !pairExists(t.id, c.id) && !metPair(t.id, c.id) && !recHides[t.id + '|' + c.id];
     }).map(function(c){ return { m:c, s:compatibilityScore(t, c) }; })
       .filter(function(r){ return !r.s.conflicts.length; })
       .sort(function(a, b){ return b.s.score - a.s.score; });
@@ -3100,6 +3122,7 @@
   }
   function recPropose(btn){
     var aId = btn.dataset.a, bId = btn.dataset.b;
+    if(metPair(aId, bId)){ showToast('이미 소개팅까지 한 짝이라 다시 소개할 수 없어요'); return; }
     if(pairExists(aId, bId)){ showToast('이미 제안한 짝이에요'); return; }
     btn.disabled = true;
     var row = matchToRow({
@@ -3196,6 +3219,7 @@
     return members.filter(function(c){
       if(c.approved === false || (t && c.id === t.id)) return false;
       if(t && t.gender && c.gender && t.gender === c.gender) return false;
+      if(t && metPair(t.id, c.id)) return false; // 이미 소개팅까지 한 짝은 아예 안 보여요
       if(!q) return !!favs[c.id];
       var hay = [c.name, c.codeName, c.job, c.regionSido, c.regionDetail, c.mbti].filter(Boolean).join(' ').toLowerCase();
       return hay.indexOf(q) >= 0;
@@ -3236,7 +3260,8 @@
     var cls = sc.conflicts.length ? 'badge-danger' : (sc.pct >= 70 ? 'badge-success' : (sc.pct >= 40 ? 'badge-accent' : 'badge-neutral'));
     var label = sc.conflicts.length ? '조건 불일치' : '궁합 ' + sc.pct + '%' + (sc.lowInfo ? ' · 정보 적음' : '');
     var action;
-    if(pairExists(t.id, other.id)) action = '<span class="badge badge-neutral">이미 제안한 짝이에요</span>';
+    if(metPair(t.id, other.id)) action = '<span class="badge badge-neutral">이미 소개팅까지 한 짝이에요</span>';
+    else if(pairExists(t.id, other.id)) action = '<span class="badge badge-neutral">이미 제안한 짝이에요</span>';
     else if(t.status !== 'available' || other.status !== 'available') action = '<span class="badge badge-warn">지금은 소개 가능 상태가 아니에요</span>';
     else action = '<button class="btn btn-primary" type="button" data-action="rec-propose" data-a="'+esc(t.id)+'" data-b="'+esc(other.id)+'" data-pct="'+sc.pct+'">제안하기</button>';
     $('recPickResult').innerHTML = '<div class="rec-item">' +
@@ -6229,6 +6254,7 @@
       msgs.push('승인된 매칭이라 참가자는 바꿀 수 없어요. 상태·날짜·메모는 수정할 수 있어요.');
     } else {
       var me = myId();
+      if(metPair($('x-a').value, $('x-b').value)) msgs.push('두 분은 이미 소개팅까지 한 짝이라 다시 등록할 수 없어요.');
       [$('x-a').value, $('x-b').value].forEach(function(id){
         var m = id ? memberById(id) : null;
         if(m && m.ownerId && m.ownerId !== me){
@@ -6252,6 +6278,7 @@
     var aId = $('x-a').value, bId = $('x-b').value;
     if(!aId || !bId){ showToast('참가자 두 명을 모두 선택해 주세요'); return; }
     if(aId === bId){ showToast('서로 다른 두 참가자를 선택해 주세요'); return; }
+    if(metPair(aId, bId)){ showToast('두 분은 이미 소개팅까지 한 짝이라 다시 소개할 수 없어요'); return; }
     var data = {
       aId: aId, bId: bId,
       matchmaker: $('x-matchmaker').value.trim(),
@@ -6281,7 +6308,7 @@
     }).catch(function(err){
       console.error(err);
       var msg = (err && err.message) || '';
-      if(/승인/.test(msg) || /참가자/.test(msg)) showToast(msg);
+      if(/승인/.test(msg) || /참가자/.test(msg) || /소개팅/.test(msg)) showToast(msg);
       else showToast('저장하지 못했어요. 다시 시도해 주세요.');
     }).finally(function(){ btn.disabled = false; });
   }
@@ -7608,6 +7635,7 @@
       var sig = JSON.stringify(res.data);
       if(matchesLoaded && !matchesFailed && sig === lastMatchesSig) return;
       lastMatchesSig = sig;
+      refetchMetPairs();
       var prevApproved = matches.filter(matchRevealed).map(function(x){ return x.id; }).sort().join(',');
       matches = res.data.map(rowToMatch);
       matchesLoaded = true;
@@ -7644,7 +7672,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-28.1';
+  var APP_VERSION = '2026-10-29.1';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
