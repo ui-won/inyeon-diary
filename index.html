@@ -1206,7 +1206,7 @@
           <dt>관리자에게 물어보고 싶은 게 있으면요?</dt>
           <dd>오른쪽 위 <span class="guide-ui">쪽지</span>(봉투 모양) 버튼으로 관리자에게 바로 보낼 수 있어요. 궁금한 참가자나 매칭을 골라 함께 붙이면 관리자가 쪽지에서 바로 그 카드로 이동해 확인해요. 답이 오면 쪽지 버튼에 숫자가 뜨고, 알림을 켜 두었다면 휴대폰으로도 알려 드려요. 쪽지는 계속 보관되고, 관리자가 쪽지 목록 위의 <b>오래된 쪽지 정리</b>로 3개월·6개월·1년 지난 쪽지를 한꺼번에 지울 수 있어요.</dd>
           <dt>안 된 매칭은 어디서 보나요?</dt>
-          <dd>매칭 기록의 <span class="guide-ui">안 된 매칭</span>에 따로 모여요. 상대 주선자나 참가자가 거절하면 자동으로 옮겨지고, 직접 <b>안 됨으로 정리</b>를 눌러 이유와 메모를 남길 수도 있어요. 지워지지 않고 참가자 카드의 <b>소개 이력</b>에 남아서 다음 소개 때 참고할 수 있어요. 거절 없이 정리한 매칭은 <b>다시 진행</b>으로 되돌릴 수 있어요. 30일 넘게 변화가 없는 매칭에는 '멈춘 매칭' 표시가 떠요.</dd>
+          <dd>매칭 기록의 <span class="guide-ui">안 된 매칭</span>에 따로 모여요. 상대 주선자나 참가자가 거절하면 자동으로 옮겨지고, 직접 <b>안 됨으로 정리</b>를 눌러 이유와 메모를 남길 수도 있어요. 지워지지 않고 매칭 기록에 남아요 (참가자별 소개 횟수·이유는 관리자만 볼 수 있어요). 거절 없이 정리한 매칭은 <b>다시 진행</b>으로 되돌릴 수 있어요. 30일 넘게 변화가 없는 매칭에는 '멈춘 매칭' 표시가 떠요.</dd>
           <dt>한 번 소개팅까지 간 두 사람을 다시 소개할 수 있나요?</dt>
           <dd>안 돼요. 두 분이 모두 '만나볼게요'를 눌렀던 짝은 매칭 카드를 지워도 기록이 남아서, AI 추천·직접 골라 궁합 보기·새 매칭 등록 어디에서도 서로 나오지 않아요.</dd>
           <dt>승인된 매칭의 사람을 바꿀 수 있나요?</dt>
@@ -4439,7 +4439,8 @@
     if(m.extraIntro) rows += '<div class="row"><span class="k">더 알려줄 점</span><span class="v">'+esc(m.extraIntro)+'</span></div>';
     if(m.personality) rows += '<div class="row"><span class="k">특징(이전)</span><span class="v">'+esc(m.personality)+'</span></div>';
     if(m.idealType) rows += '<div class="row"><span class="k">이상형(이전)</span><span class="v">'+esc(m.idealType)+'</span></div>';
-    var hist = memberHistoryText(m);
+    // 소개 이력(횟수·안 된 이유)은 관리자만 봐요. 주선자에게는 부담이 될 수 있어서 보이지 않아요
+    var hist = isAdmin() ? memberHistoryText(m) : '';
     if(hist) rows += '<div class="row"><span class="k">소개 이력</span><span class="v">'+esc(hist)+'</span></div>';
     if(m.memo) rows += '<div class="row"><span class="k">메모</span><span class="v">'+esc(m.memo)+'</span></div>';
     if(isAdmin() && !opt.noConsent) rows += '<div class="row"><span class="k">동의</span><span class="v">'+(m.consentAt ? esc(fmtDate(String(m.consentAt).slice(0,10))) + ' 개인정보 동의' + (m.sensitiveConsent ? ' · 종교 동의' : '') : '<span style="color:var(--muted)">신청서 동의 기록 없음</span>')+'</span></div>';
@@ -7672,7 +7673,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-10-29.1';
+  var APP_VERSION = '2026-11-03.1';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
