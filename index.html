@@ -820,6 +820,28 @@
   .pair-link svg{ width:72px; height:40px; overflow:visible; }
   .pair-link.off{ color:var(--line); }
   .pair-link.tied .knot{ fill:currentColor; }
+  /* 접힌 매칭 카드: 한 줄 요약만 보여요. 누르면 펼쳐져요 */
+  .match-compact{ display:flex; align-items:center; gap:8px; cursor:pointer; min-width:0; }
+  .mc-person{ display:flex; align-items:center; gap:7px; min-width:0; flex:1 1 0; }
+  .mc-person:last-child{ justify-content:flex-end; text-align:right; }
+  .mc-person .avatar, .mc-person .avatar-placeholder{ width:32px; height:32px; font-size:13px; }
+  .mc-person .avatar-count{ display:none; }
+  .mc-name{ display:flex; flex-direction:column; min-width:0; }
+  .mc-name b{ font-family:var(--font-display); font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mc-name span{ font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mc-tie{ flex:none; color:var(--accent); display:flex; }
+  .mc-tie svg{ width:28px; height:16px; }
+  .mc-tie.off{ color:var(--line); }
+  .match-row.collapsed .steps{ margin:0; }
+  .mc-sum{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); line-height:1.45; cursor:pointer; }
+  .mc-sum .txt{ flex:1; min-width:0; }
+  .mc-sum .txt b{ color:var(--ink); font-weight:600; }
+  .mc-sum .txt .warn{ color:var(--accent); font-weight:700; }
+  .mc-toggle{ flex:none; display:inline-flex; align-items:center; gap:2px; font-size:12.5px; color:var(--muted); padding:4px 6px; border-radius:8px; }
+  .mc-toggle svg{ width:14px; height:14px; transition:transform .15s; }
+  .match-row:not(.collapsed) .mc-toggle svg{ transform:rotate(180deg); }
+  .match-row.collapsed{ gap:6px; padding:12px 14px; }
+  #matchExpandAll{ font-size:12.5px; padding:6px 10px; }
   .steps{ display:flex; align-items:flex-start; margin:2px 0; }
   .step{ display:flex; flex-direction:column; align-items:center; gap:4px; font-size:11px; color:var(--muted); flex:none; width:50px; text-align:center; white-space:nowrap; }
   .step i{ width:12px; height:12px; border-radius:50%; border:2px solid var(--line); background:var(--surface); box-sizing:border-box; display:block; }
@@ -1209,6 +1231,8 @@
           <dd>매칭 기록의 <span class="guide-ui">안 된 매칭</span>에 따로 모여요. 상대 주선자나 참가자가 거절하면 자동으로 옮겨지고, 직접 <b>안 됨으로 정리</b>를 눌러 이유와 메모를 남길 수도 있어요. 지워지지 않고 매칭 기록에 남아요 (참가자별 소개 횟수·이유는 관리자만 볼 수 있어요). 거절 없이 정리한 매칭은 <b>다시 진행</b>으로 되돌릴 수 있어요. 30일 넘게 변화가 없는 매칭에는 '멈춘 매칭' 표시가 떠요.</dd>
           <dt>한 번 소개팅까지 간 두 사람을 다시 소개할 수 있나요?</dt>
           <dd>안 돼요. 두 분이 모두 '만나볼게요'를 눌렀던 짝은 매칭 카드를 지워도 기록이 남아서, AI 추천·직접 골라 궁합 보기·새 매칭 등록 어디에서도 서로 나오지 않아요.</dd>
+          <dt>매칭 카드가 접혀 있어요.</dt>
+          <dd>매칭 탭의 카드는 한 줄 요약(지금 누구를 기다리는지)만 보이고, 누르면 펼쳐져요. 내가 해야 할 일이 있는 카드(받은 요청, 링크 보낼 차례, 연락처 전달)는 자동으로 펼쳐져 있어요. 위의 <span class="guide-ui">모두 펼치기</span>로 전부 펼 수도 있어요.</dd>
           <dt>승인된 매칭의 사람을 바꿀 수 있나요?</dt>
           <dd>참가자는 바꿀 수 없어요. 상태·날짜·메모는 계속 수정할 수 있어요. 사람을 바꾸려면 새 매칭을 만들어 주세요.</dd>
           <dt>담당이 없는 참가자와 매칭하면요?</dt>
@@ -1630,6 +1654,7 @@
         <button type="button" class="seg-btn" data-seg="all" aria-pressed="false">전체<span class="seg-n" id="segN-all"></span></button>
       </div>
       <span style="flex:1"></span>
+      <button class="btn btn-ghost" id="matchExpandAll" type="button" aria-pressed="false">모두 펼치기</button>
       <button class="btn btn-primary" id="btnAddMatch" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
         새 매칭 등록
@@ -4693,6 +4718,84 @@
   }
 
   /* ---------------- matches render ---------------- */
+  /* 매칭 카드는 기본으로 접혀 있고(한 줄 요약), 내가 할 일이 있는 카드만 자동으로 펼쳐져요 */
+  var matchOpen = {}, matchExpandAll = false;
+  function matchNeedsMe(x){
+    if(mySidesPending(x).length || mySidesToSend(x).length) return true;
+    if(isAdmin() && !x.approved && !matchClosed(x) && matchNeedsAdmin(x)) return true;
+    if(!isAdmin() && matchRevealed(x) && shareOpen(x).some(function(sd){ return canSendOffer(x, sd); }) && x.status !== 'success') return true; // 연락처 전달은 담당 주선자 몫이라 관리자 카드는 접어 둬요
+    return false;
+  }
+  function isMatchOpen(x){
+    if(Object.prototype.hasOwnProperty.call(matchOpen, x.id)) return matchOpen[x.id];
+    return matchExpandAll || matchNeedsMe(x);
+  }
+  function toggleMatchOpen(id){
+    var x = matches.filter(function(m){ return m.id === id; })[0];
+    if(!x) return;
+    matchOpen[id] = !isMatchOpen(x);
+    renderMatches();
+  }
+  // 접힌 카드의 한 줄 요약: 지금 어느 단계에서 누구를 기다리는지
+  function matchSummaryHtml(x, aMember, bMember){
+    var aN = aMember ? displayName(aMember) : (x.aName || '상대'), bN = bMember ? displayName(bMember) : (x.bName || '상대');
+    var parts = [];
+    var closed = matchClosed(x);
+    if(x.status === 'success'){
+      parts.push('<b>성사</b>' + (x.outcome === 'couple' ? ' · 커플' : ''));
+    } else if(closed){
+      var rsn = matchCloseReason(x);
+      parts.push('<b>' + esc(CLOSE_REASON_LABEL[rsn] || '사유 미기록') + '</b>');
+      var when = x.closedAt || x.updatedAt;
+      if(when) parts.push(esc(fmtShortDate(String(when).slice(0, 10))) + ' 정리');
+      if(x.closeNote) parts.push(esc(x.closeNote.length > 40 ? x.closeNote.slice(0, 40) + '…' : x.closeNote));
+    } else if(x.aConsent === 'declined' || x.bConsent === 'declined'){
+      parts.push('상대 담당 거절');
+    } else if(!x.approved){
+      var w = [];
+      if(x.aConsent === 'pending' && aMember) w.push(ownerName(aMember.ownerId) || aN);
+      if(x.bConsent === 'pending' && bMember) w.push(ownerName(bMember.ownerId) || bN);
+      parts.push(w.length ? '담당 수락 기다림: <b>' + esc(w.join(', ')) + '</b>' : (matchWaitsAdmin(x) ? '<span class="warn">관리자 승인 대기</span>' : '수락 대기'));
+    } else if(!matchRevealed(x)){
+      var t = offerTimes[x.id] || {};
+      var dec = [];
+      [['a', aN, x.aDecision], ['b', bN, x.bDecision]].forEach(function(p){
+        var o = t[p[0]] || {};
+        if(p[2] === 'declined') dec.push('<b>' + esc(p[1]) + '</b> 거절' + (o.why && MM_DECLINE_WHY[o.why] ? ' (' + esc(MM_DECLINE_WHY[o.why]) + ')' : ''));
+        else if(p[2] === 'accepted') dec.push(esc(p[1]) + ' 수락');
+        else if(p[2] === 'pending'){ var d = o.sent ? daysSince(o.sent) : -1; dec.push(esc(p[1]) + ' 답 기다림' + (d >= 3 ? ' <span class="warn">(' + d + '일째)</span>' : '')); }
+        else dec.push('<span class="warn">' + esc(p[1]) + ' 링크 안 보냄</span>');
+      });
+      parts.push(dec.join(' · '));
+    } else {
+      var open = shareOpen(x);
+      parts.push(open.length ? '<span class="warn">연락처 미전달 ' + open.length + '명</span>' : '연락처 전달 완료');
+      var fu = [];
+      [['a', aN], ['b', bN]].forEach(function(p){ var o = (offerTimes[x.id] || {})[p[0]]; if(o && o.fu) fu.push(esc(p[1]) + ': ' + esc(OUTCOME_LABEL[o.fu] || o.fu)); });
+      if(fu.length) parts.push(fu.join(' · '));
+      else if(x.outcome && OUTCOME_LABEL[x.outcome]) parts.push(esc(OUTCOME_LABEL[x.outcome]));
+    }
+    var stale = matchStaleDays(x);
+    if(stale) parts.push('<span class="warn">멈춘 지 ' + stale + '일</span>');
+    if(x.createdBy && isAdmin()) parts.push('요청 ' + esc(ownerName(x.createdBy)));
+    return parts.join(' · ');
+  }
+  function pairCompactHtml(x, aMember, bMember, aName, bName){
+    function one(m, name){
+      var meta = [];
+      if(m){ if(m.gender === 'female') meta.push('여'); else if(m.gender === 'male') meta.push('남'); var ag = ageFromBirthYear(m.birthYear); if(ag != null) meta.push(ag + '세'); if(m.ownerId) meta.push(ownerName(m.ownerId) + ' 담당'); }
+      var av = m ? memberAvatarHtml(m) : '<span class="avatar-btn"><span class="avatar-placeholder" style="display:flex;">?</span></span>';
+      return '<span class="mc-person">' + av + '<span class="mc-name"><b>' + esc(name) + '</b>' + (meta.length ? '<span>' + esc(meta.join(' · ')) + '</span>' : '') + '</span></span>';
+    }
+    var off = matchClosed(x) && x.status !== 'success';
+    return '<div class="match-compact" data-action="toggle-match" data-id="' + esc(x.id) + '">' + one(aMember, aName) +
+      '<span class="mc-tie' + (off ? ' off' : '') + '" aria-hidden="true"><svg viewBox="0 0 34 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 9c5 0 5-6 10-6s4 12 10 12 5-6 10-6"/></svg></span>' +
+      one(bMember, bName) + '</div>';
+  }
+  function matchToggleHtml(x, open){
+    return '<button type="button" class="btn btn-ghost mc-toggle" data-action="toggle-match" data-id="' + esc(x.id) + '" aria-expanded="' + (open ? 'true' : 'false') + '">' + (open ? '접기' : '자세히') +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>';
+  }
   function renderMatches(){
     var listEl = $('matchesList');
     var loadingEl = $('matchesLoading');
@@ -4893,6 +4996,20 @@
            '<button class="btn btn-danger-ghost" type="button" data-action="delete-match" data-id="'+esc(x.id)+'" aria-label="삭제">' + DELETE_ICON + '</button>')
         : '';
       var topBadges = statusBadges + (closed && x.status !== 'success' ? '<span class="badge badge-danger">안 됨</span>' : '<span class="badge '+st.cls+'">'+st.label+'</span>');
+      var open = isMatchOpen(x);
+      if(!open){
+        return (
+          '<div class="match-row collapsed" data-id="'+esc(x.id)+'">' +
+            '<div class="match-top">' +
+              (x.matchmaker ? '<div class="match-matchmaker"><span class="match-matchmaker-label">주선</span>'+esc(x.matchmaker)+'</div>' : '') +
+              '<div class="match-badges">' + topBadges + '</div>' +
+            '</div>' +
+            pairCompactHtml(x, aMember, bMember, aName, bName) +
+            matchStepsHtml(x) +
+            '<div class="mc-sum" data-action="toggle-match" data-id="'+esc(x.id)+'"><span class="txt">' + matchSummaryHtml(x, aMember, bMember) + '</span>' + matchToggleHtml(x, false) + '</div>' +
+          '</div>'
+        );
+      }
       return (
         '<div class="match-row" data-id="'+esc(x.id)+'">' +
           '<div class="match-top">' +
@@ -4910,7 +5027,7 @@
           closeHtml +
           staleHtml +
           (x.memo ? '<div class="match-memo">'+esc(x.memo)+'</div>' : '') +
-          ((approveBtns || closeBtns || editBtns) ? '<div class="card-actions">' + approveBtns + closeBtns + editBtns + '</div>' : '') +
+          '<div class="card-actions">' + approveBtns + closeBtns + editBtns + matchToggleHtml(x, true) + '</div>' +
         '</div>'
       );
     }).join('');
@@ -6784,6 +6901,7 @@
   function goToMatch(list){
     if(!list.length) return;
     matchSeg = matchBucket(list[0]);
+    list.forEach(function(x){ matchOpen[x.id] = true; });
     switchToTab('matches');
     renderMatches();
     window.scrollTo(0, 0);
@@ -7355,8 +7473,13 @@
     });
     $('matchesList').addEventListener('click', function(e){
       var btn = e.target.closest('button[data-action]');
-      if(!btn) return;
+      if(!btn){
+        var tg = e.target.closest('[data-action="toggle-match"]');
+        if(tg) toggleMatchOpen(tg.dataset.id);
+        return;
+      }
       var id = btn.dataset.id;
+      if(btn.dataset.action === 'toggle-match'){ toggleMatchOpen(id); return; }
       if(btn.dataset.action === 'edit-match') openMatchModal(id);
       if(btn.dataset.action === 'approve-match') setMatchApproval(id, true);
       if(btn.dataset.action === 'send-offer') openOfferLink(id, btn.dataset.side);
@@ -7534,6 +7657,12 @@
       next();
     });
 
+    $('matchExpandAll').addEventListener('click', function(){
+      matchExpandAll = !matchExpandAll; matchOpen = {};
+      this.textContent = matchExpandAll ? '모두 접기' : '모두 펼치기';
+      this.setAttribute('aria-pressed', matchExpandAll ? 'true' : 'false');
+      renderMatches();
+    });
     $('btnAddMatch').addEventListener('click', function(){
       if(members.length < 2){ showToast('참가자를 2명 이상 등록해 주세요'); return; }
       openMatchModal(null);
@@ -7673,7 +7802,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-11-03.1';
+  var APP_VERSION = '2026-11-03.2';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
