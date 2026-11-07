@@ -1116,7 +1116,7 @@
                 <li>오른쪽 위 내 이름 버튼을 눌러 <span class="guide-ui">내 등록 링크 복사</span>로 링크를 복사해 지인에게 보내면, 그 링크로 신청한 사람은 자동으로 <b>내 담당</b>이 돼요.</li>
                 <li>처음이라 담당 참가자가 없으면 홈 맨 위에 <b>첫 참가자를 모아 보세요</b> 카드가 떠요. 거기서 바로 링크를 복사하거나 직접 등록할 수 있어요.</li>
                 <li>참가자 탭 위의 <span class="guide-ui">전체 / 내 담당</span>으로 내 사람만 모아 볼 수 있어요. 내 담당에서는 카드마다 진행 중인 소개나 마지막 소개 날짜가 보이고, 필터의 <b>소개 못 받은 지 오래된 순</b>으로 먼저 챙길 사람을 찾을 수 있어요.</li>
-                <li>링크 없이 신청할 때는 추천인 칸에 <b>등록된 주선자 이름</b>을 정확히 적어야 해요. 그 주선자가 담당이 되고, 등록되지 않은 이름으로는 신청할 수 없어요. 그래서 가입할 때 쓴 내 이름을 지인에게 알려 주세요.</li>
+                <li>링크 없이 신청할 때는 추천인 칸에 <b>주선자의 이름이나 아이디</b>를 정확히 적어야 해요. 그 주선자가 담당이 되고, 등록되지 않은 이름으로는 신청할 수 없어요. 그래서 내 이름이나 아이디를 지인에게 알려 주세요.</li>
                 <li>새 신청은 <b>승인 대기</b>로 들어와요. 내용을 확인하고 카드의 <span class="guide-ui">승인</span>을 누르면 다른 주선자들도 볼 수 있고 매칭할 수 있어요. 승인 전에는 나와 관리자만 볼 수 있어요.</li>
                 <li>장난이나 잘못된 신청은 승인하지 말고 관리자에게 삭제를 요청해 주세요. 삭제는 관리자만 할 수 있어요.</li>
                 <li>내 담당 참가자는 카드의 연필 버튼으로 지역·만남 목적·흡연·관심사 같은 <b>궁합 정보</b>를 채워 주세요. 많이 채울수록 추천이 정확해져요.</li>
@@ -1377,7 +1377,7 @@
         </div>
       </div>
       <div class="field" id="reg-referrer-field">
-        <label for="reg-referrer">추천인 (주선자 이름) <span class="required-mark">*</span></label>
+        <label for="reg-referrer">추천인 (주선자 이름 또는 아이디) <span class="required-mark">*</span></label>
         <input class="field-input" id="reg-referrer" maxlength="40" placeholder="소개해 준 주선자 이름 (예: 민지)" required autocomplete="off">
         <span class="helper-text" id="reg-referrer-check">등록된 주선자 이름만 쓸 수 있어요. 그 주선자가 담당이 돼요. 관리자에게 신청하려면 "관리자"라고 적어 주세요.</span>
         <button type="button" class="reg-admin-ref" id="regAdminRef">소개해 준 주선자가 없나요? <b>관리자에게 바로 신청하기</b></button>
@@ -1694,6 +1694,18 @@
       <div id="adminSummaryBody" class="sum-grid"></div>
       <p class="helper-text" style="margin:0;">엑셀 파일에는 참가자 이름·연락처가 들어 있어요. 내려받은 파일은 안전한 곳에 보관하고, 필요 없으면 지워 주세요.</p>
     </div>
+    <div class="card" id="annAdmin" style="padding:14px 16px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+        <b style="font-size:15px;">공지사항</b>
+        <button class="btn" id="btnAnnRefresh" type="button">새로고침</button>
+      </div>
+      <p class="helper-text" style="margin:6px 0 10px;">공지를 올리면 주선자들이 앱에 들어올 때 팝업으로 보고, 알림을 켠 분에게는 휴대폰 알림도 가요. 확인을 누른 사람에게는 다시 뜨지 않아요.</p>
+      <div class="field"><input type="text" id="annTitle" class="field-input" placeholder="제목 (예: 보이는 이름을 바꿀 수 있어요)" maxlength="40"></div>
+      <div class="field"><textarea id="annBody" class="field-input" rows="4" placeholder="공지 내용을 적어 주세요" maxlength="1000" style="resize:vertical;"></textarea></div>
+      <p id="annError" class="helper-text" style="color:var(--danger); min-height:16px; margin:0 0 8px; font-size:12.5px;">&nbsp;</p>
+      <button class="btn btn-primary" id="btnAnnPost" type="button">공지 올리기</button>
+      <div id="annList" style="display:flex; flex-direction:column; gap:8px; margin-top:14px;"></div>
+    </div>
     <div class="toolbar">
       <p class="helper-text" style="margin:0; flex:1;">주선자가 가입하면 여기서 승인해 주세요. 승인된 주선자는 참가자를 코드네임으로만 보고, 두 사람이 모두 만나보기로 한 본인 매칭에서만 이름·연락처를 볼 수 있어요.</p>
       <button class="btn" id="btnRefreshAccounts" type="button">새로고침</button>
@@ -2004,6 +2016,18 @@
         <button type="submit" class="btn btn-primary" id="pwSubmit">바꾸기</button>
       </div>
     </form>
+  </div>
+</div>
+<div class="overlay" id="annOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="annViewTitle" style="max-width:440px;">
+    <div class="dialog-head">
+      <h2 id="annViewTitle">공지사항</h2>
+    </div>
+    <p id="annViewDate" class="helper-text" style="margin:0 0 10px; font-size:12.5px;"></p>
+    <p id="annViewBody" style="font-size:15px; margin:0 0 18px; line-height:1.7; white-space:pre-wrap; word-break:break-word;"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-primary" id="annAck" style="width:100%;">확인했어요</button>
+    </div>
   </div>
 </div>
 <div class="overlay" id="nickOverlay" hidden>
@@ -2994,6 +3018,8 @@
     start();
     maybeShowGuideFirstTime();
     syncPushOnStart();
+    setTimeout(loadMyAnnouncements, 1200);
+    if(isAdmin()) setTimeout(renderAnnList, 600);
   }
 
   /* ---------------- AI 추천 (궁합 점수 기반 자동 후보) ---------------- */
@@ -3609,6 +3635,72 @@
     $('tempPwValue').textContent = '';
     $('tempPwOverlay').hidden = false;
   }
+  /* ---------------- 공지사항 ---------------- */
+  var annQueue = [];
+  function loadMyAnnouncements(){
+    if(!currentUser) return;
+    supabase.rpc('my_announcements').then(function(res){
+      if(res.error) throw res.error;
+      annQueue = res.data || [];
+      showNextAnn();
+    }).catch(function(err){ console.error('ann', err); });
+  }
+  function showNextAnn(){
+    if(!annQueue.length){ $('annOverlay').hidden = true; return; }
+    // 가이드나 알림 안내가 떠 있으면 조금 뒤에 보여줘요
+    if(!$('guideOverlay').hidden || !$('pushIntroOverlay').hidden){ setTimeout(showNextAnn, 1500); return; }
+    var a = annQueue[0];
+    $('annViewTitle').textContent = a.title || '공지사항';
+    $('annViewDate').textContent = a.created_at ? fmtShortDate(String(a.created_at).slice(0, 10)) : '';
+    $('annViewBody').textContent = a.body || '';
+    $('annOverlay').hidden = false;
+  }
+  function ackAnn(){
+    var a = annQueue.shift();
+    $('annOverlay').hidden = true;
+    if(a) supabase.rpc('mark_announcement_read', { p_id: a.id }).catch(function(e){ console.error(e); });
+    setTimeout(showNextAnn, 250);
+  }
+  function renderAnnList(){
+    if(!isAdmin()) return;
+    supabase.rpc('list_announcements').then(function(res){
+      if(res.error) throw res.error;
+      var rows = res.data || [];
+      $('annList').innerHTML = rows.length ? rows.map(function(a){
+        return '<div class="card" style="padding:10px 12px; background:var(--bg);">' +
+          '<div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start;">' +
+            '<b style="font-size:14px;">' + esc(a.title || '(제목 없음)') + (a.active ? '' : ' <span style="font-weight:500; color:var(--muted);">· 종료됨</span>') + '</b>' +
+            (a.active ? '<button class="btn btn-ghost" type="button" data-ann-end="' + a.id + '" style="flex:none;">종료</button>' : '') +
+          '</div>' +
+          '<div style="font-size:13px; color:var(--muted); margin-top:4px; white-space:pre-wrap;">' + esc(String(a.body || '').slice(0, 120)) + '</div>' +
+          '<div class="helper-text" style="margin:6px 0 0;">' + esc(fmtShortDate(String(a.created_at || '').slice(0, 10))) + ' · 확인 ' + (a.read_count || 0) + '/' + (a.member_count || 0) + '명</div>' +
+        '</div>';
+      }).join('') : '<p class="helper-text" style="margin:0;">아직 올린 공지가 없어요.</p>';
+    }).catch(function(err){ console.error(err); });
+  }
+  function postAnnouncement(){
+    var title = $('annTitle').value.trim();
+    var body = $('annBody').value.trim();
+    if(body.length < 2){ $('annError').textContent = '공지 내용을 적어 주세요'; return; }
+    var btn = $('btnAnnPost'); btn.disabled = true; $('annError').innerHTML = '&nbsp;';
+    Promise.resolve(supabase.from('announcements').insert({ title: title || null, body: body, created_by: myId() })).then(function(res){
+      if(res && res.error) throw res.error;
+      $('annTitle').value = ''; $('annBody').value = '';
+      showToast('공지를 올렸어요');
+      renderAnnList();
+    }).catch(function(err){
+      console.error(err);
+      $('annError').textContent = '올리지 못했어요. 다시 시도해 주세요';
+    }).finally(function(){ btn.disabled = false; });
+  }
+  function endAnnouncement(id){
+    Promise.resolve(supabase.from('announcements').update({ active:false }).eq('id', id)).then(function(res){
+      if(res && res.error) throw res.error;
+      showToast('공지를 종료했어요');
+      renderAnnList();
+    }).catch(function(err){ console.error(err); showToast('종료하지 못했어요'); });
+  }
+
   /* 보이는 이름 바꾸기: 다른 주선자에게 보이는 이름만 바꿔요 (아이디·실명은 그대로) */
   function openChangeNick(){
     $('nickNew').value = (currentProfile && currentProfile.display_name) || '';
@@ -5520,7 +5612,7 @@
     if(regStep === 1 && !regRefId){
       var btn = $('regNext'); btn.disabled = true;
       verifyReferrer().then(function(ok){
-        if(!ok){ showToast('추천인은 등록된 주선자 이름만 쓸 수 있어요'); $('reg-referrer').focus(); return; }
+        if(!ok){ showToast('추천인은 등록된 주선자의 이름이나 아이디만 쓸 수 있어요'); $('reg-referrer').focus(); return; }
         setRegStep(2);
       }).then(function(){ btn.disabled = false; });
       return;
@@ -5647,7 +5739,7 @@
       if(!okName){
         setRegStep(1);
         $('reg-referrer').focus();
-        showToast('추천인은 등록된 주선자 이름만 쓸 수 있어요');
+        showToast('추천인은 등록된 주선자의 이름이나 아이디만 쓸 수 있어요');
         throw { soft:true };
       }
       if(regRefId) return supabase.rpc('register_participant', params);
@@ -7646,6 +7738,13 @@
     $('btnLogout').addEventListener('click', logout);
     $('btnCopyRefLink').addEventListener('click', function(){ $('meMenu').open = false; copyMyRefLink(); });
     $('btnGuide').addEventListener('click', function(){ $('meMenu').open = false; openGuide(); });
+    $('annAck').addEventListener('click', ackAnn);
+    $('btnAnnRefresh').addEventListener('click', renderAnnList);
+    $('btnAnnPost').addEventListener('click', postAnnouncement);
+    $('annList').addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('[data-ann-end]') : null;
+      if(b) endAnnouncement(b.getAttribute('data-ann-end'));
+    });
     $('btnChangeNick').addEventListener('click', function(){ $('meMenu').open = false; openChangeNick(); });
     $('nickForm').addEventListener('submit', submitChangeNick);
     $('nickClose').addEventListener('click', closeChangeNick);
@@ -7938,7 +8037,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-11-07.1';
+  var APP_VERSION = '2026-11-07.2';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
