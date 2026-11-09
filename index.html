@@ -807,6 +807,19 @@
   .scope-seg button[aria-pressed="true"] b{ color:var(--accent); opacity:1; }
   #memberScopeOwner{ width:auto; min-width:0; max-width:220px; flex:0 1 auto; }
   #memberScopeOwner.on{ border-color:var(--accent); color:var(--accent); font-weight:700; }
+  .gender-tabs{ display:flex; border-bottom:1px solid var(--line); margin-top:-4px; }
+  .gender-tabs button{ appearance:none; flex:1 1 0; border:0; background:none; font-family:inherit; font-size:15px; font-weight:700; color:var(--muted); padding:10px 4px 9px; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-1px; }
+  .gender-tabs button b{ font-weight:800; opacity:.7; margin-left:2px; }
+  .gender-tabs button[aria-selected="true"]{ color:var(--ink); border-bottom-color:var(--accent); }
+  .gender-tabs button[aria-selected="true"] b{ color:var(--accent); opacity:1; }
+  @media (min-width:900px){ .gender-tabs{ max-width:820px; } }
+  .pager{ display:flex; flex-direction:column; align-items:center; gap:8px; margin-top:6px; }
+  .pager-nums{ display:flex; align-items:center; gap:4px; flex-wrap:wrap; justify-content:center; }
+  .pager-nums button{ appearance:none; min-width:38px; height:38px; padding:0 8px; border-radius:10px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font-family:inherit; font-size:14.5px; font-weight:700; cursor:pointer; }
+  .pager-nums button[aria-current="page"]{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .pager-nums button:disabled{ opacity:.35; cursor:default; }
+  .pager-nums .gap{ color:var(--muted); padding:0 2px; }
+  .pager-info{ font-size:12.5px; color:var(--muted); }
   /* 참가자 명단: 한 줄 목록, 누르면 그 자리에서 펼쳐져요 */
   .mlist{ display:flex; flex-direction:column; gap:8px; }
   @media (min-width:900px){ .mlist{ max-width:820px; } }
@@ -830,7 +843,6 @@
   .mrow-detail{ display:flex; flex-direction:column; gap:10px; border-top:1px solid var(--line); margin-top:10px; padding-top:10px; }
   .mrow-detail .card-actions{ flex-wrap:wrap; align-items:center; }
   .mrow-rec{ margin-right:auto; color:var(--accent); font-weight:600; gap:5px; }
-  .mlist-more{ align-self:center; grid-column:1 / -1; justify-self:center; margin-top:4px; }
   .scope-line{ display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--muted); margin:-2px 0 0; }
   .scope-line.active{ color:var(--success); }
   .scope-line.late{ color:var(--accent); }
@@ -1592,6 +1604,11 @@
       </div>
       <select id="memberScopeOwner" class="select-input admin-only" aria-label="주선자별 보기"></select>
     </div>
+    <div class="gender-tabs" id="memberGenderTabs" role="tablist" aria-label="성별">
+      <button type="button" role="tab" data-gender="" aria-selected="true">남녀 모두 <b id="gCountAll">0</b></button>
+      <button type="button" role="tab" data-gender="female" aria-selected="false">여자 <b id="gCountF">0</b></button>
+      <button type="button" role="tab" data-gender="male" aria-selected="false">남자 <b id="gCountM">0</b></button>
+    </div>
     <div class="toolbar">
       <div class="search">
         <input id="memberSearch" class="field-input" type="search" placeholder="이름·코드로 검색">
@@ -1609,7 +1626,7 @@
         <option value="matched">매칭 완료</option>
         <option value="hold">보류</option>
       </select>
-      <select id="memberGenderFilter" class="select-input">
+      <select id="memberGenderFilter" class="select-input" hidden aria-hidden="true">
         <option value="">모든 성별</option>
         <option value="male">남성</option>
         <option value="female">여성</option>
@@ -5091,7 +5108,43 @@
     sel.classList.toggle('on', !!cur);
   }
   // 명단 펼침 상태: 직접 누른 건 기억하고, 내가 처리할 일이 있는 사람은 처음부터 펼쳐요
-  var MEMBER_PAGE = 30, memberShow = 30, memberListKey = null, memberOpen = {};
+  var MEMBER_PAGE = 30, memberPage = 1, memberListKey = null, memberOpen = {};
+  function genderKey(){ return 'mm_gender_' + (myId() || ''); }
+  var genderRestored = false;
+  function restoreGenderTab(){
+    if(genderRestored || !myId()) return;
+    genderRestored = true;
+    var g = '';
+    try{ g = localStorage.getItem(genderKey()) || ''; }catch(e){}
+    if(g === 'male' || g === 'female') $('memberGenderFilter').value = g;
+  }
+  function setGenderTab(g){
+    $('memberGenderFilter').value = g;
+    try{ localStorage.setItem(genderKey(), g); }catch(e){}
+    renderMembers();
+  }
+  function goMemberPage(n){
+    memberPage = n;
+    renderMembers();
+    var top = $('memberGenderTabs').getBoundingClientRect().top + window.scrollY - 12;
+    window.scrollTo({ top: Math.max(0, top), behavior:'smooth' });
+  }
+  function pagerHtml(page, pages, from, to, total){
+    if(pages <= 1) return '';
+    var nums = [];
+    for(var i = 1; i <= pages; i++){
+      if(i === 1 || i === pages || Math.abs(i - page) <= 2) nums.push(i);
+      else if(nums[nums.length - 1] !== '…') nums.push('…');
+    }
+    return '<nav class="pager" aria-label="참가자 페이지"><div class="pager-nums">' +
+      '<button type="button" data-action="member-page" data-page="'+(page - 1)+'" aria-label="이전 페이지"'+(page <= 1 ? ' disabled' : '')+'>‹</button>' +
+      nums.map(function(n){
+        return n === '…' ? '<span class="gap">…</span>' :
+          '<button type="button" data-action="member-page" data-page="'+n+'"'+(n === page ? ' aria-current="page"' : '')+'>'+n+'</button>';
+      }).join('') +
+      '<button type="button" data-action="member-page" data-page="'+(page + 1)+'" aria-label="다음 페이지"'+(page >= pages ? ' disabled' : '')+'>›</button>' +
+      '</div><div class="pager-info">'+total+'명 중 '+from+'–'+to+'</div></nav>';
+  }
   function memberNeedsMe(m){
     if(m.approved === false && canApproveMember(m)) return true;
     if(changeRequests[m.id] && canEditMember(m)) return true;
@@ -5113,6 +5166,7 @@
     }
   }
   function renderMembers(){
+    restoreGenderTab();
     renderFillNudge();
     renderScopeBar();
     renderFirstStep();
@@ -5134,12 +5188,18 @@
     var mbtiFilter = $('memberMbtiFilter').value;
     var sortMode = $('memberSort').value;
     var ownerFilter = $('memberOwnerFilter').value;
-    var nFilters = [statusFilter, genderFilter, ownerFilter, mbtiFilter].filter(Boolean).length + ((ageMinRaw !== '' || ageMaxRaw !== '') ? 1 : 0) + (sortMode && sortMode !== 'default' ? 1 : 0);
+    var nFilters = [statusFilter, ownerFilter, mbtiFilter].filter(Boolean).length + ((ageMinRaw !== '' || ageMaxRaw !== '') ? 1 : 0) + (sortMode && sortMode !== 'default' ? 1 : 0);
     $('memberFilterCount').textContent = String(nFilters);
     $('memberFilterCount').hidden = !nFilters;
     var scopeOwner = scopeOwnerId();
     var favScope = getMemberScope() === 'fav';
     var stats = introStats();
+    // 성별 탭: 지금 보고 있는 범위(전체/내 담당/★/주선자별) 안에서 센 숫자
+    var inScope = members.filter(function(m){ return (!scopeOwner || m.ownerId === scopeOwner) && (!favScope || favs[m.id]); });
+    $('gCountAll').textContent = inScope.length;
+    $('gCountF').textContent = inScope.filter(function(m){ return m.gender === 'female'; }).length;
+    $('gCountM').textContent = inScope.filter(function(m){ return m.gender === 'male'; }).length;
+    Array.prototype.forEach.call($('memberGenderTabs').querySelectorAll('[data-gender]'), function(b){ b.setAttribute('aria-selected', b.dataset.gender === genderFilter ? 'true' : 'false'); });
     var filtered = members.filter(function(m){
       if(scopeOwner && m.ownerId !== scopeOwner) return false;
       if(favScope && !favs[m.id]) return false;
@@ -5216,9 +5276,12 @@
 
     // 검색·필터·범위가 바뀌면 다시 처음 30명부터 보여줘요
     var listKey = [getMemberScope(), q, statusFilter, genderFilter, ageMinRaw, ageMaxRaw, mbtiFilter, sortMode, ownerFilter].join('|');
-    if(listKey !== memberListKey){ memberListKey = listKey; memberShow = MEMBER_PAGE; }
-    var shown = filtered.slice(0, memberShow);
-    var rest = filtered.length - shown.length;
+    if(listKey !== memberListKey){ memberListKey = listKey; memberPage = 1; }
+    var pages = Math.max(1, Math.ceil(filtered.length / MEMBER_PAGE));
+    if(memberPage > pages) memberPage = pages;
+    if(memberPage < 1) memberPage = 1;
+    var startAt = (memberPage - 1) * MEMBER_PAGE;
+    var shown = filtered.slice(startAt, startAt + MEMBER_PAGE);
     var chev = '<svg class="mrow-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
     var starSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z"/></svg>';
 
@@ -5227,7 +5290,7 @@
       var pending = m.approved === false;
       var open = isMemberOpen(m);
       var sub = [];
-      if(m.gender === 'female') sub.push('여'); else if(m.gender === 'male') sub.push('남');
+      if(!genderFilter){ if(m.gender === 'female') sub.push('여'); else if(m.gender === 'male') sub.push('남'); }
       var computedAge = ageFromBirthYear(m.birthYear);
       if(computedAge != null) sub.push(computedAge + '세');
       if(m.regionSido) sub.push(m.regionSido);
@@ -5293,7 +5356,7 @@
         '</div>'
       );
     }).join('') +
-    (rest > 0 ? '<button type="button" class="btn mlist-more" data-action="more-members">'+Math.min(rest, MEMBER_PAGE)+'명 더 보기 <span style="color:var(--muted); font-weight:500;">(남은 '+rest+'명)</span></button>' : '');
+    pagerHtml(memberPage, pages, startAt + 1, startAt + shown.length, filtered.length);
     hydratePhotos();
   }
 
@@ -8042,7 +8105,7 @@
         return;
       }
       var id = btn.dataset.id;
-      if(btn.dataset.action === 'more-members'){ memberShow += MEMBER_PAGE; renderMembers(); return; }
+      if(btn.dataset.action === 'member-page'){ if(!btn.disabled) goMemberPage(Number(btn.dataset.page) || 1); return; }
       if(btn.dataset.action === 'edit-member') openMemberModal(id);
       if(btn.dataset.action === 'edit-link') openEditLinkModal(id);
       if(btn.dataset.action === 'review-change') openChangeReview(id);
@@ -8163,7 +8226,7 @@
       this.setAttribute('aria-expanded', p.hidden ? 'false' : 'true');
     });
     $('btnMemberFilterReset').addEventListener('click', function(){
-      ['memberStatusFilter','memberGenderFilter','memberMbtiFilter','memberOwnerFilter'].forEach(function(id){ $(id).value = ''; });
+      ['memberStatusFilter','memberMbtiFilter','memberOwnerFilter'].forEach(function(id){ $(id).value = ''; });
       $('memberAgeMin').value = ''; $('memberAgeMax').value = ''; $('memberSort').value = 'default';
       renderMembers();
     });
@@ -8229,6 +8292,10 @@
     $('memberSearch').addEventListener('input', renderMembers);
     $('memberStatusFilter').addEventListener('change', renderMembers);
     $('memberGenderFilter').addEventListener('change', renderMembers);
+    $('memberGenderTabs').addEventListener('click', function(e){
+      var b = e.target.closest('[data-gender]'); if(!b) return;
+      setGenderTab(b.dataset.gender);
+    });
     $('memberAgeMin').addEventListener('input', renderMembers);
     $('memberAgeMax').addEventListener('input', renderMembers);
     $('memberMbtiFilter').addEventListener('change', renderMembers);
@@ -8435,7 +8502,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-11-09.2';
+  var APP_VERSION = '2026-11-09.3';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
