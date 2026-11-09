@@ -489,6 +489,18 @@
   .viewer-strip{ display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; }
   .viewer-item{ position:relative; flex:none; }
   .viewer-item img{ height:min(60vh,340px); width:auto; max-width:100%; border-radius:var(--radius-sm); display:block; background:var(--surface-2); }
+  .pledge-box{ display:flex; flex-direction:column; gap:10px; padding:12px 14px; border-radius:12px; background:var(--surface-2); border:1px solid var(--line); margin:0 0 10px; text-align:left; }
+  .pledge-head{ font-size:14px; }
+  .pledge-list{ margin:0; padding-left:18px; font-size:13.5px; line-height:1.6; color:var(--ink); display:flex; flex-direction:column; gap:3px; }
+  .pledge-box .consent-check{ font-size:14.5px; }
+  .wm-on{ position:relative; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+  .wm-on img{ pointer-events:none; -webkit-user-drag:none; -webkit-touch-callout:none; }
+  .wm-on::after{ content:''; position:absolute; inset:0; border-radius:inherit; background-image:var(--wm, none); background-repeat:repeat; background-size:200px 120px; }
+  .wm-note{ color:var(--muted); }
+  /* 다른 주선자의 참가자 정보는 글자를 드래그해 복사할 수 없어요 (관리자 제외) */
+  body:not(.role-admin) .mrow.others .mrow-detail,
+  body:not(.role-admin) .rec-item,
+  body:not(.role-admin) .pair-person{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
   .viewer-actions{ position:absolute; right:8px; bottom:8px; display:flex; gap:6px; }
   .viewer-btn{ width:32px; height:32px; border-radius:50%; border:none; background:rgba(20,14,18,.6); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; }
   .viewer-btn:hover{ background:rgba(20,14,18,.85); }
@@ -1047,6 +1059,16 @@
       </div>
       <div class="field">
         <input type="password" id="signupPassword2" class="field-input" placeholder="비밀번호 확인" minlength="6" autocomplete="new-password" required>
+      </div>
+      <div class="pledge-box">
+        <b class="pledge-head">참가자 정보 보호 약속</b>
+        <ul class="pledge-list">
+        <li>참가자의 사진·프로필·연락처는 <b>소개를 위해서만</b> 써요.</li>
+        <li>다른 주선자의 참가자 정보를 <b>캡처하거나 복사해서 앱 밖으로 보내지 않아요.</b></li>
+        <li>내 담당 참가자 정보도 소개 상대가 아닌 사람에게는 보내지 않아요.</li>
+        <li>사진에는 보고 있는 사람의 아이디가 표시돼요. 유출이 확인되면 <b>계정이 정지</b>되고, 법적 책임을 질 수 있어요.</li>
+      </ul>
+        <label class="consent-check"><input type="checkbox" id="signupPledge"> [필수] 위 약속을 지킬게요</label>
       </div>
       <p id="signupError" class="helper-text" style="color:var(--danger); min-height:16px; margin:0 0 10px; font-size:12.5px;">&nbsp;</p>
       <button type="submit" class="btn btn-primary" id="signupSubmitBtn" style="width:100%; margin-top:2px;">가입 신청</button>
@@ -2131,6 +2153,28 @@
     </div>
   </div>
 </div>
+<div class="overlay" id="pledgeOverlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="pledgeTitle" style="max-width:440px;">
+    <div class="dialog-head">
+      <h2 id="pledgeTitle">참가자 정보 보호 약속</h2>
+    </div>
+    <p style="font-size:14.5px; margin:0 0 10px; line-height:1.6; color:var(--muted);">참가자들이 믿고 정보를 맡길 수 있도록, 모든 주선자에게 한 번씩 약속을 받고 있어요.</p>
+    <div class="pledge-box">
+      <ul class="pledge-list">
+        <li>참가자의 사진·프로필·연락처는 <b>소개를 위해서만</b> 써요.</li>
+        <li>다른 주선자의 참가자 정보를 <b>캡처하거나 복사해서 앱 밖으로 보내지 않아요.</b></li>
+        <li>내 담당 참가자 정보도 소개 상대가 아닌 사람에게는 보내지 않아요.</li>
+        <li>사진에는 보고 있는 사람의 아이디가 표시돼요. 유출이 확인되면 <b>계정이 정지</b>되고, 법적 책임을 질 수 있어요.</li>
+      </ul>
+      <label class="consent-check"><input type="checkbox" id="pledgeCheck"> 위 내용을 확인했고 지킬게요</label>
+    </div>
+    <p id="pledgeError" class="helper-text" style="color:var(--danger); min-height:16px; margin:8px 0 0; font-size:12.5px;">&nbsp;</p>
+    <div class="dialog-actions">
+      <button type="button" class="btn" id="pledgeLogout">로그아웃</button>
+      <button type="button" class="btn btn-primary" id="pledgeAgree" disabled>동의하고 계속하기</button>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="annOverlay" hidden>
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="annViewTitle" style="max-width:440px;">
     <div class="dialog-head">
@@ -2377,7 +2421,8 @@
       </div>
     </div>
     <div class="viewer-strip" id="photoViewerStrip"></div>
-    <p class="viewer-hint">사진 한 장은 복사 아이콘으로 바로 붙여넣을 수 있어요. 여러 장을 한 번에 복사하는 건 브라우저 제약으로 안 돼서, 여러 장을 보낼 땐 '전체 저장' 후 카톡에서 한 번에 골라 보내보세요.</p>
+    <p class="viewer-hint wm-note" id="photoViewerNote" hidden>다른 주선자의 참가자 사진이라 저장·복사할 수 없어요. 사진에는 보고 있는 내 아이디가 함께 표시돼요.</p>
+    <p class="viewer-hint" id="photoViewerHint">사진 한 장은 복사 아이콘으로 바로 붙여넣을 수 있어요. 여러 장을 한 번에 복사하는 건 브라우저 제약으로 안 돼서, 여러 장을 보낼 땐 '전체 저장' 후 카톡에서 한 번에 골라 보내보세요.</p>
   </div>
 </div>
 
@@ -3016,6 +3061,7 @@
       if(realErr){ $('signupError').textContent = realErr; return; }
       if(!password || password.length < 6){ $('signupError').textContent = '비밀번호는 6자 이상으로 해주세요'; return; }
       if(password !== password2){ $('signupError').textContent = '비밀번호 확인이 일치하지 않아요'; return; }
+      if(!$('signupPledge').checked){ $('signupError').textContent = '참가자 정보 보호 약속에 체크해 주세요'; return; }
       var btn = $('signupSubmitBtn');
       btn.disabled = true;
       $('signupError').innerHTML = '&nbsp;';
@@ -3033,7 +3079,7 @@
         return supabase.auth.signUp({
           email: loginEmail,
           password: password,
-          options: { data: { display_name: name, real_name: realName } }
+          options: { data: { display_name: name, real_name: realName, pledge_v: PLEDGE_VERSION } }
         });
       }).then(function(res){
         if(res.error) throw res.error;
@@ -3197,7 +3243,19 @@
       next();
     });
   }
+  // 사진 워터마크: 보고 있는 사람의 아이디와 날짜를 비스듬히 반복해서 겹쳐요 (캡처해도 남아요)
+  function setWatermark(){
+    var nm = (currentProfile && currentProfile.display_name) || '';
+    if(!nm){ document.documentElement.style.removeProperty('--wm'); return; }
+    var d = new Date();
+    var label = nm + ' · ' + d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0');
+    var safe = label.replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; });
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="120"><text x="100" y="66" text-anchor="middle" transform="rotate(-24 100 60)" ' +
+      'font-family="sans-serif" font-size="15" font-weight="700" fill="rgba(255,255,255,0.5)" stroke="rgba(0,0,0,0.28)" stroke-width="0.6">' + safe + '</text></svg>';
+    document.documentElement.style.setProperty('--wm', 'url("data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg) + '")');
+  }
   function applyRolePermissions(){
+    setWatermark();
     document.body.classList.toggle('role-admin', isAdmin());
     document.body.classList.toggle('role-matchmaker', currentRole === 'matchmaker');
     var nm = currentProfile && currentProfile.display_name ? String(currentProfile.display_name) : '';
@@ -3217,6 +3275,35 @@
       return supabase.auth.signOut().catch(function(){});
     }).then(function(){ location.reload(); });
   }
+  /* 참가자 정보 보호 약속: 관리자를 뺀 모든 주선자가 한 번 동의해야 해요. 내용을 바꾸면 PLEDGE_VERSION 을 올려 다시 받아요 */
+  var PLEDGE_VERSION = 1;
+  function maybeAskPledge(){
+    if(!currentProfile || isAdmin()) return false;
+    if((currentProfile.pledge_version || 0) >= PLEDGE_VERSION) return false;
+    var meta = (currentUser && currentUser.user_metadata) || {};
+    if(Number(meta.pledge_v || 0) >= PLEDGE_VERSION){ savePledge(true); return false; } // 가입할 때 이미 체크했어요
+    $('pledgeCheck').checked = false;
+    $('pledgeAgree').disabled = true;
+    $('pledgeError').innerHTML = '&nbsp;';
+    $('pledgeOverlay').hidden = false;
+    return true;
+  }
+  function savePledge(silent){
+    if(!silent) $('pledgeAgree').disabled = true;
+    Promise.resolve(supabase.rpc('accept_pledge', { p_version: PLEDGE_VERSION })).then(function(res){
+      if(res.error) throw res.error;
+      if(currentProfile){ currentProfile.pledge_at = res.data; currentProfile.pledge_version = PLEDGE_VERSION; }
+      if(!silent) showToast('고마워요. 참가자들이 안심할 수 있어요');
+    }).catch(function(err){
+      console.error('pledge', err);
+    }).then(function(){
+      if(silent) return;
+      // 저장이 안 돼도 이번엔 들어갈 수 있게 해요 (다음 접속 때 다시 물어요)
+      $('pledgeOverlay').hidden = true;
+      maybeShowGuideFirstTime();
+      setTimeout(showNextAnn, 400);
+    });
+  }
   function unlock(){
     if(appStarted) return;
     appStarted = true;
@@ -3225,7 +3312,7 @@
     applyRolePermissions();
     loadSigCache();
     start();
-    maybeShowGuideFirstTime();
+    if(!maybeAskPledge()) maybeShowGuideFirstTime();
     syncPushOnStart();
     setTimeout(loadMyAnnouncements, 1200);
     if(isAdmin()){ setTimeout(renderAnnList, 600); setTimeout(renderHelpList, 900); }
@@ -3950,7 +4037,7 @@
   function showNextAnn(){
     if(!annQueue.length){ $('annOverlay').hidden = true; return; }
     // 가이드나 알림 안내가 떠 있으면 조금 뒤에 보여줘요
-    if(!$('guideOverlay').hidden || !$('pushIntroOverlay').hidden){ setTimeout(showNextAnn, 1500); return; }
+    if(!$('guideOverlay').hidden || !$('pushIntroOverlay').hidden || !$('pledgeOverlay').hidden){ setTimeout(showNextAnn, 1500); return; }
     var a = annQueue[0];
     $('annViewTitle').textContent = a.title || '공지사항';
     $('annViewDate').textContent = a.created_at ? fmtShortDate(String(a.created_at).slice(0, 10)) : '';
@@ -5315,10 +5402,11 @@
           (!pending ? '<button class="btn btn-ghost fav-btn" type="button" data-action="fav-member" data-id="'+esc(m.id)+'" aria-pressed="'+(favs[m.id] ? 'true' : 'false')+'" aria-label="즐겨찾기" title="즐겨찾기 (나만 보여요)">'+starSvg+'</button>' : '') +
           chev +
         '</div>';
-      if(!open) return '<div class="card mrow" data-id="'+esc(m.id)+'">' + head + '</div>';
+      var others = !canEditMember(m) ? ' others' : '';
+      if(!open) return '<div class="card mrow'+others+'" data-id="'+esc(m.id)+'">' + head + '</div>';
       var rows = memberRowsHtml(m);
       return (
-        '<div class="card mrow open" data-id="'+esc(m.id)+'">' + head +
+        '<div class="card mrow open'+others+'" data-id="'+esc(m.id)+'">' + head +
         '<div class="mrow-detail">' +
           (!isAdmin() && m.revealed ? '<span class="badge badge-success" style="align-self:flex-start;">매칭 승인 · 정보 공개</span>' : '') +
           preqHtml(m) +
@@ -5337,9 +5425,9 @@
               '</button>'
             : '') +
             (canEditMember(m) && !pending ? '<button class="btn btn-ghost" type="button" data-action="pause-member" data-id="'+esc(m.id)+'" aria-label="잠시 쉬기" title="잠시 쉬기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></svg></button>' : '') +
-            '<button class="btn btn-ghost" type="button" data-action="copy-member" data-id="'+esc(m.id)+'" aria-label="카톡 공유용 정보 복사">' +
+            (canEditMember(m) ? '<button class="btn btn-ghost" type="button" data-action="copy-member" data-id="'+esc(m.id)+'" aria-label="카톡 공유용 정보 복사">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" stroke-linecap="round"/></svg>' +
-            '</button>' +
+            '</button>' : '') +
             (canEditMember(m) ?
             '<button class="btn btn-ghost" type="button" data-action="edit-link" data-id="'+esc(m.id)+'" aria-label="참가자에게 정보 수정 링크 보내기" title="참가자에게 정보 수정 링크 보내기 (7일·1회용)">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
@@ -5859,8 +5947,9 @@
     renderEncBtns();
     var pushOn = approvedMM.filter(function(p){ return pushStatus[p.id]; }).length;
     var guideRead = approvedMM.filter(function(p){ return p.role === 'matchmaker' && p.guide_read_at; }).length;
+    var pledged = approvedMM.filter(function(p){ return p.role === 'matchmaker' && p.pledge_at; }).length;
     var summary = pushStatusLoaded && approvedMM.length
-      ? '<p class="helper-text" style="margin:0;">승인된 주선자 ' + approvedMM.length + '명 · 담당 참가자 있음 <b>' + ownedMM + '</b> · 제안해 본 사람 <b>' + activeMM + '</b> · 알림 켬 <b>' + pushOn + '</b> · 가이드 읽음 <b>' + guideRead + '</b></p>'
+      ? '<p class="helper-text" style="margin:0;">승인된 주선자 ' + approvedMM.length + '명 · 담당 참가자 있음 <b>' + ownedMM + '</b> · 제안해 본 사람 <b>' + activeMM + '</b> · 알림 켬 <b>' + pushOn + '</b> · 가이드 읽음 <b>' + guideRead + '</b> · 약속 동의 <b>' + pledged + '</b></p>'
       : '';
     listEl.innerHTML = summary + others.map(function(p){
       var roleLabel = ROLE_LABEL[p.role] || p.role;
@@ -5872,6 +5961,9 @@
       var pushBadge = !pushStatusLoaded || !p.approved ? '' : (ps
         ? '<span class="badge badge-success acct-push">알림 켬' + (ps.devices > 1 ? ' · 기기 ' + ps.devices + '대' : '') + '</span>'
         : '<span class="badge badge-neutral acct-push">알림 꺼짐</span>');
+      var pledgeBadge = !p.approved || p.role !== 'matchmaker' ? '' : (p.pledge_at
+        ? '<span class="badge badge-success">약속 동의 · ' + esc(fmtShortDate(String(p.pledge_at).slice(0, 10))) + '</span>'
+        : '<span class="badge badge-warn">약속 전</span>');
       var guideBadge = !p.approved || p.role !== 'matchmaker' ? '' : (p.guide_read_at
         ? '<span class="badge badge-success">가이드 읽음 · ' + esc(fmtShortDate(String(p.guide_read_at).slice(0, 10))) + '</span>'
         : '<span class="badge badge-warn">가이드 안 읽음</span>');
@@ -5888,7 +5980,7 @@
             (p.approved && p.role === 'matchmaker' ? '<div class="acct-act">담당 <b>' + (act.owned[p.id] || 0) + '</b> · 제안 <b>' + (act.made[p.id] || 0) + '</b>' +
               (act.last[p.id] ? ' · 마지막 제안 ' + esc(fmtShortDate(String(act.last[p.id]).slice(0, 10))) : (act.owned[p.id] ? ' · <span class="warn">아직 제안 없음</span>' : ' · <span class="warn">담당 없음</span>')) + '</div>' : '') +
           '</div>' +
-          '<span style="display:flex; gap:6px; flex-wrap:wrap;">' + status + pushBadge + guideBadge + '</span>' +
+          '<span style="display:flex; gap:6px; flex-wrap:wrap;">' + status + pushBadge + guideBadge + pledgeBadge + '</span>' +
           '<div class="card-actions" style="margin:0;">'+actions+'</div>' +
         '</div>'
       );
@@ -6680,31 +6772,37 @@
     var shownName = displayName(m) || '사진';
     photoViewerMemberName = shownName;
     photoViewerIds = paths.slice();
+    // 내 담당(관리자는 전부)만 저장·복사할 수 있어요. 다른 주선자의 참가자는 보기만 하고, 사진에 내 아이디가 겹쳐 보여요
+    photoViewerCanSave = canEditMember(m);
     $('photoViewerTitle').textContent = shownName + ' 사진';
-    $('photoViewerSaveAll').hidden = paths.length < 2;
+    $('photoViewerSaveAll').hidden = paths.length < 2 || !photoViewerCanSave;
     $('photoViewerSaveAll').disabled = false;
     $('photoViewerSaveAll').textContent = '전체 저장';
     $('photoViewerStrip').innerHTML = paths.map(function(p){
       return (
-        '<div class="viewer-item">' +
-          '<img '+photoImgAttrs(p)+' alt="'+esc(shownName)+'">' +
-          '<div class="viewer-actions">' +
+        '<div class="viewer-item'+(photoViewerCanSave ? '' : ' wm-on')+'">' +
+          '<img '+photoImgAttrs(p)+' alt="'+esc(shownName)+'" draggable="false">' +
+          (!photoViewerCanSave ? '' : '<div class="viewer-actions">' +
             '<button type="button" class="viewer-btn" data-action="copy-photo" data-path="'+esc(p)+'" title="사진 복사 (카톡에 붙여넣기)">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
             '</button>' +
             '<button type="button" class="viewer-btn" data-action="save-photo" data-path="'+esc(p)+'" title="사진 저장">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
             '</button>' +
-          '</div>' +
+          '</div>') +
         '</div>'
       );
     }).join('');
+    $('photoViewerNote').hidden = photoViewerCanSave;
+    $('photoViewerHint').hidden = !photoViewerCanSave;
     $('photoViewerOverlay').hidden = false;
     hydratePhotos();
   }
   function closePhotoViewer(){ $('photoViewerOverlay').hidden = true; }
 
+  var photoViewerCanSave = false;
   function savePhoto(path, idx){
+    if(!photoViewerCanSave) return;
     fetchPhotoBlob(path).then(function(blob){
       var ext = extFromType(blob.type);
       var filename = (photoViewerMemberName || '사진') + '_' + (idx + 1) + '.' + ext;
@@ -6716,6 +6814,7 @@
     });
   }
   function saveAllPhotos(paths){
+    if(!photoViewerCanSave) return;
     var queue = paths.slice();
     var total = queue.length;
     var done = 0;
@@ -6746,6 +6845,7 @@
     next();
   }
   function copyPhoto(path){
+    if(!photoViewerCanSave) return;
     if(!navigator.clipboard || !navigator.clipboard.write || typeof ClipboardItem === 'undefined'){
       showToast('이 브라우저에서는 사진 복사를 지원하지 않아요. 저장 버튼을 이용해 주세요.');
       return;
@@ -6855,7 +6955,7 @@
   }
   function copyMemberInfo(id){
     var m = memberById(id);
-    if(!m) return;
+    if(!m || !canEditMember(m)) return;
     copyText(buildMemberShareText(m));
   }
 
@@ -8194,6 +8294,9 @@
     });
     $('acctSearch').addEventListener('input', renderAccounts);
     $('annAck').addEventListener('click', ackAnn);
+    $('pledgeCheck').addEventListener('change', function(){ $('pledgeAgree').disabled = !this.checked; });
+    $('pledgeAgree').addEventListener('click', function(){ if($('pledgeCheck').checked) savePledge(false); });
+    $('pledgeLogout').addEventListener('click', function(){ $('pledgeOverlay').hidden = true; logout(); });
     $('btnAnnRefresh').addEventListener('click', renderAnnList);
     $('btnAnnPost').addEventListener('click', postAnnouncement);
     $('annList').addEventListener('click', function(e){
@@ -8391,6 +8494,9 @@
     $('photoViewerClose').addEventListener('click', closePhotoViewer);
     $('photoViewerOverlay').addEventListener('click', function(e){ if(e.target === this) closePhotoViewer(); });
     $('photoViewerSaveAll').addEventListener('click', function(){ saveAllPhotos(photoViewerIds); });
+    ['contextmenu','dragstart'].forEach(function(ev){
+      $('photoViewerStrip').addEventListener(ev, function(e){ if(e.target.closest && e.target.closest('.wm-on')) e.preventDefault(); });
+    });
     $('photoViewerStrip').addEventListener('click', function(e){
       var btn = e.target.closest('button[data-action]');
       if(!btn) return;
@@ -8502,7 +8608,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-11-09.3';
+  var APP_VERSION = '2026-11-09.4';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
