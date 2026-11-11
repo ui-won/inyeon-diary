@@ -4873,7 +4873,8 @@
     membersPanel.style.display = tabName === 'members' ? 'flex' : 'none';
     matchesP.style.display = tabName === 'matches' ? 'flex' : 'none';
     accountsP.style.display = tabName === 'accounts' ? 'flex' : 'none';
-    if(tabName === 'accounts') refetchProfiles();
+    // 주선자 탭을 열 때마다 로그인 도움 요청·공지를 새로 불러와요 (앱을 연 뒤에 들어온 요청도 바로 보이게)
+    if(tabName === 'accounts'){ refetchProfiles(); renderHelpList(); renderAnnList(); }
   }
   function initTabs(){
     var btns = document.querySelectorAll('.tab-btn');
@@ -8610,7 +8611,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-11-11.1';
+  var APP_VERSION = '2026-11-11.2';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
