@@ -6952,6 +6952,8 @@
       return '· ' + (m.name || m.codeName || '참가자') + (m.contact ? ' ' + fmtPhone(m.contact).text : '');
     });
     copyText('[매칭메이커] 두 분 모두 만나보기로 했어요\n' + lines.join('\n') + '\n서로 편하게 연락해 보세요.');
+    // 한꺼번에 복사해도 '전달 완료'로 남겨요. 내가 담당하는 쪽만(관리자는 양쪽), 아직 기록이 없는 쪽만요. 잘못 눌렀으면 '아직 안 보냈어요'로 되돌릴 수 있어요
+    shareOpen(x).filter(function(sd){ return isAdmin() || canSendOffer(x, sd); }).forEach(function(sd){ markShared(id, sd, true); });
   }
   function copyMemberInfo(id){
     var m = memberById(id);
@@ -8608,7 +8610,7 @@
      홈 화면 앱(특히 아이폰)은 화면을 떠나면 실시간 연결이 끊겨요.
      그래서 다시 앱을 열 때, 인터넷이 돌아올 때, 그리고 보고 있는 동안 1분마다 새로 불러와요.
      새 버전이 올라왔으면 자동으로 페이지를 다시 열어요. */
-  var APP_VERSION = '2026-11-09.4';
+  var APP_VERSION = '2026-11-11.1';
   var lastRefreshAt = 0;
   var pendingReload = false;
   function anyOverlayOpen(){
